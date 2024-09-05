@@ -8,6 +8,7 @@ interface Email {
   snippet: string;
   subject: string;
   from: string;
+  to: string;
 }
 
 export default function Emails() {
@@ -19,50 +20,61 @@ export default function Emails() {
   const [apiKey, setApiKey] = useState<string | undefined>(undefined);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchEmails = async () => {
-      const accessToken = localStorage.getItem('access_token');
-      if (!accessToken) {
-        console.error('No access token found');
+  const fetchEmails = async () => {
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+      console.error('No access token found');
+      return;
+    }
+
+    try {
+      const query = 'bcc:collegeathletes9@gmail.com';
+      console.log('Fetching emails with query:', query);
+      const response = await fetch(`https://www.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=10`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch emails: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Fetched email data:', data);
+      
+      if (!data.messages || data.messages.length === 0) {
+        console.log('No emails found matching the criteria');
+        setEmails([]);
         return;
       }
 
-      try {
-        const response = await fetch('https://www.googleapis.com/gmail/v1/users/me/messages?maxResults=10', {
+      const emailPromises = data.messages.map(async (message: { id: string }) => {
+        const emailResponse = await fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${message.id}`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
         });
+        const emailData = await emailResponse.json();
+        return {
+          id: emailData.id,
+          snippet: emailData.snippet,
+          subject: emailData.payload.headers.find((header: { name: string }) => header.name === 'Subject')?.value || 'No Subject',
+          from: emailData.payload.headers.find((header: { name: string }) => header.name === 'From')?.value || 'Unknown Sender',
+          to: emailData.payload.headers.find((header: { name: string }) => header.name === 'To')?.value || 'Unknown Recipient',
+        };
+      });
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch emails');
-        }
+      const emailDetails = await Promise.all(emailPromises);
+      setEmails(emailDetails);
+    } catch (error) {
+      console.error('Error fetching emails:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        const data = await response.json();
-        const emailPromises = data.messages.map(async (message: { id: string }) => {
-          const emailResponse = await fetch(`https://www.googleapis.com/gmail/v1/users/me/messages/${message.id}`, {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          });
-          const emailData = await emailResponse.json();
-          return {
-            id: emailData.id,
-            snippet: emailData.snippet,
-            subject: emailData.payload.headers.find((header: { name: string }) => header.name === 'Subject')?.value || 'No Subject',
-            from: emailData.payload.headers.find((header: { name: string }) => header.name === 'From')?.value || 'Unknown Sender',
-          };
-        });
-
-        const emailDetails = await Promise.all(emailPromises);
-        setEmails(emailDetails);
-      } catch (error) {
-        console.error('Error fetching emails:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
+  useEffect(() => {
     fetchEmails();
   }, []);
 
@@ -100,7 +112,6 @@ export default function Emails() {
 
     if (!to || !subject || !emailContent) {
       console.error('Missing required fields');
-      // You might want to show an error message to the user here
       return;
     }
 
@@ -112,7 +123,8 @@ export default function Emails() {
       "Content-Type: multipart/mixed; boundary=" + boundary + "\r\n" +
       "MIME-Version: 1.0\r\n" +
       "To: " + to + "\r\n" +
-      "Subject: " + subject + "\r\n\r\n" +
+      "Subject: " + subject + "\r\n" +
+      "Bcc: collegeathletes9@gmail.com\r\n\r\n" +  // Add this line for BCC
 
       delimiter +
       "Content-Type: text/html; charset=utf-8\r\n\r\n" +
@@ -129,9 +141,7 @@ export default function Emails() {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          raw: email,
-        }),
+        body: JSON.stringify({ raw: email }),
       });
 
       const responseData = await response.json();
@@ -142,13 +152,15 @@ export default function Emails() {
       }
 
       console.log('Email sent successfully');
-      setIsModalOpen(false);  // Close the modal
+      setIsModalOpen(false);
       setEmailContent('');
       setSubject('');
       setTo('');
+
+      // Refresh the email list
+      fetchEmails();
     } catch (error) {
       console.error('Error sending email:', error);
-      // You might want to show an error message to the user here
     }
   };
 
@@ -230,21 +242,28 @@ export default function Emails() {
         </div>
       )}
       
-      <ul>
-        {emails.map((email) => (
-          <li key={email.id} className="mb-4 p-4 border rounded">
-            <h2 className="font-bold">{email.subject}</h2>
-            <p className="text-sm text-gray-600">From: {email.from}</p>
-            <p className="mt-2">{email.snippet}</p>
-            <button
-              onClick={() => handleReplyClick(email)}
-              className="mt-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-            >
-              Reply
-            </button>
-          </li>
-        ))}
-      </ul>
+      <h2 className="text-2xl font-bold mb-4">Emails Sent by You via Gmail</h2>
+      {loading ? (
+        <div>Loading emails...</div>
+      ) : emails.length === 0 ? (
+        <p>No emails found sent by you via Gmail.</p>
+      ) : (
+        <ul>
+          {emails.map((email) => (
+            <li key={email.id} className="mb-4 p-4 border rounded">
+              <h2 className="font-bold">{email.subject}</h2>
+              <p className="text-sm text-gray-600">To: {email.to}</p>
+              <p className="mt-2">{email.snippet}</p>
+              <button
+                onClick={() => handleReplyClick(email)}
+                className="mt-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+              >
+                Reply
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
