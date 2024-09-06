@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import SendEmailModal from '../../../components/SendEmailModal';
+import { threadId } from 'worker_threads';
+import Link from 'next/link';
 
 interface Email {
   id: string;
@@ -42,7 +44,7 @@ export default function Emails() {
 
       const data = await response.json();
       console.log('Fetched email data:', data);
-      
+
       if (!data.messages || data.messages.length === 0) {
         console.log('No emails found matching the criteria');
         setEmails([]);
@@ -56,12 +58,14 @@ export default function Emails() {
           },
         });
         const emailData = await emailResponse.json();
+        console.log("EMAILDATA", emailData);
         return {
           id: emailData.id,
           snippet: emailData.snippet,
           subject: emailData.payload.headers.find((header: { name: string }) => header.name === 'Subject')?.value || 'No Subject',
           from: emailData.payload.headers.find((header: { name: string }) => header.name === 'From')?.value || 'Unknown Sender',
           to: emailData.payload.headers.find((header: { name: string }) => header.name === 'To')?.value || 'Unknown Recipient',
+          // threadId: emailData.threadId,
         };
       });
 
@@ -89,13 +93,6 @@ export default function Emails() {
     setEmailContent('');
   };
 
-  const handleReplyClick = (email: Email) => {
-    setIsModalOpen(true);
-    setTo(email.from);
-    setSubject(`Re: ${email.subject}`);
-    setEmailContent('');
-  };
-
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEmailContent('');
@@ -117,12 +114,12 @@ export default function Emails() {
           Compose Email
         </button>
       </div>
-      
+
       {isModalOpen &&
         apiKey &&
-        <SendEmailModal closeModal={handleCloseModal} initCont={emailContent} initSubj={subject} initTo={to} apiKey={apiKey} />
+        <SendEmailModal closeModal={handleCloseModal} initCont={emailContent} initSubj={subject} initTo={to} apiKey={apiKey} fetchEmails={fetchEmails} />
       }
-      
+
       <h2 className="text-2xl font-bold mb-4">Emails Sent by You via Gmail</h2>
       {loading ? (
         <div>Loading emails...</div>
@@ -130,19 +127,22 @@ export default function Emails() {
         <p>No emails found sent by you via Gmail.</p>
       ) : (
         <ul>
-          {emails.map((email) => (
-            <li key={email.id} className="mb-4 p-4 border rounded">
-              <h2 className="font-bold">{email.subject}</h2>
-              <p className="text-sm text-gray-600">To: {email.to}</p>
-              <p className="mt-2">{email.snippet}</p>
-              <button
-                onClick={() => handleReplyClick(email)}
-                className="mt-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-              >
-                Reply
-              </button>
-            </li>
-          ))}
+          {emails.map((email) => {
+            console.log("EMAIL", email);
+            return (
+              <li key={email.id} className="mb-4">
+                <Link
+                  href={`/dashboard/emails/threads?threadId=${email.id}`}
+                  className="block p-4 border rounded"
+                >
+                  <h2 className="font-bold">{email.subject}</h2>
+                  <p className="text-sm text-gray-600">To: {email.to}</p>
+                  <p className="mt-2">{email.snippet}</p>
+                </Link>
+              </li>
+            )
+          }
+          )}
         </ul>
       )}
     </div>
