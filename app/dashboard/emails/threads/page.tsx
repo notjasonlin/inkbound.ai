@@ -24,7 +24,7 @@ export default function Threads() {
                 <div className="p-4">
                     <h1 className="text-2xl font-bold mb-4">Your Threads</h1>
                     <ul>
-                        {threads[0].messages.map((thread, index) => {
+                        {threads.messages.map((thread, index) => {
                             const formattedDate = new Date(thread.date).toLocaleString();
                             const from = thread.from;
                             const snippet = thread.snippet;
