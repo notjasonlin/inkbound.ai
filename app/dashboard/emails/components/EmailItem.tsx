@@ -1,4 +1,4 @@
-import { EmailItemProps } from '@/types/index';
+import { EmailItemProps } from '@/types/email/index';
 
 export default function EmailItem({ email }: EmailItemProps) {
   return (

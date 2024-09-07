@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { EmailListProps } from '@/types/index';
+import { EmailListProps } from '@/types/email/index';
 import EmailItem from './EmailItem';
 
 export default function EmailList({ emails }: EmailListProps) {
