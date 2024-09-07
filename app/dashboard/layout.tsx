@@ -8,7 +8,8 @@ const sidebarItems = [
   { name: 'Schools', path: '/dashboard/schools' },
   { name: 'Emails', path: '/dashboard/emails' },
   { name: 'Background', path: '/dashboard/background' },
-  { name: 'Upgrade', path: '/dashboard/upgrade' }, // Add this line
+  { name: 'Outline', path: '/dashboard/outline' }, 
+  { name: 'Upgrade', path: '/dashboard/upgrade' },
 ];
 
 export default function DashboardLayout({
