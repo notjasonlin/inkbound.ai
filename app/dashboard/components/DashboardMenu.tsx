@@ -4,25 +4,30 @@ import { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { signout } from '@/lib/auth-actions';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@/components/UserContext'; // Make sure this path is correct
 
 function DashboardMenu({ userEmail }: { userEmail: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const router = useRouter();
+  const { setUser } = useUser();
 
   const handleSignOut = async () => {
-    await signout();
-    router.push('/logout');
+    try {
+      await signout();
+      setUser(null); // Clear the user in your context
+      router.refresh(); // Force a refresh of the page
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
     <div className="absolute top-4 right-4">
-      {/* Triple bar icon */}
       <button onClick={() => setIsOpen(!isOpen)} className="p-2 text-gray-600 dark:text-gray-300">
         ☰
       </button>
 
-      {/* Dropdown menu */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg">
           {userEmail && (

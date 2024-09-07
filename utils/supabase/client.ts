@@ -10,15 +10,32 @@ export function createClient() {
 export async function getCoaches() {
   const supabase = createClient();
   const { data, error } = await supabase
-    .from('coaches')
-    .select('id, School, Name, Position, Email');
-
-  if (error) throw error;
-  return data;
+    .from('coachinformation')
+    .select('*');
+  
+  if (error) {
+    console.error('Error fetching coaches:', error);
+    return [];
+  }
+  
+  return data || [];
 }
 
 export async function getUniqueSchools() {
-  const coaches = await getCoaches();
-  const uniqueSchools = [...new Set(coaches.map(coach => coach.School))];
-  return uniqueSchools.sort();  // Sort schools alphabetically
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from('coachinformation')
+    .select('school, state, division')
+    .order('school');
+  
+  if (error) {
+    console.error('Error fetching schools:', error);
+    return [];
+  }
+  
+  // Filter unique schools and keep additional information
+  const uniqueSchools = Array.from(new Set(data.map(item => JSON.stringify(item))))
+    .map(item => JSON.parse(item));
+  
+  return uniqueSchools;
 }

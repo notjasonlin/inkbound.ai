@@ -1,22 +1,40 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import Link from 'next/link';
+import SearchBar, { SearchFilters } from './SearchBar';
+
+interface School {
+  school: string;
+  state: string;
+  division: string;
+}
 
 interface SchoolListProps {
-  schools: string[];
+  schools: School[];
 }
 
 const SchoolList: React.FC<SchoolListProps> = ({ schools }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [filteredSchools, setFilteredSchools] = useState(schools);
   const schoolsPerPage = 10;
+
+  const filterSchools = useCallback((filters: SearchFilters) => {
+    const filtered = schools.filter(school => 
+      school.school.toLowerCase().includes(filters.schoolName.toLowerCase()) &&
+      school.state.toLowerCase().includes(filters.state.toLowerCase()) &&
+      (filters.division === '' || school.division === filters.division)
+    );
+    setFilteredSchools(filtered);
+    setCurrentPage(1);
+  }, [schools]);
 
   const indexOfLastSchool = currentPage * schoolsPerPage;
   const indexOfFirstSchool = indexOfLastSchool - schoolsPerPage;
-  const currentSchools = schools.slice(indexOfFirstSchool, indexOfLastSchool);
+  const currentSchools = filteredSchools.slice(indexOfFirstSchool, indexOfLastSchool);
 
-  const totalPages = Math.ceil(schools.length / schoolsPerPage);
+  const totalPages = Math.ceil(filteredSchools.length / schoolsPerPage);
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
@@ -24,6 +42,10 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools }) => {
 
   const toggleDropdown = (school: string) => {
     setOpenDropdown(openDropdown === school ? null : school);
+  };
+
+  const handleSearch = (filters: SearchFilters) => {
+    filterSchools(filters);
   };
 
   const renderPaginationButtons = () => {
@@ -77,22 +99,23 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools }) => {
 
   return (
     <div>
+      <SearchBar onSearch={handleSearch} />
       <ul className="space-y-2">
         {currentSchools.map((school) => (
-          <li key={school} className="flex justify-between items-center border p-2 rounded">
-            <Link href={`/schools/${encodeURIComponent(school)}`}>
-              {school}
+          <li key={school.school} className="flex justify-between items-center border p-2 rounded">
+            <Link href={`/dashboard/schools/${encodeURIComponent(school.school)}`}>
+              {school.school} - {school.state}, Division {school.division}
             </Link>
             <div className="relative">
               <button
-                onClick={() => toggleDropdown(school)}
+                onClick={() => toggleDropdown(school.school)}
                 className="bg-blue-500 text-white px-2 py-1 rounded"
               >
                 ⋮
               </button>
-              {openDropdown === school && (
+              {openDropdown === school.school && (
                 <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg">
-                  <Link href={`/schools/${encodeURIComponent(school)}`} className="block px-4 py-2 hover:bg-gray-100">
+                  <Link href={`/dashboard/schools/${encodeURIComponent(school.school)}`} className="block px-4 py-2 hover:bg-gray-100">
                     View Details
                   </Link>
                   {/* Add more dropdown options here */}
