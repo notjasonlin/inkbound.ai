@@ -20,14 +20,14 @@ export default function Threads() {
 
     return (
         <>
-            {threads &&
+            {threads && (
                 <div className="p-4">
                     <h1 className="text-2xl font-bold mb-4">Your Threads</h1>
                     <ul>
                         {threads[0].messages.map((thread, index) => {
                             const formattedDate = new Date(thread.date).toLocaleString();
                             const from = thread.from;
-                            const snippet = thread.snippet;
+                            const snippet = thread.snippet || "No content available";
 
                             console.log("THREAD");
 
@@ -35,15 +35,15 @@ export default function Threads() {
                                 <li key={index} className="border p-4 rounded-lg shadow mb-4">
                                     <p className="font-semibold">{`From: ${from}`}</p>
                                     <p className="text-sm text-gray-600">{`Date: ${formattedDate}`}</p>
-                                    <p className="mt-2 text-sm text-gray-700 line-clamp-3">
-                                        {snippet || "No content available"}
+                                    <p className="mt-2 text-sm text-gray-700 line-clamp-3 overflow-hidden text-ellipsis">
+                                        {snippet}
                                     </p>
                                 </li>
                             );
                         })}
                     </ul>
                 </div>
-            }
+            )}
         </>
     );
 }

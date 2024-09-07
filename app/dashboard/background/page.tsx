@@ -37,7 +37,12 @@ export default function BackgroundPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form Data:', formData);
+
+    const data = JSON.stringify(formData);
+    console.log('Form Data:', data);
+
+
+
     // Add further form submission logic here (e.g., API calls)
   };
 
