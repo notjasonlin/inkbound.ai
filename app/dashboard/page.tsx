@@ -1,13 +1,18 @@
 import { createClient } from "@/utils/supabase/server";
+import { redirect } from 'next/navigation';
 import DashboardMenu from './components/DashboardMenu';
 
 export default async function Dashboard() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  if (!user) {
+    redirect('/login');
+  }
+
   return (
     <div className="relative">
-      {user && <DashboardMenu userEmail={user.email || ''} />}
+      <DashboardMenu userEmail={user.email || ''} />
       <div className="p-6">
         <h1 className="text-3xl font-semibold text-gray-800 dark:text-gray-200">Dashboard</h1>
         <div className="mt-4">
