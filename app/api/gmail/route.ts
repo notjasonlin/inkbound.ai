@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { createClient } from '@/utils/supabase/server';
-import { Email } from '@/types/index';
+import { Email } from '@/types/email/index';
 import { Readable } from 'stream';
 
 export async function GET() {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchEmails } from '@/lib/emailService';
-import { UseEmailsResult, Email } from '@/types/index';
+import { UseEmailsResult, Email } from '@/types/email/index';
 
 export function useEmails(): UseEmailsResult {
   const [emails, setEmails] = useState<Email[]>([]);
