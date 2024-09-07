@@ -1,4 +1,4 @@
-import { Email } from '@/types';
+import { Email } from '@/types/email';
 
 const API_URL = '/api/gmail';
 
