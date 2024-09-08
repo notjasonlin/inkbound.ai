@@ -4,12 +4,18 @@ import { createClient } from '@/utils/supabase/server';
 import { EmailThread } from '@/types/threads/index';
 
 export async function GET(req: Request) {
+  console.log("1");
+
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
+
+  console.log("2");
 
   if (!session?.provider_token) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
+
+  console.log("3");
 
   const oauth2Client = new google.auth.OAuth2();
   oauth2Client.setCredentials({ access_token: session.provider_token });
@@ -24,14 +30,17 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'No thread IDs provided' }, { status: 400 });
     }
 
+
     // Fetch specific threads by ID
     const emailThreads: EmailThread[] = await Promise.all(
       threadIds.map(async (threadId) => {
-        // console.log("ENTER");
+        console.log("THREADID", threadId);
         const threadDetails = await gmail.users.threads.get({
           userId: 'me',
           id: threadId,
         });
+
+        console.log("CHECKPOINT");
 
         const messages = threadDetails.data.messages || [];
         const threadMessages = messages.map((message) => {
@@ -52,7 +61,7 @@ export async function GET(req: Request) {
       })
     );
 
-    // console.log("TEST", emailThreads);
+    console.log("TEST", emailThreads);
 
     return NextResponse.json(emailThreads);
   } catch (error) {

@@ -4,7 +4,7 @@ import { createClient } from '@/utils/supabase/server';
 import { Email } from '@/types/email/index';
 import { Readable } from 'stream';
 
-export async function GET() {
+export async function GET(req: Request) {
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -26,10 +26,17 @@ export async function GET() {
       return NextResponse.json({ error: 'Unable to fetch user email' }, { status: 500 });
     }
 
+    const url = new URL(req.url);
+    const numEmails = url.searchParams.getAll('numEmails');
+
+    if (!numEmails.length) {
+      return NextResponse.json({ error: 'No thread IDs provided' }, { status: 400 });
+    }
+
     const res = await gmail.users.messages.list({
       userId: 'me',
       q: `bcc:${userEmail}`,
-      maxResults: 100,
+      maxResults: parseInt(numEmails[0]),
     });
 
     const messages = res.data.messages || [];

@@ -20,7 +20,7 @@ export default function EmailsPage() {
       <ul className="space-y-4">
         {emails.map((email) => {
 
-          console.log("EMAIL", email);
+          console.log("EMAILID", email.id);
           return (
             <li key={email.id} className="border p-4 rounded-lg shadow">
               <Link
