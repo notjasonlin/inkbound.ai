@@ -4,9 +4,9 @@ import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useForm } from 'react-hook-form';
 import Modal from './Modal'; // Adjust the import path as needed
-
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 import 'react-quill/dist/quill.snow.css';
+
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false }) as any;
 
 export default function ComposeEmail() {
   const [isModalOpen, setIsModalOpen] = useState(false);
