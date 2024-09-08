@@ -4,16 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { useUser } from '@/components/UserContext';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-
-type Plan = { credits: number; price: number; savings: number };
+import PlanSelector from './components/PlanSelector';
+import UpgradeButton from './components/UpgradeButton';
+import { Plan, plans } from './constants';
+import { fetchOrCreateUserCredits } from './utils';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-
-const plans: Plan[] = [
-  { credits: 100, price: 20, savings: 0 },
-  { credits: 200, price: 25, savings: 15 },
-  { credits: 300, price: 30, savings: 30 },
-];
 
 export default function UpgradePage() {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
@@ -23,26 +19,10 @@ export default function UpgradePage() {
   const supabase = createClientComponentClient();
 
   useEffect(() => {
-    console.log('Current user:', user);
     if (user) {
-      fetchUserCredits();
+      fetchOrCreateUserCredits(supabase, user.id).then(setCurrentCredits);
     }
   }, [user]);
-
-  const fetchUserCredits = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('user_credits')
-        .select('credits')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) throw error;
-      setCurrentCredits(data?.credits || 0);
-    } catch (error) {
-      console.error('Error fetching user credits:', error);
-    }
-  };
 
   const handleUpgrade = async () => {
     console.log('handleUpgrade called', { selectedPlan, user });
@@ -94,36 +74,12 @@ export default function UpgradePage() {
       {currentCredits !== null && (
         <p className="text-xl mb-6">Your current credit balance: {currentCredits} credits</p>
       )}
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
-        {plans.map((plan) => (
-          <div 
-            key={plan.credits}
-            className={`border rounded-lg p-6 cursor-pointer transition-all ${
-              selectedPlan === plan ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:shadow-md'
-            }`}
-            onClick={() => {
-              setSelectedPlan(plan);
-              console.log('Plan selected:', plan);
-            }}
-          >
-            <h2 className="text-2xl font-bold mb-2">{plan.credits} Credits</h2>
-            <p className="text-3xl font-bold text-blue-600 mb-2">${plan.price}</p>
-            {plan.savings > 0 && (
-              <p className="text-green-600 mb-2">Save ${plan.savings}</p>
-            )}
-            <p className="text-gray-600">
-              ${(plan.price / plan.credits).toFixed(2)} per credit
-            </p>
-          </div>
-        ))}
-      </div>
-      <button
-        onClick={handleUpgrade}
-        disabled={isLoading || !selectedPlan}
-        className="w-full bg-blue-500 text-white py-3 px-4 rounded-lg text-lg font-semibold hover:bg-blue-600 transition duration-200 disabled:opacity-50"
-      >
-        {isLoading ? 'Processing...' : selectedPlan ? `Purchase ${selectedPlan.credits} Credits` : 'Select a plan'}
-      </button>
+      <PlanSelector plans={plans} selectedPlan={selectedPlan} onSelectPlan={setSelectedPlan} />
+      <UpgradeButton
+        isLoading={isLoading}
+        selectedPlan={selectedPlan}
+        onUpgrade={handleUpgrade}
+      />
     </div>
   );
 }
