@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { debounce } from 'lodash';
 import { PlayerStats, FormField } from '@/types/background/index';
 import { initialFormData, formFields } from '../constants';
-import { InputField } from '@/app/dashboard/background/components/InputField';
+import { InputField } from '@/app/dashboard/profile/background/components/InputField';
 
 interface BackgroundProfile {
   id: string;

@@ -18,7 +18,7 @@ export default function Home() {
       </div>
 
       <div className="flex flex-col items-center justify-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Commit!</h1>
+        <h1 className="text-4xl font-bold mb-4">Welcome to Inkbound!</h1>
       </div>
 
       <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-2 lg:text-left">
