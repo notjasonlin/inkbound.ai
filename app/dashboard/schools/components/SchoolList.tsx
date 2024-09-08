@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import SearchBar, { SearchFilters } from './SearchBar';
 
@@ -20,12 +20,18 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools }) => {
   const [filteredSchools, setFilteredSchools] = useState(schools);
   const schoolsPerPage = 10;
 
+  useEffect(() => {
+    console.log('Total schools:', schools.length);
+    console.log('Initial filtered schools:', filteredSchools.length);
+  }, [schools, filteredSchools]);
+
   const filterSchools = useCallback((filters: SearchFilters) => {
     const filtered = schools.filter(school => 
       school.school.toLowerCase().includes(filters.schoolName.toLowerCase()) &&
       school.state.toLowerCase().includes(filters.state.toLowerCase()) &&
       (filters.division === '' || school.division === filters.division)
     );
+    console.log('Filtered schools:', filtered.length);
     setFilteredSchools(filtered);
     setCurrentPage(1);
   }, [schools]);
@@ -100,6 +106,7 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools }) => {
   return (
     <div>
       <SearchBar onSearch={handleSearch} />
+      <p>Showing {filteredSchools.length} schools</p>
       <ul className="space-y-2">
         {currentSchools.map((school) => (
           <li key={school.school} className="flex justify-between items-center border p-2 rounded">

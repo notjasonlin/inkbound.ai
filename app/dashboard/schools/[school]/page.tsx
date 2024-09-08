@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 export async function generateStaticParams() {
   const schools = await getUniqueSchools();
   return schools.map((school) => ({
-    school: encodeURIComponent(school),
+    school: school.school,
   }));
 }
 
