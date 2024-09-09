@@ -56,7 +56,7 @@ export default function TemplateEditor({ template, userId }: { template: Templat
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4">
-        <Link href="/dashboard/outline/templates" className="text-blue-500 hover:text-blue-700">
+        <Link href="/dashboard/profile/templates" className="text-blue-500 hover:text-blue-700">
           ← Back to Templates
         </Link>
         <h1 className="text-2xl font-bold">{title}</h1>

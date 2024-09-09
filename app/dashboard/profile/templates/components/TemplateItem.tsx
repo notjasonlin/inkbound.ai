@@ -32,7 +32,7 @@ export default function TemplateItem({ template }: { template: Template }) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-4 flex justify-between items-center">
       <div>
-        <Link href={`/dashboard/outline/templates/${template.id}`} className="text-xl font-semibold text-blue-500 hover:underline">
+        <Link href={`/dashboard/profile/templates/${template.id}`} className="text-xl font-semibold text-blue-500 hover:underline">
           {template.title}
         </Link>
         <p className="text-sm text-gray-500">Last updated: {new Date(template.updated_at).toLocaleDateString()}</p>
