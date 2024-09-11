@@ -19,14 +19,9 @@ async function SchoolPage({ params }: { params: { school: string } }) {
   const schoolName = decodeURIComponent(params.school).replace(/\b\w/g, l => l.toUpperCase());
   const coaches = await getCoaches();
   const schoolCoaches = coaches.filter(coach => coach.school.toLowerCase() === schoolName.toLowerCase());
-  const { data, error } = await supabase
-    .from("favorite_schools")
-    .select("data")
-    .eq("uuid", user?.id)
-    .single();
 
 
-  console.log("FAVORITES", data);
+  // console.log("FAVORITES", data);
 
   // Assuming all coaches have the same school info
   const schoolInfo = schoolCoaches[0];
@@ -42,8 +37,11 @@ async function SchoolPage({ params }: { params: { school: string } }) {
         email: coach.email,
         position: coach.position,
       }
-      coachList.concat(data);
+      coachList.push(data);
+      // console.log(data)
     })
+
+    // console.log("COACHES", coachList);
     return {
       name: schoolName,
       coaches: coachList,
@@ -63,7 +61,7 @@ async function SchoolPage({ params }: { params: { school: string } }) {
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white shadow-md rounded-lg p-6 mb-8">
         <h1 className="text-3xl font-bold mb-4 text-center">{schoolName}</h1>
-        {user && <FavoriteButton userId={user.id} allFavorites={data} schoolData={school}/> }
+        {user && <FavoriteButton userId={user.id} schoolData={school}/> }
 
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
