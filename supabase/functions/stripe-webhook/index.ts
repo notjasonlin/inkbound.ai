@@ -1,8 +1,7 @@
-import express from 'express';
+import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
-const app = express();
 const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY!, {
   apiVersion: '2024-06-20',
 });
@@ -12,19 +11,23 @@ const supabaseServiceRoleKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
 
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
-  const signature = req.headers['stripe-signature'];
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  const signature = req.headers['stripe-signature'] as string;
 
   console.log('Received webhook request');
   console.log('Headers:', JSON.stringify(req.headers));
 
   if (!signature) {
     console.error('Missing Stripe signature');
-    return res.status(401).send('Missing Stripe signature');
+    return res.status(401).json({ error: 'Missing Stripe signature' });
   }
 
   try {
-    const body = req.body;
+    const body = await buffer(req);
     console.log('Webhook body:', body.toString());
     const stripeWebhookSecret = process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET!;
     
@@ -60,12 +63,18 @@ app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) =
     }
 
     return res.status(200).json({ received: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error('Error processing webhook:', err);
     return res.status(400).json({ error: 'Webhook error: ' + err.message });
   }
-});
+}
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`Server running on port ${port}`));
+// Helper function to parse the request body
+async function buffer(req: VercelRequest) {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) {
+    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+  }
+  return Buffer.concat(chunks);
+}
 
