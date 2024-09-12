@@ -4,10 +4,10 @@ const nextConfig = {
     return [
       {
         source: '/auth/:path*',
-        destination: 'https://YOUR_PROJECT_ID.supabase.co/auth/:path*',
+        destination: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/:path*`,
       },
     ]
   },
 }
 
-export default nextConfig
+module.exports = nextConfig
