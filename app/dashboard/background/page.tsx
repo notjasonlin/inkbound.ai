@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import { useState } from 'react';
 
 interface PlayerStats {
@@ -85,7 +86,7 @@ function renderInput(
   );
 }
 
-const styles = {
+const styles: { [key: string]: React.CSSProperties } = {
   container: {
     maxWidth: '600px',
     margin: '0 auto',
