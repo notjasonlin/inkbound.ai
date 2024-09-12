@@ -62,21 +62,31 @@ export async function signout() {
 
 export async function getGoogleSignInUrl(redirectTo: string) {
   const supabase = createClient();
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      queryParams: {
-        access_type: "offline",
-        scope: "email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.labels",
-        redirectTo,
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        queryParams: {
+          access_type: "offline",
+          scope: "email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.labels",
+          redirectTo,
+        },
       },
-    },
-  });
+    });
 
-  if (error) {
-    console.log(error);
-    redirect("/error");
+    if (error) {
+      console.error('Supabase OAuth error:', error);
+      throw error;
+    }
+
+    if (!data.url) {
+      console.error('No URL returned from Supabase');
+      throw new Error('No URL returned from Supabase');
+    }
+
+    return data.url;
+  } catch (error) {
+    console.error('Error in getGoogleSignInUrl:', error);
+    throw error;
   }
-
-  return data.url;
 }
