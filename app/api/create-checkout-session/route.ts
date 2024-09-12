@@ -18,8 +18,8 @@ export async function POST(req: Request) {
         if (!process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY) {
             throw new Error('NEXT_PUBLIC_STRIPE_SECRET_KEY is not set');
         }
-        if (!process.env.NEXT_PUBLIC_BASE_URL) {
-            throw new Error('NEXT_PUBLIC_BASE_URL is not set');
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+            throw new Error('NEXT_PUBLIC_SUPABASE_URL is not set');
         }
 
         const { credits, userId } = await req.json();
