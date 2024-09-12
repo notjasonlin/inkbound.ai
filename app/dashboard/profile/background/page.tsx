@@ -2,6 +2,8 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import BackgroundEditor from './components/BackgroundEditor';
 
+export const dynamic = 'force-dynamic';
+
 export default async function BackgroundPage() {
   const supabase = createServerComponentClient({ cookies });
   
