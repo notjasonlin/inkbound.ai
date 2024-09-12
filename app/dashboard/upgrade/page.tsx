@@ -9,7 +9,7 @@ import UpgradeButton from './components/UpgradeButton';
 import { Plan, plans } from './constants';
 import { fetchOrCreateUserCredits } from './utils';
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+const stripePromise = loadStripe(process.env.STRIPE_PUBLISHABLE_KEY!);
 
 export default function UpgradePage() {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);

@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { createClient } from "@/utils/supabase/server";
 import FavoriteButton from './components/FavoriteButton';
 
-const API_URL = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/favorites`;
+const API_URL = `${process.env.BASE_URL || 'http://localhost:3000'}/api/favorites`;
 
 export async function generateStaticParams() {
   const schools = await getUniqueSchools();

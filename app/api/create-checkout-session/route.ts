@@ -18,8 +18,8 @@ export async function POST(req: Request) {
         if (!process.env.STRIPE_SECRET_KEY) {
             throw new Error('STRIPE_SECRET_KEY is not set');
         }
-        if (!process.env.NEXT_PUBLIC_BASE_URL) {
-            throw new Error('NEXT_PUBLIC_BASE_URL is not set');
+        if (!process.env.BASE_URL) {
+            throw new Error('BASE_URL is not set');
         }
 
         const { credits, userId } = await req.json();
@@ -51,8 +51,8 @@ export async function POST(req: Request) {
                 },
             ],
             mode: 'payment',
-            success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/upgrade`,
+            success_url: `${process.env.BASE_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.BASE_URL}/dashboard/upgrade`,
             client_reference_id: userId,
             metadata: {
                 credits: credits.toString(),
