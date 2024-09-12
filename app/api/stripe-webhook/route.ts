@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
@@ -6,84 +6,63 @@ const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY!, {
   apiVersion: '2024-06-20',
 });
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPANEXT_PUBLIC_BASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceRoleKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!;
+
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 const endpointSecret = process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET!;
 
-export async function POST(req: Request) {
-  const body = await req.text();
-  const sig = req.headers.get('stripe-signature') as string;
+export async function POST(req: NextRequest) {
+  const signature = req.headers.get('stripe-signature');
 
-  let event: Stripe.Event;
+  console.log('Received webhook request');
+  console.log('Headers:', JSON.stringify(Object.fromEntries(req.headers)));
+
+  if (!signature) {
+    console.error('Missing Stripe signature');
+    return NextResponse.json({ error: 'Missing Stripe signature' }, { status: 401 });
+  }
 
   try {
-    if (endpointSecret) {
-      // For production and CLI testing
-      event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
-    } else {
-      // For local testing without CLI
-      event = JSON.parse(body) as Stripe.Event;
-    }
-  } catch (err) {
-    return NextResponse.json({ error: 'Webhook signature verification failed' }, { status: 400 });
-  }
-
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session;
-    console.log('Checkout session completed:', JSON.stringify(session, null, 2));
+    const body = await req.text();
+    console.log('Webhook body:', body);
+    const stripeWebhookSecret = process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET!;
     
-    const userId = session.client_reference_id;
-    const credits = session.metadata?.credits;
+    console.log('Verifying Stripe signature...');
+    const event = stripe.webhooks.constructEvent(body, signature, stripeWebhookSecret);
+    console.log('Stripe signature verified successfully');
 
-    console.log('User ID:', userId);
-    console.log('Credits to add:', credits);
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const userId = session.client_reference_id;
+      const credits = parseInt(session.metadata?.credits || '0', 10);
 
-    if (!userId || !credits) {
-      console.error('Missing userId or credits in session');
-      return NextResponse.json({ error: 'Missing data in checkout session' }, { status: 400 });
+      console.log('Processing checkout.session.completed', { userId, credits });
+
+      if (userId && credits) {
+        console.log('Adding credits to user', userId);
+        const { data, error } = await supabase.rpc('add_credits', {
+          p_user_id: userId,
+          p_credit_amount: credits
+        });
+
+        if (error) {
+          console.error('Error adding credits:', error);
+          return NextResponse.json({ error: 'Failed to add credits: ' + error.message }, { status: 500 });
+        }
+
+        console.log('Credits added successfully:', data);
+        return NextResponse.json({ received: true, credits_added: credits, new_balance: data }, { status: 200 });
+      } else {
+        console.error('Missing userId or credits in session');
+        return NextResponse.json({ error: 'Missing userId or credits' }, { status: 400 });
+      }
     }
 
-    try {
-      const { data, error } = await supabase
-        .from('user_credits')
-        .select('credits')
-        .eq('user_id', userId)
-        .single();
-
-      console.log('Supabase query result:', { data, error });
-
-      if (error) {
-        console.error('Error fetching user credits:', error);
-        return NextResponse.json({ error: 'Error fetching user credits' }, { status: 500 });
-      }
-
-      const currentCredits = data?.credits || 0;
-      const newCredits = currentCredits + parseInt(credits);
-
-      console.log('Current credits:', currentCredits);
-      console.log('New total credits:', newCredits);
-
-      const { error: updateError } = await supabase
-        .from('user_credits')
-        .upsert({ user_id: userId, credits: newCredits });
-
-      console.log('Supabase update result:', { error: updateError });
-
-      if (updateError) {
-        console.error('Error updating user credits:', updateError);
-        return NextResponse.json({ error: 'Error updating user credits' }, { status: 500 });
-      }
-
-      console.log('Credits updated successfully');
-      return NextResponse.json({ success: true });
-    } catch (error) {
-      console.error('Unexpected error:', error);
-      return NextResponse.json({ error: 'Unexpected error occurred' }, { status: 500 });
-    }
+    return NextResponse.json({ received: true }, { status: 200 });
+  } catch (err: any) {
+    console.error('Error processing webhook:', err);
+    return NextResponse.json({ error: 'Webhook error: ' + err.message }, { status: 400 });
   }
-
-  return NextResponse.json({ received: true });
 }
