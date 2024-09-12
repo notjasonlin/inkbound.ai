@@ -4,7 +4,7 @@ const nextConfig = {
     return [
       {
         source: '/auth/:path*',
-        destination: `/${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/:path*`,
+        destination: `https://${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/:path*`,
       },
     ]
   },
