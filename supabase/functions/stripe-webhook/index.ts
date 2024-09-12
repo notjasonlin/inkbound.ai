@@ -8,12 +8,12 @@ serve.default.options.onError = (error) => {
   return new Response('Internal Server Error', { status: 500 });
 };
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, {
+const stripe = new Stripe(Deno.env.get('NEXT_PUBLIC_STRIPE_SECRET_KEY')!, {
   apiVersion: '2024-06-20',
 })
 
-const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-const supabaseServiceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+const supabaseUrl = Deno.env.get('NEXT_PUBLIC_SUPANEXT_PUBLIC_BASE_URL')!
+const supabaseServiceRoleKey = Deno.env.get('NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY')!
 
 const supabase = createClient(supabaseUrl, supabaseServiceRoleKey)
 
@@ -31,7 +31,7 @@ serve(async (req) => {
   try {
     const body = await req.text()
     console.log('Webhook body:', body)
-    const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')!
+    const stripeWebhookSecret = Deno.env.get('NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET')!
     
     console.log('Verifying Stripe signature...')
     const event = stripe.webhooks.constructEvent(body, signature, stripeWebhookSecret)
