@@ -60,7 +60,7 @@ export async function signout() {
   redirect("/");
 }
 
-export async function signInWithGoogle() {
+export async function getGoogleSignInUrl(redirectTo: string) {
   const supabase = createClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
@@ -68,7 +68,7 @@ export async function signInWithGoogle() {
       queryParams: {
         access_type: "offline",
         scope: "email profile https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.labels",
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo,
       },
     },
   });
@@ -78,5 +78,5 @@ export async function signInWithGoogle() {
     redirect("/error");
   }
 
-  redirect(data.url);
+  return data.url;
 }
