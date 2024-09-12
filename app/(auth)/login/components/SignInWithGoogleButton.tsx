@@ -12,14 +12,10 @@ const SignInWithGoogleButton = () => {
     setIsLoading(true);
     try {
       const url = await getGoogleSignInUrl(`${window.location.origin}/auth/callback`);
-      if (url) {
-        window.location.href = url;
-      } else {
-        throw new Error('No URL returned');
-      }
+      router.push(url);
     } catch (error) {
       console.error('Sign in error:', error);
-      alert('Sign in failed. Please try again.');
+      router.push(`/error?message=${encodeURIComponent('Failed to initiate sign in')}`);
     } finally {
       setIsLoading(false);
     }
