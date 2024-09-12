@@ -61,11 +61,16 @@ export async function POST(req: Request) {
 
         console.log('Checkout session created:', session);
         return NextResponse.json({ id: session.id });
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Stripe error:', error);
         if (error instanceof Stripe.errors.StripeError) {
             console.error('Stripe error details:', error.message);
         }
-        return NextResponse.json({ error: 'Error creating checkout session', details: error.message }, { status: 500 });
+        
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        return NextResponse.json(
+            { error: 'Error creating checkout session', details: errorMessage }, 
+            { status: 500 }
+        );
     }
 }
