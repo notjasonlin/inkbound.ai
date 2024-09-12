@@ -32,7 +32,7 @@ export default function FavoriteButton({ userId, schoolData }: FavoriteButtonPro
             try {
                 if (data) {
                     const isFavorite = data.data.some(
-                        (favSchool) => favSchool.name === schoolData.name
+                        (favSchool: SchoolData) => favSchool.name === schoolData.name
                     );
                     console.log("ISFAVORITE", isFavorite);
 
