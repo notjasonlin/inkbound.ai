@@ -14,10 +14,15 @@ const supabase = createClient(
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export async function POST(req: NextRequest) {
   const signature = req.headers.get('stripe-signature');
-  console.log('Received webhook request');
-  console.log('Headers:', JSON.stringify(Object.fromEntries(req.headers)));
+  console.log('Stripe signature:', signature);
 
   if (!signature) {
     console.error('Missing Stripe signature');
@@ -26,14 +31,24 @@ export async function POST(req: NextRequest) {
 
   try {
     const rawBody = await req.text();
-    console.log('Webhook body:', rawBody);
+    console.log('Raw body length:', rawBody.length);
+    console.log('Raw body preview:', rawBody.substring(0, 100)); // Log first 100 characters
+
     const stripeWebhookSecret = process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET!;
+    
+    console.log('Webhook secret:', stripeWebhookSecret.slice(0, 5) + '...');
     
     console.log('Verifying Stripe signature...');
     console.log('Signature:', signature);
     console.log('Secret:', stripeWebhookSecret.slice(0, 5) + '...');
-    const event = await stripe.webhooks.constructEventAsync(rawBody, signature, stripeWebhookSecret);
-    console.log('Stripe signature verified successfully');
+    let event;
+    try {
+      event = await stripe.webhooks.constructEventAsync(rawBody, signature!, stripeWebhookSecret);
+      console.log('Stripe signature verified successfully');
+    } catch (err: any) {
+      console.error('Error verifying webhook signature:', err);
+      return NextResponse.json({ error: 'Webhook signature verification failed: ' + err.message }, { status: 400 });
+    }
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
