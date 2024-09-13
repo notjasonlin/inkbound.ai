@@ -2,13 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { FiHeart } from "react-icons/fi";
+import { AiFillHeart } from "react-icons/ai";
 import { createClient } from "@/utils/supabase/client";
 import { debounce } from 'lodash';
 
-
 interface FavoriteButtonProps {
     userId: string;
-    // allFavorites: any;
     schoolData: SchoolData;
 }
 
@@ -18,10 +17,8 @@ export default function FavoriteButton({ userId, schoolData }: FavoriteButtonPro
     const [error, setError] = useState<string | null>(null);
     const [favorite, setFavorite] = useState(false);
 
-
     useEffect(() => {
         // Parse allFavorites and check if the passed schoolData is in the array
-
         const checkFav = async () => {
             const { data, error } = await supabase
                 .from("favorite_schools")
@@ -42,8 +39,8 @@ export default function FavoriteButton({ userId, schoolData }: FavoriteButtonPro
                 console.error("Invalid JSON:", error);
             }
         }
-
-    }, [schoolData]);
+        checkFav();
+    }, [schoolData, userId, supabase]);
 
     const toggleFavorite = useCallback(async (newData: SchoolData[]) => {
         setError(null);
@@ -64,7 +61,7 @@ export default function FavoriteButton({ userId, schoolData }: FavoriteButtonPro
             console.error('Error saving background:', error);
             setError('Failed to save background. Please try again.');
         }
-    }, [userId]);
+    }, [userId, supabase]);
 
     const debouncedSave = useCallback(debounce(toggleFavorite, 1000), [favsObj]);
 
@@ -79,13 +76,14 @@ export default function FavoriteButton({ userId, schoolData }: FavoriteButtonPro
     };
 
     useEffect(() => {
-        if (favsObj)
-            debouncedSave(favsObj);
-    }, [favsObj, debouncedSave])
+        if (favsObj) debouncedSave(favsObj);
+    }, [favsObj, debouncedSave]);
 
     return (
-        <button onClick={updateFavorite}>
-            {favorite ? <FiHeart color="red" /> : <FiHeart />}
-        </button>
+        <div className="flex items-center space-x-2">
+            <button onClick={updateFavorite}>
+                {favorite ? <AiFillHeart color="red" size={33} /> : <AiFillHeart color="black" size={33} />}
+            </button>
+        </div>
     );
 }
