@@ -6,19 +6,16 @@ const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY!, {
   apiVersion: '2024-06-20',
 });
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceRoleKey = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!;
-
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
-
-const endpointSecret = process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET!;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   const signature = req.headers.get('stripe-signature');
-
   console.log('Received webhook request');
   console.log('Headers:', JSON.stringify(Object.fromEntries(req.headers)));
 
@@ -28,7 +25,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const rawBody = await req.text(); // Use this instead of getRawBody
+    const rawBody = await req.text();
     console.log('Webhook body:', rawBody);
     const stripeWebhookSecret = process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET!;
     
