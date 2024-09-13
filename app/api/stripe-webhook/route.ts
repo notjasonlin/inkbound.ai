@@ -13,11 +13,8 @@ const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 const endpointSecret = process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET!;
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   const signature = req.headers.get('stripe-signature');
