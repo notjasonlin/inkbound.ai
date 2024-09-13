@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
     console.log('Verifying Stripe signature...');
     console.log('Signature:', signature);
     console.log('Secret:', stripeWebhookSecret.slice(0, 5) + '...');
-    const event = stripe.webhooks.constructEvent(rawBody, signature, stripeWebhookSecret);
+    const event = await stripe.webhooks.constructEventAsync(rawBody, signature, stripeWebhookSecret);
     console.log('Stripe signature verified successfully');
 
     if (event.type === 'checkout.session.completed') {
