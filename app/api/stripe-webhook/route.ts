@@ -13,6 +13,12 @@ const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 const endpointSecret = process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET!;
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 export async function POST(req: NextRequest) {
   const signature = req.headers.get('stripe-signature');
 
@@ -25,12 +31,14 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.text();
-    console.log('Webhook body:', body);
+    const rawBody = await req.text(); // Use this instead of getRawBody
+    console.log('Webhook body:', rawBody);
     const stripeWebhookSecret = process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET!;
     
     console.log('Verifying Stripe signature...');
-    const event = stripe.webhooks.constructEvent(body, signature, stripeWebhookSecret);
+    console.log('Signature:', signature);
+    console.log('Secret:', stripeWebhookSecret.slice(0, 5) + '...');
+    const event = stripe.webhooks.constructEvent(rawBody, signature, stripeWebhookSecret);
     console.log('Stripe signature verified successfully');
 
     if (event.type === 'checkout.session.completed') {
