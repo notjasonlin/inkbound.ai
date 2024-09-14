@@ -9,6 +9,7 @@ const sidebarItems = [
   { name: 'Schools', path: '/dashboard/schools' },
   { name: 'Profile', path: '/dashboard/profile' }, 
   { name: 'Upgrade', path: '/dashboard/upgrade' },
+  { name: 'Compose', path: '/dashboard/compose' },
 ];
 
 export default function DashboardLayout({

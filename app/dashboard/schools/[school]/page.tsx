@@ -2,6 +2,7 @@ import { getCoaches, getUniqueSchools } from '@/utils/supabase/client';
 import { notFound } from 'next/navigation';
 import { createClient } from "@/utils/supabase/server";
 import FavoriteButton from './components/FavoriteButton';
+import { SchoolData, CoachData } from '@/types/school/index';
 
 const API_URL = `${process.env.BASE_URL || 'http://localhost:3000'}/api/favorites`;
 
@@ -30,24 +31,23 @@ async function SchoolPage({ params }: { params: { school: string } }) {
 
   function makeSchoolData(): SchoolData {
     const coachList: CoachData[] = [];
-    schoolCoaches.map((coach) => {
+    schoolCoaches.forEach((coach) => {
       const data = {
         name: coach.name,
         email: coach.email,
         position: coach.position,
-      }
+      };
       coachList.push(data);
-      // console.log(data)
-    })
+    });
 
-    // console.log("COACHES", coachList);
     return {
+      id: schoolInfo.id, // Added the missing 'id' property
       name: schoolName,
       coaches: coachList,
       division: schoolInfo.division,
       state: schoolInfo.state,
       conference: schoolInfo.conference,
-    }
+    };
   }
 
   if (schoolCoaches.length === 0) {
