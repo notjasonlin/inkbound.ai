@@ -4,6 +4,8 @@ import AddSchoolModal from './AddSchoolModal';
 import Tabs from './Tabs';
 import { SchoolData } from '@/types/school/index';
 import { createClient } from "@/utils/supabase/client";
+import DivisionList from './DivisionList';
+import LocationList from './LocationList';
 
 interface SidebarProps {
   onSelectSchool: (school: SchoolData) => void;
@@ -73,7 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
   }, [supabase]);
 
   useEffect(() => {
-    // Filter schools based on search query and active tab
+    // Filter schools based on search query
     let filtered = schools;
 
     if (searchQuery) {
@@ -82,14 +84,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
       );
     }
 
-    if (activeTab === 'Division') {
-      // Implement division filtering logic here
-    } else if (activeTab === 'Location') {
-      // Implement location filtering logic here
-    }
-
     setFilteredSchools(filtered);
-  }, [searchQuery, activeTab, schools]);
+  }, [searchQuery, schools]);
 
   const handleAddSchool = async (newSchool: SchoolData) => {
     try {
@@ -127,12 +123,25 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
     return <div>Error: {error}</div>;
   }
 
+  // Conditionally render SchoolDisplay based on the activeTab
+  const SchoolDisplay = () => {
+    if (activeTab === 'All') {
+      return <SchoolList schools={filteredSchools} onSelectSchool={onSelectSchool} />;
+    } else if (activeTab === 'Division') {
+      return <DivisionList schools={filteredSchools} onSelectSchool={onSelectSchool} />;
+    } else if (activeTab === 'Location') {
+      // Placeholder for location-based filtering, assuming you would implement it later
+      return <LocationList schools={filteredSchools} onSelectSchool={onSelectSchool} />;
+    }
+    return null;
+  };
+
   return (
     <aside className="w-80 bg-white shadow-md flex flex-col">
       <div className="p-4">
         <h2 className="text-xl font-bold text-gray-800">Favorites</h2>
       </div>
-      
+
       <Tabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
       <div className="p-4">
@@ -146,7 +155,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
-        <SchoolList schools={filteredSchools} onSelectSchool={onSelectSchool} />
+        <SchoolDisplay />
       </div>
 
       <div className="p-4">
