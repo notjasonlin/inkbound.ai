@@ -125,7 +125,7 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent }) => {
 
   return (
     <div className="bg-white p-6 rounded shadow">
-      <h2 className="text-xl font-semibold mb-4">Compose Email for {school.name}</h2>
+      <h2 className="text-xl font-semibold mb-4">Compose Email for {school.school}</h2>
       
       <div className="mb-4">
         <label className="block text-gray-700 mb-2">Emails Send To:</label>

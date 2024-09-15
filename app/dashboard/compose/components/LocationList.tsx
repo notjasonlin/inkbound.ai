@@ -19,7 +19,7 @@ const LocationList: React.FC<LocationListProps> = ({ schools, onSelectSchool }) 
             }
 
             const isDuplicate = places[school.state].some(
-                (existing) => existing.name === school.name
+                (existing) => existing.school === school.school
             );
 
             if (!isDuplicate) {

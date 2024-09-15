@@ -63,7 +63,7 @@ const EmailComposer: React.FC<EmailComposerProps> = ({ schools, onRemoveSchool }
             className={`px-4 py-2 cursor-pointer ${index === activeSchoolIndex ? 'bg-white border-t border-l border-r' : 'bg-gray-200'}`}
             onClick={() => setActiveSchoolIndex(index)}
           >
-            {school.name}
+            {school.school}
             {sentSchools.has(school.id) && (
               <span className="ml-2 text-green-500">✓</span>
             )}

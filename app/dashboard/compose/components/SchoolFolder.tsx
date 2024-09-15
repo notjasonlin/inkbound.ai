@@ -33,7 +33,7 @@ const SchoolFolder: React.FC<SchoolFolderProps> = ({ header, schools, onSelectSc
                             className="p-2 bg-gray-100 rounded cursor-pointer hover:bg-gray-200"
                             onClick={() => handleSchoolSelect(school)}
                         >
-                            {school.name}
+                            {school.school}
                         </li>
                     ))}
                 </ul>

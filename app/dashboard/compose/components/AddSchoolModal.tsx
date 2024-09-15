@@ -22,10 +22,11 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({ onAddSchool, onClose })
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('schools')
+        .from('coachinformation')
         .select('*');
 
       if (error) throw error;
+
 
       setAllSchools(data || []);
     } catch (error) {
@@ -36,11 +37,22 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({ onAddSchool, onClose })
   };
 
   const handleSearch = () => {
-    const filtered = allSchools.filter(school =>
-      school.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    console.log(allSchools);
+  
+    const uniqueSchools = new Set<string>();
+  
+    const filtered = allSchools.filter(school => {
+      const schoolNameLower = school.school.toLowerCase();
+      if (!uniqueSchools.has(schoolNameLower) && schoolNameLower.includes(searchQuery.toLowerCase())) {
+        uniqueSchools.add(schoolNameLower);
+        return true; 
+      }
+      return false; 
+    });
+  
     setSearchResults(filtered);
   };
+  
 
   const handleSelectSchool = async (school: SchoolData) => {
     try {
@@ -97,15 +109,18 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({ onAddSchool, onClose })
         <div className="max-h-60 overflow-y-auto">
           {searchResults.length > 0 ? (
             <ul className="space-y-2">
-              {searchResults.map(school => (
-                <li
-                  key={school.id}
-                  className="p-2 bg-gray-100 rounded cursor-pointer hover:bg-gray-200"
-                  onClick={() => handleSelectSchool(school)}
-                >
-                  {school.name}
-                </li>
-              ))}
+              {searchResults.map(school => {
+                return (
+                  <li
+                    key={school.id}
+                    className="p-2 bg-gray-100 rounded cursor-pointer hover:bg-gray-200"
+                    onClick={() => handleSelectSchool(school)}
+                  >
+                    {school.school}
+                  </li>
+                )
+              }
+              )}
             </ul>
           ) : (
             <p className="text-gray-600">

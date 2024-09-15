@@ -42,7 +42,7 @@ async function SchoolPage({ params }: { params: { school: string } }) {
 
     return {
       id: schoolInfo.id, // Added the missing 'id' property
-      name: schoolName,
+      school: schoolName,
       coaches: coachList,
       division: schoolInfo.division,
       state: schoolInfo.state,

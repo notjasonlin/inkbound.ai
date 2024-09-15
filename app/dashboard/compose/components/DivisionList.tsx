@@ -19,7 +19,7 @@ const DivisionList: React.FC<DivisionListProps> = ({ schools, onSelectSchool }) 
             }
 
             const isDuplicate = divs[school.division].some(
-                (existing) => existing.name === school.name
+                (existing) => existing.school === school.school
             );
 
             if (!isDuplicate) {

@@ -80,7 +80,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
 
     if (searchQuery) {
       filtered = filtered.filter(school =>
-        school.name.toLowerCase().includes(searchQuery.toLowerCase())
+        school.school.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 

@@ -6,7 +6,7 @@ export interface CoachData {
 
 export interface SchoolData {
     id: string;
-    name: string;
+    school: string;
     coaches: CoachData[];
     division: string;
     state: string;

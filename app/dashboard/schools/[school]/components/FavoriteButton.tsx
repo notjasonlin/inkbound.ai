@@ -55,7 +55,7 @@ export default function FavoriteButton({ userId, schoolData }: FavoriteButtonPro
                 const favs = Array.isArray(data.data) ? data.data : [];
                 setFavsObj(favs);
                 const isFavorite = favs.some(
-                    (favSchool: SchoolData) => favSchool.name === schoolData.name
+                    (favSchool: SchoolData) => favSchool.school === schoolData.school
                 );
                 console.log("Is favorite:", isFavorite);
                 setFavorite(isFavorite);
@@ -83,20 +83,20 @@ export default function FavoriteButton({ userId, schoolData }: FavoriteButtonPro
                 console.error("Error updating favorites:", error);
             } else {
                 setFavsObj(newData);
-                setFavorite(newData.some(fav => fav.name === schoolData.name));
+                setFavorite(newData.some(fav => fav.school === schoolData.school));
             }
 
         } catch (error) {
             console.error('Error saving favorites:', error);
             setError('Failed to save favorites. Please try again.');
         }
-    }, [userId, supabase, schoolData.name]);
+    }, [userId, supabase, schoolData.school]);
 
     const debouncedSave = useCallback(debounce(toggleFavorite, 1000), [toggleFavorite]);
 
     const updateFavorite = () => {
         const updatedFavs = favorite
-            ? favsObj.filter((fav) => fav.name !== schoolData.name) // Remove favorite
+            ? favsObj.filter((fav) => fav.school !== schoolData.school) // Remove favorite
             : [...favsObj, schoolData]; // Add favorite
 
         setFavorite(!favorite);
