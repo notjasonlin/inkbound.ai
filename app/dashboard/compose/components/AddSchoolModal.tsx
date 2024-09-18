@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SchoolData } from '@/types/school/index';
+import { CoachData, SchoolData } from '@/types/school/index';
 import { createClient } from "@/utils/supabase/client";
 
 interface AddSchoolModalProps {
@@ -7,10 +7,22 @@ interface AddSchoolModalProps {
   onClose: () => void;
 }
 
+interface CoachInformation {
+  id: string,
+  school: string,
+  confrence: string,
+  division: string,
+  state: string,
+  name: string,
+  position: string,
+  email: string,
+}
+
 const AddSchoolModal: React.FC<AddSchoolModalProps> = ({ onAddSchool, onClose }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SchoolData[]>([]);
-  const [allSchools, setAllSchools] = useState<SchoolData[]>([]);
+  const [unfiltered, setUnfiltered] = useState<CoachInformation[]>([]); // to account for duplicate entries of a school, containing different coach info
+  const [searchResults, setSearchResults] = useState<CoachInformation[]>([]);
+  const [allSchools, setAllSchools] = useState<CoachInformation[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const supabase = createClient();
 
@@ -38,26 +50,33 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({ onAddSchool, onClose })
 
   const handleSearch = () => {
     console.log(allSchools);
-  
+
     const uniqueSchools = new Set<string>();
-  
+
     const filtered = allSchools.filter(school => {
       const schoolNameLower = school.school.toLowerCase();
-      if (!uniqueSchools.has(schoolNameLower) && schoolNameLower.includes(searchQuery.toLowerCase())) {
-        uniqueSchools.add(schoolNameLower);
-        return true; 
+      if (schoolNameLower.includes(searchQuery.toLowerCase())) {
+        setUnfiltered([...unfiltered, school]);
+        if (!uniqueSchools.has(schoolNameLower)) {
+          uniqueSchools.add(schoolNameLower);
+          return true;
+        }
       }
-      return false; 
+      return false;
+
+
     });
-  
+
     setSearchResults(filtered);
   };
-  
 
-  const handleSelectSchool = async (school: SchoolData) => {
+
+  const handleSelectSchool = async (school: CoachInformation) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
+
+      const schoolData: SchoolData = makeSchoolData(school);
 
       const { data: existingFavorites, error: fetchError } = await supabase
         .from('favorite_schools')
@@ -71,7 +90,7 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({ onAddSchool, onClose })
       if (existingFavorites) {
         updatedFavorites = [...existingFavorites.data, school];
       } else {
-        updatedFavorites = [school];
+        updatedFavorites = [schoolData];
       }
 
       const { error: upsertError } = await supabase
@@ -80,13 +99,29 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({ onAddSchool, onClose })
 
       if (upsertError) throw upsertError;
 
-      onAddSchool(school);
+      onAddSchool(schoolData);
       onClose();
     } catch (error) {
       console.error('Error adding school to favorites:', error);
       // Optionally, show an error message to the user
     }
   };
+
+  const makeSchoolData = (school: CoachInformation) => {
+    const allData = unfiltered.filter(datum => datum.school === school.school);
+
+    const coaches: CoachData[] = [];
+    allData.map(datum => coaches.push({ name: datum.name, email: datum.email, position: datum.position }));
+
+    return {
+      id: school.id,
+      school: school.school,
+      coaches,
+      division: school.division,
+      state: school.state,
+      conference: school.confrence
+    }
+  }
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
