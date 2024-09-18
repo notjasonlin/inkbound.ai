@@ -52,21 +52,21 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({ onAddSchool, onClose })
     console.log(allSchools);
 
     const uniqueSchools = new Set<string>();
+    const copies: CoachInformation[] = [];
 
     const filtered = allSchools.filter(school => {
       const schoolNameLower = school.school.toLowerCase();
       if (schoolNameLower.includes(searchQuery.toLowerCase())) {
-        setUnfiltered([...unfiltered, school]);
+        console.log("ENTER");
+        copies.push(school);
         if (!uniqueSchools.has(schoolNameLower)) {
           uniqueSchools.add(schoolNameLower);
           return true;
         }
       }
       return false;
-
-
     });
-
+    setUnfiltered(copies);
     setSearchResults(filtered);
   };
 
@@ -108,6 +108,9 @@ const AddSchoolModal: React.FC<AddSchoolModalProps> = ({ onAddSchool, onClose })
   };
 
   const makeSchoolData = (school: CoachInformation) => {
+    console.log("UNFILTERED", unfiltered);
+
+
     const allData = unfiltered.filter(datum => datum.school === school.school);
 
     const coaches: CoachData[] = [];
