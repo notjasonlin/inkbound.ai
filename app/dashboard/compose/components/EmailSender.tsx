@@ -18,7 +18,7 @@ interface EmailDraft {
 const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent }) => {
   const supabase = createClient();
   const [emailDraft, setEmailDraft] = useState<EmailDraft>({
-    emailsTo: school.coaches.map(coach => coach.email).join(', '),
+    emailsTo: school?.coaches?.map(coach => coach.email).join(', ') || '',
     subject: '',
     template: '',
     customSection: '',
