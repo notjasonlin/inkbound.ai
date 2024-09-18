@@ -1,11 +1,12 @@
-interface CoachData {
+export interface CoachData {
     name: string;
     email: string;
     position: string;
 }
 
-interface SchoolData {
-    name: string;
+export interface SchoolData {
+    id: string;
+    school: string;
     coaches: CoachData[];
     division: string;
     state: string;
