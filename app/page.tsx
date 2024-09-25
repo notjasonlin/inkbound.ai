@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Navbar from '../components/navbar';  // Import Navbar
 import Footer from '../components/footer';  // Import Footer
 import LoginButton from '@/components/LoginLogoutButton';  // Import LoginButton
@@ -36,20 +35,16 @@ const spinnerAnimation = `
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  // Remove the router constant
 
   useEffect(() => {
-    const checkLoginStatus = () => {
-      const isLoggedIn = document.cookie.includes("isLoggedIn=true");
-      if (isLoggedIn) {
-        router.push("/dashboard"); // Redirect directly to the dashboard if logged in
-      } else {
-        setIsLoading(false); // Show landing page if not logged in
-      }
-    };
+    // Simplified effect to just set loading to false after a short delay
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500); // Short delay to simulate any necessary loading
 
-    checkLoginStatus();
-  }, [router]);
+    return () => clearTimeout(timer);
+  }, []); // Empty dependency array as we're not using any external values
 
   // Always show loader while checking the login status
   if (isLoading) {
