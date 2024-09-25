@@ -1,6 +1,14 @@
 import { createClient } from "@/utils/supabase/server";
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import EnterUrl from "./components/EnterUrl";
+import { useEffect } from "react";
+
+interface Player {
+  stats: { [key: string]: any },
+  highlights: string[],
+}
+
 
 export default async function OutlinePage() {
   const supabase = createClient();
@@ -10,10 +18,21 @@ export default async function OutlinePage() {
     return notFound();
   }
 
+  let { data: player_profiles, error } = await supabase
+    .from('player_profiles')
+    .select('*')
+    .eq("user_id", user.id)
+
+  if (error) {
+    console.error(error.message);
+  }
+
+  console.log(player_profiles);
+
   return (
     <div className="p-6">
       <h1 className="text-3xl font-semibold mb-8">Outline</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }} className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <Link href="/dashboard/profile/templates" className="block">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 transition-shadow hover:shadow-lg">
             <h2 className="text-2xl font-semibold mb-4">Templates</h2>
@@ -43,6 +62,9 @@ export default async function OutlinePage() {
             </ul>
           </div>
         </Link>
+      </div>
+      <div>
+        {player_profiles && <EnterUrl highlights={[player_profiles[0].highlights]} userId={user.id}/>}
       </div>
     </div>
   );
