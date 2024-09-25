@@ -154,7 +154,7 @@ export default function Home() {
             </div>
             <div className="text-left">
               <h3 className="text-2xl font-semibold mb-2">
-                Can colleges tell if you used Commit.io?
+                Can colleges tell if you used Inkbound?
               </h3>
               <p className="text-gray-600">
                 No, your emails will be sent from your own personal email, ensuring a personalized and authentic experience.
@@ -167,7 +167,7 @@ export default function Home() {
         <section id="about-us" className="py-20 bg-white w-full">
           <h2 className="text-4xl font-bold mb-12 text-babyblue-600">About Us</h2>
           <p className="text-lg text-gray-600 max-w-4xl mx-auto">
-            At Commit.io, we are passionate about making the college recruiting process more accessible and affordable. Our mission is to help talented athletes connect with the right opportunities without the high costs. We believe that every athlete deserves a chance to succeed, and we are here to support them through every step of the recruitment process.
+            At Inkbound.ai, we are passionate about making the college recruiting process more accessible and affordable. Our mission is to help talented athletes connect with the right opportunities without the high costs. We believe that every athlete deserves a chance to succeed, and we are here to support them through every step of the recruitment process.
           </p>
         </section>
       </main>
