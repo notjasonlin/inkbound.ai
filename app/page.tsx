@@ -97,7 +97,7 @@ export default function Home() {
           <h2 className="text-4xl font-bold mb-12 text-babyblue-600">Features</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             <div className="bg-white shadow-lg p-8 rounded-lg">
-              <h3 className="text-2xl font-semibold mb-4">Mass Emailing</h3>
+              <h3 className="text-2xl font-semibold mb-4">Email Assistant</h3>
               <p className="text-gray-600">
                 Send personalized emails to 500+ coaches at once using custom templates designed to maximize responses.
               </p>
