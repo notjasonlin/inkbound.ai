@@ -1,4 +1,12 @@
+import { useEffect, useState } from 'react';
+
 export default function Footer() {
+  const [year, setYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
+
   return (
     <footer className="w-full bg-gray-100 py-8">
       <div className="max-w-7xl mx-auto px-4">
@@ -15,14 +23,15 @@ export default function Footer() {
             <a href="/policy/privacy" className="text-gray-600 hover:text-babyblue-600">
               Privacy Policy
             </a>
-            <a href="/terms-and-conditions" className="text-gray-600 hover:text-babyblue-600">
+            <a href="/policy/terms-and-conditions" className="text-gray-600 hover:text-babyblue-600">
               Terms and Conditions
             </a>
           </div>
         </div>
         <div className="mt-8 text-center text-gray-600">
-          &copy; {new Date().getFullYear()} Inkbound.ai. All rights reserved.
+          &copy; 2024 Inkbound.ai. All rights reserved.
         </div>
+
       </div>
     </footer>
   );
