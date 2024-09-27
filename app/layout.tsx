@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { cn } from "@/lib/utils"
-import { UserProvider } from '@/components/UserContext';
+import { cn } from "@/lib/utils";
+import { UserProvider } from "@/components/UserContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -18,10 +18,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={cn("bg-background", inter.className )}>
-        <UserProvider>
-          {children}
-        </UserProvider>
+      {/* Remove bg-background if unnecessary */}
+      <body className={cn(inter.className)}>
+        <UserProvider>{children}</UserProvider>
       </body>
     </html>
   );

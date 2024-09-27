@@ -1,5 +1,8 @@
 import { useRouter } from 'next/navigation';
 import LoginButton from '@/components/LoginLogoutButton'; // Import the LoginButton component
+import { Shrikhand } from 'next/font/google'; // Import the Shrikhand font
+
+const shrikhand = Shrikhand({ subsets: ['latin'], weight: '400' });
 
 export default function Navbar() {
   const router = useRouter();
@@ -17,7 +20,8 @@ export default function Navbar() {
       const smoothScroll = (timestamp: number) => {
         if (!start) start = timestamp;
         const progress = timestamp - start;
-        const easeInOutQuad = (t: number) => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; // easing function
+        const easeInOutQuad = (t: number) =>
+          t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; // easing function
         const percent = easeInOutQuad(Math.min(progress / duration, 1));
         window.scrollTo(0, startPosition + distance * percent);
         if (progress < duration) {
@@ -26,6 +30,9 @@ export default function Navbar() {
       };
 
       window.requestAnimationFrame(smoothScroll);
+    } else {
+      // If the element is not found, navigate to the section through router
+      router.push(`/#${id}`);
     }
   };
 
@@ -34,31 +41,31 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between h-16">
           <div className="flex-shrink-0 flex items-center">
-            <a href="/" className="text-2xl font-bold text-babyblue-600">
-              Inkbound.ai
-            </a>
+            <h1 className={`text-3xl font-bold text-babyblue-500 ${shrikhand.className}`}>
+              Inkbound
+            </h1>
           </div>
           <div className="flex items-center space-x-6">
             <button
-              className="text-gray-600 hover:text-babyblue-600"
+              className="text-black hover:text-babyblue-600"
               onClick={() => scrollToSection('features')}
             >
               Features
             </button>
             <button
-              className="text-gray-600 hover:text-babyblue-600"
+              className="text-black hover:text-babyblue-600"
               onClick={() => scrollToSection('pricing')}
             >
               Pricing
             </button>
             <button
-              className="text-gray-600 hover:text-babyblue-600"
+              className="text-black hover:text-babyblue-600"
               onClick={() => scrollToSection('faq')}
             >
               FAQ
             </button>
             <button
-              className="text-gray-600 hover:text-babyblue-600"
+              className="text-black hover:text-babyblue-600"
               onClick={() => scrollToSection('about-us')}
             >
               About Us
@@ -66,10 +73,10 @@ export default function Navbar() {
           </div>
           <div className="flex items-center space-x-4">
             {/* Try Now Button */}
-            <LoginButton label="Try Now" />  {/* Same functionality as login, but labeled "Try Now" */}
+            <LoginButton label="Sign in" />  {/* Same functionality as login, but labeled "Try Now" */}
 
             {/* Login Button */}
-            <LoginButton label="Login" />
+            <LoginButton label="Get Started" />
           </div>
         </div>
       </div>

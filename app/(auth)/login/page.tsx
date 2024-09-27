@@ -8,7 +8,7 @@ const LoginForm = dynamic(() => import('./components/LoginForm'), {
 
 const LoginPage = () => {
   return (
-    <div className="flex h-svh items-center">
+    <div className="flex h-screen items-center justify-center bg-babyblue-600"> {/* Full screen height with centered items */}
       <LoginForm />
     </div>
   )
