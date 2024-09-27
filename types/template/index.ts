@@ -1,10 +1,8 @@
-export interface TemplateContent {
-    content: string;
-    title: string;
-  }
-  
-  export interface Template {
+
+export interface TemplateData {
     id: string;
-    name: string;
-    content: TemplateContent;
-  }
+    content: { title: string; content: string };
+    title: string;
+    updated_at: string;
+}
+
