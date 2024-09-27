@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Navbar from '../components/navbar';  // Import Navbar
 import Footer from '../components/footer';  // Import Footer
 import LoginButton from '@/components/LoginLogoutButton';  // Import LoginButton
@@ -36,20 +35,16 @@ const spinnerAnimation = `
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
+  // Remove the router constant
 
   useEffect(() => {
-    const checkLoginStatus = () => {
-      const isLoggedIn = document.cookie.includes("isLoggedIn=true");
-      if (isLoggedIn) {
-        router.push("/dashboard"); // Redirect directly to the dashboard if logged in
-      } else {
-        setIsLoading(false); // Show landing page if not logged in
-      }
-    };
+    // Simplified effect to just set loading to false after a short delay
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 500); // Short delay to simulate any necessary loading
 
-    checkLoginStatus();
-  }, [router]);
+    return () => clearTimeout(timer);
+  }, []); // Empty dependency array as we're not using any external values
 
   // Always show loader while checking the login status
   if (isLoading) {
@@ -102,7 +97,7 @@ export default function Home() {
           <h2 className="text-4xl font-bold mb-12 text-babyblue-600">Features</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             <div className="bg-white shadow-lg p-8 rounded-lg">
-              <h3 className="text-2xl font-semibold mb-4">Mass Emailing</h3>
+              <h3 className="text-2xl font-semibold mb-4">Email Assistant</h3>
               <p className="text-gray-600">
                 Send personalized emails to 500+ coaches at once using custom templates designed to maximize responses.
               </p>
@@ -154,7 +149,7 @@ export default function Home() {
             </div>
             <div className="text-left">
               <h3 className="text-2xl font-semibold mb-2">
-                Can colleges tell if you used Commit.io?
+                Can colleges tell if you used Inkbound?
               </h3>
               <p className="text-gray-600">
                 No, your emails will be sent from your own personal email, ensuring a personalized and authentic experience.
@@ -167,7 +162,7 @@ export default function Home() {
         <section id="about-us" className="py-20 bg-white w-full">
           <h2 className="text-4xl font-bold mb-12 text-babyblue-600">About Us</h2>
           <p className="text-lg text-gray-600 max-w-4xl mx-auto">
-            At Commit.io, we are passionate about making the college recruiting process more accessible and affordable. Our mission is to help talented athletes connect with the right opportunities without the high costs. We believe that every athlete deserves a chance to succeed, and we are here to support them through every step of the recruitment process.
+            At Inkbound.ai, we are passionate about making the college recruiting process more accessible and affordable. Our mission is to help talented athletes connect with the right opportunities without the high costs. We believe that every athlete deserves a chance to succeed, and we are here to support them through every step of the recruitment process.
           </p>
         </section>
       </main>
