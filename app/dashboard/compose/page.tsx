@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import EmailComposer from './components/EmailComposer';
 import { SchoolData } from '@/types/school/index';
+import Link from 'next/link';
 
 export default function ComposePage() {
   const [selectedSchools, setSelectedSchools] = useState<SchoolData[]>([]);
@@ -24,6 +25,11 @@ export default function ComposePage() {
     <div className="flex h-full">
       <Sidebar onSelectSchool={handleSelectSchool} />
       <main className="flex-1 p-6 bg-gray-100">
+        <div className="mb-4">
+          <Link href="/dashboard/auto-compose" className="text-blue-500 hover:underline">
+            Go to Auto Compose
+          </Link>
+        </div>
         {selectedSchools.length > 0 ? (
           <EmailComposer 
             schools={selectedSchools} 
