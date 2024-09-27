@@ -116,18 +116,6 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent, setIsOpe
     }
   };
 
-
-  const writeWithTemplate = () => {
-    const updatedDraft = {
-      emailsTo: school?.coaches?.map(coach => coach.email).join(', ') || '',
-      subject: selectedTemplate.content.title,
-      template: selectedTemplate.title,
-      customSection: readTemplate(selectedTemplate, school),
-    }
-    setEmailDraft(updatedDraft);
-    debouncedSave(updatedDraft);
-  }
-
   const writeWithTemplate = () => {
     if (selectedTemplate) {
       const updatedDraft = {
