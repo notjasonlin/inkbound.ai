@@ -2,10 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { SchoolData } from '@/types/school/index';
 import { createClient } from "@/utils/supabase/client";
 import { debounce } from 'lodash';
+import { TemplateData } from '@/types/template';
+import readTemplate from '@/functions/readTemplate';
+import Alert from '@/components/ui/Alert';
 
 interface EmailSenderProps {
   school: SchoolData;
   onEmailSent: (schoolId: string) => void;
+  setIsOpen: (state: boolean) => void;
+  selectedTemplate: TemplateData | null;
 }
 
 interface EmailDraft {
@@ -15,7 +20,7 @@ interface EmailDraft {
   customSection: string;
 }
 
-const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent }) => {
+const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent, setIsOpen, selectedTemplate }) => {
   const supabase = createClient();
   const [emailDraft, setEmailDraft] = useState<EmailDraft>({
     emailsTo: school?.coaches?.map(coach => coach.email).join(', ') || '',
@@ -25,6 +30,8 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent }) => {
   });
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState('');
+  const [warning, setWarning] = useState<boolean>(false);
+
 
   useEffect(() => {
     const fetchDraft = async () => {
@@ -53,6 +60,13 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent }) => {
 
     fetchDraft();
   }, [school.id, supabase]);
+
+
+  useEffect(() => { // ALSO CHECK FOR CURRENT DRAFT
+    if (selectedTemplate) {
+      handleInputChange();
+    }
+  }, [selectedTemplate])
 
   const saveDraft = useCallback(async (draft: EmailDraft) => {
     setIsSaving(true);
@@ -87,12 +101,31 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent }) => {
 
   const debouncedSave = useCallback(debounce(saveDraft, 1000), [saveDraft]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    const updatedDraft = { ...emailDraft, [name]: value };
+  const handleInputChange = (e?: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (e) {
+      const { name, value } = e.target;
+      const updatedDraft = { ...emailDraft, [name]: value };
+      setEmailDraft(updatedDraft);
+      debouncedSave(updatedDraft);
+    } else if (selectedTemplate) {
+      if (emailDraft.subject !== "" || emailDraft.customSection !== "") {
+        setWarning(true);
+      } else {
+        writeWithTemplate();
+      }
+    }
+  };
+
+  const writeWithTemplate = () => {
+    const updatedDraft = {
+      emailsTo: school?.coaches?.map(coach => coach.email).join(', ') || '',
+      subject: selectedTemplate.content.title,
+      template: selectedTemplate.title,
+      customSection: readTemplate(selectedTemplate, school),
+    }
     setEmailDraft(updatedDraft);
     debouncedSave(updatedDraft);
-  };
+  }
 
   const handleSend = async () => {
     try {
@@ -126,7 +159,14 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent }) => {
   return (
     <div className="bg-white p-6 rounded shadow">
       <h2 className="text-xl font-semibold mb-4">Compose Email for {school.school}</h2>
-      
+
+      <button
+        onClick={() => setIsOpen(true)}
+        className="px-3 py-2 text-blue-500 border border-blue-500 rounded hover:bg-blue-100 transition-colors"
+      >
+        Select Template
+      </button>
+
       <div className="mb-4">
         <label className="block text-gray-700 mb-2">Emails Send To:</label>
         <input
@@ -139,6 +179,19 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent }) => {
         />
       </div>
 
+      {warning &&
+        <Alert
+          header={"Overwritting Draft"}
+          message={"You currently have a draft saved, do you want to overwrite with template?"}
+          type={"warning"}
+          onClose={() => setWarning(false)}
+          onConfirm={() => {
+            writeWithTemplate();
+            setWarning(false)
+          }}
+        />
+      }
+
       <div className="mb-4">
         <label className="block text-gray-700 mb-2">Subject:</label>
         <input
@@ -149,18 +202,6 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent }) => {
           onChange={handleInputChange}
           placeholder="Email Subject"
         />
-      </div>
-
-      <div className="mb-4">
-        <label className="block text-gray-700 mb-2">Generic Email Template:</label>
-        <textarea
-          name="template"
-          className="w-full px-3 py-2 border border-gray-300 rounded"
-          value={emailDraft.template}
-          onChange={handleInputChange}
-          placeholder="Enter your email template here..."
-          rows={4}
-        ></textarea>
       </div>
 
       <div className="mb-4">

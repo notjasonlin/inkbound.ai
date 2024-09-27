@@ -2,14 +2,10 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { createClient } from "@/utils/supabase/client";
+import TemplateDisplay from './TemplateDisplay';
+import { TemplateData } from '@/types/template';
 
-interface Template {
-  id: string;
-  title: string;
-  updated_at: string;
-}
-
-export default function TemplateItem({ template }: { template: Template }) {
+export default function TemplateItem({ template }: { template: TemplateData }) {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -30,20 +26,25 @@ export default function TemplateItem({ template }: { template: Template }) {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 mb-4 flex justify-between items-center">
-      <div>
-        <Link href={`/dashboard/profile/templates/${template.id}`} className="text-xl font-semibold text-blue-500 hover:underline">
-          {template.title}
-        </Link>
-        <p className="text-sm text-gray-500">Last updated: {new Date(template.updated_at).toLocaleDateString()}</p>
-      </div>
-      <button
-        onClick={handleDelete}
-        disabled={isDeleting}
-        className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-      >
-        {isDeleting ? 'Deleting...' : 'Delete'}
-      </button>
-    </div>
+    <>
+      {template && <div className="bg-gray-100 dark:bg-gray-900 rounded-lg shadow-md p-6 mb-4 flex flex-col justify-between items-center">
+        <div className="w-full">
+          <Link href={`/dashboard/profile/templates/${template.id}`} className="text-xl font-semibold text-blue-600 hover:no-underline">
+            <div className="mb-2"> {/* Add margin bottom for spacing */}
+              <TemplateDisplay template={template} />
+            </div>
+            <div className="text-lg font-medium">{template.title}</div> {/* Increase font size */}
+          </Link>
+          <p className="text-sm text-gray-600">Last updated: {new Date(template.updated_at).toLocaleDateString()}</p>
+        </div>
+        <button
+          onClick={handleDelete}
+          disabled={isDeleting}
+          className="bg-red-600 hover:bg-red-800 text-white font-bold py-2 px-4 rounded mt-4 transition duration-200"
+        >
+          {isDeleting ? 'Deleting...' : 'Delete'}
+        </button>
+      </div>}
+    </>
   );
 }
