@@ -1,5 +1,5 @@
 import React from 'react';
-import { Template } from '@/types/template/index';
+import { TemplateData } from '@/types/template/index';
 
 interface TemplateModalProps {
   isOpen: boolean;
