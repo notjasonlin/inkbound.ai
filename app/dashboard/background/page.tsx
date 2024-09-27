@@ -1,87 +1,53 @@
 "use client";
 
 import React from 'react';
-import { useState } from 'react';
-
-interface PlayerStats {
-  height: number;
-  weight: number;
-  position: string;
-  clubTeam: string;
-  clubLevel: string;
-  teamRole: string;
-  satAct: string;
-  gpaScale: string;
-  intendedMajor: string;
-}
+import { useState, useCallback } from 'react';
+import debounce from 'lodash/debounce';
+import { PlayerStats, FormField } from '@/types/background/index';
+import { initialFormData, formFields } from './constants';
+import { InputField } from './components/InputField';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 
 export default function BackgroundPage() {
-  const [formData, setFormData] = useState<PlayerStats>({
-    height: 0,
-    weight: 0,
-    position: '',
-    clubTeam: '',
-    clubLevel: '',
-    teamRole: '',
-    satAct: '',
-    gpaScale: '',
-    intendedMajor: '',
-  });
+  const [formData, setFormData] = useState<PlayerStats>(initialFormData);
+  const supabase = useSupabaseClient();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const debouncedUpdate = useCallback(
+    debounce(async (updatedData: Partial<PlayerStats>) => {
+      try {
+        const { data, error } = await supabase
+          .from('player_profiles')
+          .upsert({ stats: updatedData }, { onConflict: 'user_id' });
+        if (error) throw error;
+        console.log('Updated:', data);
+      } catch (error) {
+        console.error('Error updating:', error);
+      }
+    }, 500),
+    [supabase]
+  );
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const data = JSON.stringify(formData);
-    console.log('Form Data:', data);
-
-
-
-    // Add further form submission logic here (e.g., API calls)
+    const updatedData = { ...formData, [name]: value };
+    setFormData(updatedData);
+    debouncedUpdate(updatedData);
   };
 
   return (
     <div style={styles.container}>
       <h1 style={styles.title}>Background Information</h1>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        {renderInput('Height: ', 'height', String(formData.height), handleChange)}
-        {renderInput('Weight: ', 'weight', String(formData.weight), handleChange)}
-        {renderInput('Position:', 'position', formData.position, handleChange)}
-        {renderInput('Club Team:', 'clubTeam', formData.clubTeam, handleChange)}
-        {renderInput('Club Level:', 'clubLevel', formData.clubLevel, handleChange)}
-        {renderInput('Role on the Team:', 'teamRole', formData.teamRole, handleChange)}
-        {renderInput('SAT/ACT:', 'satAct', formData.satAct, handleChange)}
-        {renderInput('GPA / Scale:', 'gpaScale', formData.gpaScale, handleChange)}
-        {renderInput('Intended Major:', 'intendedMajor', formData.intendedMajor, handleChange)}
-        <button type="submit" style={styles.button}>Submit</button>
+      <form style={styles.form}>
+        {formFields.map((field: FormField) => (
+          <InputField
+            key={field.name}
+            label={field.label}
+            name={field.name}
+            value={formData[field.name]}
+            onChange={handleChange}
+          />
+        ))}
       </form>
-    </div>
-  );
-}
-
-function renderInput(
-  label: string,
-  name: string,
-  value: string,
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-) {
-  return (
-    <div style={styles.formGroup}>
-      <label style={styles.label}>{label}</label>
-      <input
-        type="text"
-        name={name}
-        value={value}
-        onChange={onChange}
-        style={styles.input}
-      />
     </div>
   );
 }

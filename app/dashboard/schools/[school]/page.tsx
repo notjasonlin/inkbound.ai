@@ -1,10 +1,10 @@
-
 import { getCoaches, getUniqueSchools } from '@/utils/supabase/client';
 import { notFound } from 'next/navigation';
 import { createClient } from "@/utils/supabase/server";
 import FavoriteButton from './components/FavoriteButton';
+import { SchoolData, CoachData } from '@/types/school/index';
 
-const API_URL = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/favorites`;
+const API_URL = `${process.env.BASE_URL || 'http://localhost:3000'}/api/favorites`;
 
 export async function generateStaticParams() {
   const schools = await getUniqueSchools();
@@ -28,41 +28,46 @@ async function SchoolPage({ params }: { params: { school: string } }) {
 
   const school: SchoolData = makeSchoolData();
 
-  
+
   function makeSchoolData(): SchoolData {
     const coachList: CoachData[] = [];
-    schoolCoaches.map((coach) => {
+    schoolCoaches.forEach((coach) => {
       const data = {
         name: coach.name,
         email: coach.email,
         position: coach.position,
-      }
+      };
       coachList.push(data);
-      // console.log(data)
-    })
+    });
 
-    // console.log("COACHES", coachList);
     return {
-      name: schoolName,
+      id: schoolInfo.id, // Added the missing 'id' property
+      school: schoolName,
       coaches: coachList,
       division: schoolInfo.division,
       state: schoolInfo.state,
       conference: schoolInfo.conference,
-    }
+    };
   }
 
   if (schoolCoaches.length === 0) {
     notFound();
   }
 
-  
+
 
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="bg-white shadow-md rounded-lg p-6 mb-8">
-        <h1 className="text-3xl font-bold mb-4 text-center">{schoolName}</h1>
-        {user && <FavoriteButton userId={user.id} schoolData={school}/> }
-
+        <div className="flex items-center justify-center space-x-2">
+          <h1 className="text-3xl font-bold mb-4 text-center">{schoolName}</h1>
+          {user && (
+            <div className="relative -mt-2"> {/* Shift the heart up */}
+              <FavoriteButton userId={user.id} schoolData={school} />
+            </div>
+          )}
+        </div>
+  
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <p className="font-semibold">Division</p>
@@ -78,7 +83,7 @@ async function SchoolPage({ params }: { params: { school: string } }) {
           </div>
         </div>
       </div>
-
+  
       <h2 className="text-2xl font-bold mb-4">Coaches</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {schoolCoaches.map((coach) => (
@@ -104,7 +109,7 @@ async function SchoolPage({ params }: { params: { school: string } }) {
         ))}
       </div>
     </div>
-  );
+  );  
 }
 
 export default SchoolPage;

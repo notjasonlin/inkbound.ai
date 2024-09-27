@@ -1,14 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from "react";
-import { FiHeart } from "react-icons/fi";
+import { AiFillHeart } from "react-icons/ai";
 import { createClient } from "@/utils/supabase/client";
 import { debounce } from 'lodash';
-
+import { SchoolData } from "@/types/school/index";
 
 interface FavoriteButtonProps {
     userId: string;
-    // allFavorites: any;
     schoolData: SchoolData;
 }
 
@@ -17,33 +16,58 @@ export default function FavoriteButton({ userId, schoolData }: FavoriteButtonPro
     const [favsObj, setFavsObj] = useState<SchoolData[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [favorite, setFavorite] = useState(false);
-
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Parse allFavorites and check if the passed schoolData is in the array
-
         const checkFav = async () => {
-            const { data, error } = await supabase
+            setIsLoading(true);
+            console.log("Checking favorites for user:", userId);
+
+            let { data, error } = await supabase
                 .from("favorite_schools")
                 .select("data")
                 .eq("uuid", userId)
                 .single();
 
-            try {
-                if (data) {
-                    const isFavorite = data.data.some(
-                        (favSchool: SchoolData) => favSchool.name === schoolData.name
-                    );
-                    console.log("ISFAVORITE", isFavorite);
-
-                    setFavorite(isFavorite);
+            if (error && error.code === 'PGRST116') {
+                console.log("No existing row, creating new one");
+                const insertResult = await supabase
+                    .from("favorite_schools")
+                    .insert({ uuid: userId, data: [] })
+                    .select()
+                    .single();
+                
+                if (insertResult.error) {
+                    console.error("Error creating new row:", insertResult.error);
+                    setIsLoading(false);
+                    return;
                 }
-            } catch (error) {
-                console.error("Invalid JSON:", error);
+                data = insertResult.data;
+            } else if (error) {
+                console.error("Error checking favorites:", error);
+                setIsLoading(false);
+                return;
             }
-        }
 
-    }, [schoolData]);
+            console.log("Received data:", data);
+
+            if (data && data.data) {
+                const favs = Array.isArray(data.data) ? data.data : [];
+                setFavsObj(favs);
+                const isFavorite = favs.some(
+                    (favSchool: SchoolData) => favSchool.school === schoolData.school
+                );
+                console.log("Is favorite:", isFavorite);
+                setFavorite(isFavorite);
+            } else {
+                console.log("No data received or empty data");
+                setFavsObj([]);
+                setFavorite(false);
+            }
+            setIsLoading(false);
+        }
+        checkFav();
+    }, [schoolData, userId, supabase]);
 
     const toggleFavorite = useCallback(async (newData: SchoolData[]) => {
         setError(null);
@@ -52,40 +76,43 @@ export default function FavoriteButton({ userId, schoolData }: FavoriteButtonPro
             const { data, error } = await supabase
                 .from("favorite_schools")
                 .update({ data: newData })
-                .eq("uuid", userId);
+                .eq("uuid", userId)
+                .select();
 
             if (error) {
                 console.error("Error updating favorites:", error);
             } else {
                 setFavsObj(newData);
+                setFavorite(newData.some(fav => fav.school === schoolData.school));
             }
 
         } catch (error) {
-            console.error('Error saving background:', error);
-            setError('Failed to save background. Please try again.');
+            console.error('Error saving favorites:', error);
+            setError('Failed to save favorites. Please try again.');
         }
-    }, [userId]);
+    }, [userId, supabase, schoolData.school]);
 
-    const debouncedSave = useCallback(debounce(toggleFavorite, 1000), [favsObj]);
+    const debouncedSave = useCallback(debounce(toggleFavorite, 1000), [toggleFavorite]);
 
-    const updateFavorite = async () => {
-        setFavorite((prev) => !prev);
-
+    const updateFavorite = () => {
         const updatedFavs = favorite
-            ? favsObj.filter((fav) => fav.name !== schoolData.name) // Remove favorite
+            ? favsObj.filter((fav) => fav.school !== schoolData.school) // Remove favorite
             : [...favsObj, schoolData]; // Add favorite
 
-        setFavsObj(updatedFavs)
+        setFavorite(!favorite);
+        setFavsObj(updatedFavs);
+        debouncedSave(updatedFavs);
     };
 
-    useEffect(() => {
-        if (favsObj)
-            debouncedSave(favsObj);
-    }, [favsObj, debouncedSave])
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
 
     return (
-        <button onClick={updateFavorite}>
-            {favorite ? <FiHeart color="red" /> : <FiHeart />}
-        </button>
+        <div className="flex items-center space-x-2">
+            <button onClick={updateFavorite} disabled={isLoading}>
+                <AiFillHeart color={favorite ? "red" : "black"} size={33} />
+            </button>
+        </div>
     );
 }
