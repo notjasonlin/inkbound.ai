@@ -10,11 +10,12 @@ const config: Config = {
     extend: {
       colors: {
         babyblue: {
-          50: '#E6F7FF',   // Lightest baby blue
-          100: '#BAE3FF',  // Lighter baby blue
-          200: '#7CC1FF',  // Mid-tone baby blue
-          600: '#3399FF',  // Primary baby blue (for buttons, etc.)
-          700: '#1F77CC',  // Darker baby blue
+          100: '#CAF0F8',  // Light baby blue
+          200: '#ADE8F4',  // Slightly darker
+          300: '#90E0EF',  // Mid baby blue
+          400: '#48CAE4',  // Darker baby blue
+          500: '#00B4D8',  // Baby blue (main shade)
+          600: '#0096C7',  // Darker shade of baby blue
         },
       },
       backgroundImage: {

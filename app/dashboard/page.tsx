@@ -15,7 +15,7 @@ export default async function Dashboard() {
     <div className="relative">
       <DashboardMenu userEmail={user.email || ''} />
       <div className="p-6">
-        <h1 className="text-3xl font-semibold text-gray-800 dark:text-gray-200">Dashboard</h1>
+        <h1 className="text-3xl font-semibold text-black dark:text:black">Dashboard</h1>
         <div className="mt-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {/* Dashboard cards */}
@@ -32,9 +32,9 @@ export default async function Dashboard() {
 
 function DashboardCard({ title, value }: { title: string; value: string }) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300">{title}</h2>
-      <p className="text-3xl font-bold text-gray-800 dark:text-gray-100 mt-2">{value}</p>
+    <div className="bg-white dark:bg-white rounded-lg shadow-md p-6">
+      <h2 className="text-xl font-semibold text-black dark:text-black">{title}</h2>
+      <p className="text-3xl font-bold text-black dark:text-black mt-2">{value}</p>
     </div>
   );
 }

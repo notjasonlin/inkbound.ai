@@ -29,7 +29,7 @@ const LoginButton = ({ label }: { label?: string }) => {
 
   return (
     <button
-      className="px-4 py-2 font-semibold text-white bg-babyblue-600 rounded-lg hover:bg-babyblue-700"
+      className="px-6 py-2 font-semibold text-white bg-babyblue-600 rounded-lg hover:bg-black hover:text-white whitespace-nowrap transition-colors duration-300"
       onClick={() => {
         router.push("/login"); // Redirect to login page
       }}

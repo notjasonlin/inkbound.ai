@@ -2,10 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Keep your custom variables but remove the body background that causes issues */
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;  
+  --background-end-rgb: 255, 255, 255;
 }
 
 @media (prefers-color-scheme: light) {
@@ -16,16 +17,13 @@
   }
 }
 
+/* This will not affect individual page backgrounds */
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  /* Removed the background gradient for the entire body */
 }
 
+/* Keep your custom utility class */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
