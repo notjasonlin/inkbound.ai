@@ -3,6 +3,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { FaInbox } from 'react-icons/fa'; 
+import { Shrikhand } from 'next/font/google'; // Import the Shrikhand font
+
+const shrikhand = Shrikhand({ subsets: ['latin'], weight: '400' });
 
 const sidebarItems = [
   { name: 'Home', path: '/dashboard' },
@@ -24,7 +27,10 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <aside className="w-64 bg-white shadow-md">
         <div className="p-4">
-          <h1 className="text-2xl font-bold text-gray-800">Inkbound</h1>
+          {/* Inkbound text with Shrikhand font and baby blue color */}
+          <h1 className={`text-3xl font-bold text-babyblue-500 ${shrikhand.className}`}>
+            Inkbound
+          </h1>
         </div>
         <nav className="mt-6">
           {sidebarItems.map((item) => (

@@ -1,0 +1,66 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+export default function Footer() {
+  const [year, setYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
+
+  return (
+    <footer className="w-full bg-babyblue-900 py-8 text-black">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Left Section */}
+          <div>
+            <h3 className="text-2xl font-semibold">
+              Inkbound.ai
+            </h3>
+            <p className="mt-2">
+              Changing the college athlete recruitment game.
+            </p>
+          </div>
+
+          {/* Middle Section - Contact Info */}
+          <div>
+            <h4 className="text-lg font-semibold">Contact</h4>
+            <ul className="mt-4 space-y-2">
+              <li>
+                <a href="mailto:founders@inkbound.ai" className="text-black hover:text-white">
+                  founders@inkbound.ai
+                </a>
+              </li>
+              <li>
+                <a href="tel:+19546393002" className="text-black hover:text-white">
+                  +1 (954) 639-3002
+                </a>
+              </li>
+              <li>
+                <p className="text-black">Pembroke Pines, FL, USA</p>
+              </li>
+            </ul>
+          </div>
+
+          {/* Right Section - Privacy & Terms */}
+          <div className="flex md:justify-end space-x-6">
+            <a href="/policy/privacy" className="text-black hover:text-white">
+              Privacy Policy
+            </a>
+            <a href="/policy/terms-and-conditions" className="text-black hover:text-white">
+              Terms and Conditions
+            </a>
+          </div>
+        </div>
+
+        {/* Bottom Section */}
+        <div className="mt-8 text-center text-black">
+          <p>
+            &copy; {year ? year : ""} Inkbound.ai. All rights reserved to Inkbound.ai, Inc.
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+}
