@@ -71,7 +71,6 @@ export default function Home() {
         <Features/>
         <Pricing/>
         <FAQ />
-        <About />
         <Footer />
       </main>
     </div>
