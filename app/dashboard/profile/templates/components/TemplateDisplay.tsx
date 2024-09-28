@@ -6,7 +6,9 @@ interface TemplateDisplayProps {
 }
 
 const TemplateDisplay = ({ template }: TemplateDisplayProps) => {
-    const formattedContent = template.content.content ? readTemplate(template).replace(/\n/g, "<br />") + "..." : "";
+    const formattedContent = template.content.content 
+        ? (readTemplate(template) || '').replace(/\n/g, "<br />") + "..." 
+        : "";
 
     return (
         <div
