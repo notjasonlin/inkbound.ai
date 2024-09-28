@@ -4,8 +4,8 @@ import { TemplateData } from '@/types/template/index';
 interface TemplateModalProps {
   isOpen: boolean;
   onClose: () => void;
-  templates: Template[];
-  onSelectTemplate: (template: Template) => void;
+  templates: TemplateData[];
+  onSelectTemplate: (template: TemplateData) => void;
 }
 
 const TemplateModal: React.FC<TemplateModalProps> = ({ isOpen, onClose, templates, onSelectTemplate }) => {
@@ -25,7 +25,7 @@ const TemplateModal: React.FC<TemplateModalProps> = ({ isOpen, onClose, template
                 className="cursor-pointer hover:bg-gray-100 p-2"
                 onClick={() => onSelectTemplate(template)}
               >
-                {template.name}
+                {template.title}
               </li>
             ))}
           </ul>

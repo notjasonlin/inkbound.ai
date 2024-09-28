@@ -6,7 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import EmailPreview from './components/EmailPreview';
 import QueueStatus from './components/QueueStatus';
 import TemplateModal from './components/TemplateModal'; 
-import { Template, TemplateContent } from '@/types/template/index';
+import { TemplateData } from '@/types/template/index';
 import Sidebar from './components/Sidebar';
 
 interface EmailPreviewData {
@@ -18,8 +18,8 @@ interface EmailPreviewData {
 export default function AutoComposePage() {
   const [favoriteSchools, setFavoriteSchools] = useState<SchoolData[]>([]);
   const [selectedSchools, setSelectedSchools] = useState<SchoolData[]>([]);
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [templates, setTemplates] = useState<TemplateData[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<TemplateData | null>(null);
   const [queueStatus, setQueueStatus] = useState<string[]>([]);
   const [previewEmails, setPreviewEmails] = useState<{ [key: string]: EmailPreviewData }>({});
   const [showTemplateModal, setShowTemplateModal] = useState(false);
@@ -64,11 +64,7 @@ export default function AutoComposePage() {
       }
 
       console.log('Fetched templates:', data);
-      const validTemplates = data.filter((template: any) => 
-        template && template.content && typeof template.content === 'object'
-      );
-      console.log('Valid templates:', validTemplates);
-      setTemplates(validTemplates);
+      setTemplates(data);
     } catch (error) {
       console.error('Error fetching templates:', error);
     }
@@ -78,8 +74,9 @@ export default function AutoComposePage() {
     setSelectedSchools(schools);
   };
 
-  const handleTemplateSelection = (template: Template) => {
+  const handleTemplateSelection = (template: TemplateData) => {
     setSelectedTemplate(template);
+    setShowTemplateModal(false);
   };
 
   const generatePreviews = () => {
@@ -87,9 +84,8 @@ export default function AutoComposePage() {
 
     const newPreviews: { [key: string]: EmailPreviewData } = {};
     selectedSchools.forEach(school => {
-      const templateContent = selectedTemplate.content as unknown as TemplateContent;
-      let content = templateContent.content || '';
-      let subject = templateContent.title || '';
+      let content = selectedTemplate.content.content || '';
+      let subject = selectedTemplate.content.title || '';
 
       // Replace placeholders in content and subject
       [content, subject] = [content, subject].map(text => 
