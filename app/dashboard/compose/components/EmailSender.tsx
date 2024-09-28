@@ -122,7 +122,7 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent, setIsOpe
         emailsTo: school?.coaches?.map(coach => coach.email).join(', ') || '',
         subject: selectedTemplate.content.title,
         template: selectedTemplate.title,
-        customSection: readTemplate(selectedTemplate, school),
+        customSection: readTemplate(selectedTemplate, school) || '', // Add fallback to empty string
       }
       setEmailDraft(updatedDraft);
       debouncedSave(updatedDraft);
