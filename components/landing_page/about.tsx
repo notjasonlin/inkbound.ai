@@ -2,13 +2,18 @@ import { motion } from 'framer-motion';
 
 const About = () => {
   return (
-    <section id="about-us" className="py-16 bg-gradient-to-r from-blue-50 to-babyblue-100 w-full">
-      <div className="max-w-6xl mx-auto px-4">
+    <section id="about-us" className="relative py-16 bg-gradient-to-br from-blue-50 to-babyblue-100 w-full overflow-hidden">
+      {/* Floating Decorative Elements */}
+      <div className="absolute top-0 left-0 w-1/3 h-1/3 bg-gradient-to-r from-blue-200 to-blue-400 rounded-full blur-3xl opacity-50"></div>
+      <div className="absolute bottom-0 right-0 w-1/3 h-1/3 bg-gradient-to-r from-blue-300 to-blue-500 rounded-full blur-3xl opacity-50"></div>
+
+      <div className="relative max-w-6xl mx-auto px-4">
         {/* Header */}
         <h2 className="text-4xl font-bold text-babyblue-700 text-center mb-10">About The Founders</h2>
+
         {/* Text Content */}
         <motion.div
-          className="text-lg md:text-xl text-gray-700 leading-relaxed space-y-6 text-left"
+          className="text-lg md:text-xl text-gray-700 leading-relaxed space-y-6 text-left bg-white p-6 rounded-lg shadow-lg"
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
@@ -32,7 +37,7 @@ const About = () => {
 
         {/* Signatures */}
         <motion.div
-          className="mt-8 text-left font-semibold text-blue-700"
+          className="mt-8 text-left font-semibold text-blue-700 bg-white p-4 rounded-lg shadow-md inline-block"
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}

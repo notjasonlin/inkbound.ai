@@ -24,30 +24,31 @@ const WaitlistForm: React.FC = () => {
         .eq('email', email)
         .single();
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        // Handle errors other than "no match" (PGRST116 is "no row found")
-        throw new Error(checkError.message);
-      }
-
-      // If the email is already on the waitlist, show a specific error message
       if (existingUser) {
-        setMessage('This email is already on the waiting list.');
+        // If the email is already on the waitlist, show the specific message
+        setMessage('You are already on the waiting list.');
         setLoading(false);
         return;
       }
 
-      // If the user is not already on the waitlist, insert the full name and email
-      const { data, error } = await supabase
-        .from('waiting_list')
-        .insert([{ fullName: fullName, email }]);
+      // If the email is not found, insert the full name and email
+      if (checkError && checkError.code === 'PGRST116') {
+        const { data, error } = await supabase
+          .from('waiting_list')
+          .insert([{ fullName: fullName, email }]);
 
-      if (error) {
-        console.error('Error adding to waitlist:', error.message);
-        setMessage('There was an error. Please try again later.');
-      } else {
-        setMessage('Thank you for joining the waitlist!');
-        setFullName('');
-        setEmail('');
+        if (error) {
+          console.error('Error adding to waitlist:', error.message);
+          setMessage('There was an error. Please try again later.');
+        } else {
+          setMessage('Thank you for joining the waitlist!');
+          setFullName('');
+          setEmail('');
+        }
+      } else if (checkError) {
+        // Handle unexpected errors
+        console.error('Unexpected error checking for existing email:', checkError.message);
+        setMessage('An unexpected error occurred. Please try again later.');
       }
     } catch (err) {
       console.error('Unexpected error:', err);
