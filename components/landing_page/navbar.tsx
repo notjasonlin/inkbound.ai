@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaBars, FaTimes } from 'react-icons/fa'; // Icons for the hamburger menu
 import { Shrikhand } from 'next/font/google'; // Import the Shrikhand font
+import LoginButton from '../LoginLogoutButton';
 
 const shrikhand = Shrikhand({ subsets: ['latin'], weight: '400' });
 
@@ -61,6 +62,11 @@ export default function Navbar() {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-6">
+            {/* <div className="hidden md:flex items-center space-x-4"> */}
+              {/* Sign in and Get Started buttons */}
+              {/* <LoginButton label="Sign in" />
+              <LoginButton label="Get Started" /> */}
+            {/* </div> */}
             <button
               className="text-black hover:text-babyblue-600"
               onClick={() => scrollToSection('features')}
@@ -139,6 +145,7 @@ export default function Navbar() {
               >
                 About Us
               </button>
+              
             </div>
           </div>
         )}

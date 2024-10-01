@@ -63,7 +63,6 @@ export default function AutoComposePage() {
         throw error;
       }
 
-      console.log('Fetched templates:', data);
       setTemplates(data);
     } catch (error) {
       console.error('Error fetching templates:', error);
@@ -139,7 +138,10 @@ export default function AutoComposePage() {
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-100">
-      <Sidebar onSelectSchools={handleSchoolSelection} />
+      <div className="md:w-1/4 w-full">
+        <Sidebar onSelectSchools={handleSchoolSelection} />
+      </div>
+
       <div className="flex-1 p-6 w-full md:w-3/4">
         <h1 className="text-3xl font-bold mb-8 text-gray-800">Auto Compose</h1>
         
@@ -152,13 +154,15 @@ export default function AutoComposePage() {
             Select Template
           </button>
         </div>
+        
         <button 
-            onClick={handleSubmit}
-            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-lg font-semibold"
-            disabled={selectedSchools.length === 0 || !selectedTemplate}
-          >
-            Queue Emails
-          </button>
+          onClick={handleSubmit}
+          className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-lg font-semibold"
+          disabled={selectedSchools.length === 0 || !selectedTemplate}
+        >––
+          Queue Emails
+        </button>
+
         <TemplateModal 
           isOpen={showTemplateModal}
           onClose={() => setShowTemplateModal(false)}
@@ -176,7 +180,6 @@ export default function AutoComposePage() {
         )}
         
         <div className="flex flex-col items-start">
-          
           <div className="mt-6">
             <QueueStatus status={queueStatus} />
           </div>

@@ -144,7 +144,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
   return (
     <>
       {/* Button to toggle sidebar on mobile */}
-      <div className="md:hidden p-4 fixed top-0 left-0 z-50">
+      <div className="p-4 fixed top-0 left-0 z-50 md:hidden">
         <button
           className="text-gray-600 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-600 transition-colors"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -156,9 +156,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-white shadow-lg z-40 transform transition-transform duration-300 ${
+        className={`fixed top-0 left-0 h-full bg-white shadow-lg z-40 transform transition-transform duration-300 md:w-80 w-full ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:translate-x-0 md:relative md:w-80 w-64`}
+        } md:relative md:translate-x-0`}
       >
         <div className="p-4">
           <h2 className="text-xl font-bold text-gray-800">Schools</h2>
@@ -193,7 +193,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
       {/* Overlay to close sidebar on mobile */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black opacity-50 z-30"
+          className="fixed inset-0 bg-black opacity-50 z-30 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
