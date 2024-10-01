@@ -5,7 +5,7 @@ const pricingPlans = [
   {
     title: "Basic",
     price: "Free",
-    description: "Free for one school",
+    description: "You'll want to upgrade soon 😉",
     features: [
       "Access to 1 school",
       "Basic support",
@@ -15,7 +15,7 @@ const pricingPlans = [
   },
   {
     title: "Plus",
-    price: "$9/month",
+    price: "$10",
     description: "For up to 20 schools",
     features: [
       "Access to 20 schools",
@@ -26,7 +26,7 @@ const pricingPlans = [
   },
   {
     title: "Pro",
-    price: "$29/month",
+    price: "$25",
     description: "Unlimited schools access",
     features: [
       "Unlimited schools",

@@ -1,90 +1,44 @@
-import React from 'react';
 import { motion } from 'framer-motion';
-import { Shrikhand } from 'next/font/google';
-
-const shrikhand = Shrikhand({ subsets: ['latin'], weight: '400' });
 
 const About = () => {
   return (
-    <section className="py-20 bg-gradient-to-r from-blue-50 to-babyblue-100 w-full">
-      <div className="max-w-6xl mx-auto text-center space-y-12">
-        
-        {/* Heading */}
-        <motion.h2
-          className={`text-4xl font-bold text-babyblue-700`}
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          About Us
-        </motion.h2>
-
-        {/* Introduction Text */}
-        <motion.p
-          className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-4xl mx-auto"
+    <section id="about-us" className="py-16 bg-gradient-to-r from-blue-50 to-babyblue-100 w-full">
+      <div className="max-w-6xl mx-auto px-4">
+        {/* Header */}
+        <h2 className="text-4xl font-bold text-babyblue-700 text-center mb-10">About The Founders</h2>
+        {/* Text Content */}
+        <motion.div
+          className="text-lg md:text-xl text-gray-700 leading-relaxed space-y-6 text-left"
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
         >
-          At Inkbound.ai, we are passionate about simplifying the college recruiting process. 
-          Our mission is to make it more accessible and affordable for athletes to connect with the right opportunities.
-          Whether you're looking to join a D1 powerhouse or an academically prestigious D3, we've been through the process ourselves 
-          and understand what it takes.
-        </motion.p>
-
-        {/* Founders Section */}
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.6 }}
-        >
-          {/* Founder 1 */}
-          <motion.div
-            className="bg-babyblue-200 shadow-lg rounded-lg p-8 text-center hover:shadow-2xl transition-shadow duration-300"
-            whileHover={{ scale: 1.05 }}
-          >
-            <motion.img
-              src="/Gaby_About.jpg" // Replace with actual image path
-              alt="Cofounder Image 1"
-              className="rounded-full w-48 h-48 mx-auto shadow-xl"
-              whileHover={{ scale: 1.05 }}
-            />
-            <h3 className="text-2xl font-semibold mt-6 text-gray-800">Gabriel Diaz</h3>
-            <p className="text-gray-600 mt-2">
-              Current UChicago Men's Soccer player. Deeply passionate about helping athletes like him navigate the college recruiting process.
-            </p>
-          </motion.div>
-
-          {/* Founder 2 */}
-          <motion.div
-            className="bg-babyblue-200 shadow-lg rounded-lg p-8 text-center hover:shadow-2xl transition-shadow duration-300"
-            whileHover={{ scale: 1.05 }}
-          >
-         <motion.img
-            src="/Elan_About.jpg"  // Replace with the actual path to your image
-            alt="Cofounder Image 1"
-            className="rounded-full w-48 h-48 mx-auto shadow-lg object-cover object-center"
-            whileHover={{ scale: 1.05 }}
-            />
-
-            <h3 className="text-2xl font-semibold mt-6 text-gray-800">Elan Romo</h3>
-            <p className="text-gray-600 mt-2">
-              Current Brandeis Men's Soccer player. Focused on making recruiting easier for student-athletes through cutting-edge technology.
-            </p>
-          </motion.div>
+          <p>
+            The idea of Inkbound.ai was born from our own experience navigating the competitive landscape of college athletics recruitment. Just a few years ago, we were in your shoes—looking for a way to stand out, connect with the right coaches, and make the most of our athletic potential.
+          </p>
+          <p>
+            Like many student-athletes, we found that most of the resources out there were either way too expensive or didn't offer the personalized guidance we needed. We often wished there was something affordable, simple, and actually helpful to make the recruitment process easier.
+          </p>
+          <p>
+            That's why we created Inkbound.ai—to solve the problems we faced. Our AI-driven platform helps athletes like you get noticed without breaking the bank. Whether you're aiming for D1 athletics or balancing academics and sports at a D3 school, we're here to help you connect with the right opportunities.
+          </p>
+          <p>
+            Over the past year, we've worked tirelessly to build a platform that meets the real needs of student-athletes. By bridging the gap between athletes and coaches with modern tools and data-driven insights, we believe the future of recruitment should be accessible to all.
+          </p>
+          <p>
+            We created Inkbound.ai because we knew there had to be a better way. Now, we're here to make sure the process is smoother, more transparent, and more affordable for you.
+          </p>
         </motion.div>
 
-        {/* Final Text */}
-        <motion.p
-          className="text-lg md:text-xl text-gray-600 leading-relaxed max-w-4xl mx-auto"
+        {/* Signatures */}
+        <motion.div
+          className="mt-8 text-left font-semibold text-blue-700"
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.4 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
         >
-          As former recruits and current players, we know how difficult and stressful the process can be. 
-          That's why we created Inkbound.ai — to give every aspiring college athlete the tools they need to succeed.
-        </motion.p>
+          <p>- Elan, Gabriel, Jason, & John</p>
+        </motion.div>
       </div>
     </section>
   );

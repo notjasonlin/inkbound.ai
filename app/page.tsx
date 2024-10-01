@@ -66,11 +66,12 @@ export default function Home() {
   return (
     <div className="bg-white text-gray-800">
       <Navbar />
-      <main className="w-full px-4 md:px-12 lg:px-20 text-center bg-gradient-to-r from-blue-100 to-babyblue-300">
+      <main className="w-full px-4 md:px-12 lg:px-10 text-center bg-gradient-to-r from-blue-100 to-babyblue-300">
         <Hero/>
         <Features/>
         <Pricing/>
         <FAQ />
+        <About />
         <Footer />
       </main>
     </div>

@@ -138,9 +138,9 @@ export default function AutoComposePage() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-100">
       <Sidebar onSelectSchools={handleSchoolSelection} />
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 p-6 w-full md:w-3/4">
         <h1 className="text-3xl font-bold mb-8 text-gray-800">Auto Compose</h1>
         
         <div className="mb-8">
@@ -152,7 +152,13 @@ export default function AutoComposePage() {
             Select Template
           </button>
         </div>
-        
+        <button 
+            onClick={handleSubmit}
+            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-lg font-semibold"
+            disabled={selectedSchools.length === 0 || !selectedTemplate}
+          >
+            Queue Emails
+          </button>
         <TemplateModal 
           isOpen={showTemplateModal}
           onClose={() => setShowTemplateModal(false)}
@@ -162,7 +168,6 @@ export default function AutoComposePage() {
         
         {selectedTemplate && selectedSchools.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold mb-4 text-gray-700">Email Preview</h2>
             <EmailPreview 
               schools={selectedSchools}
               previewEmails={previewEmails}
@@ -171,13 +176,6 @@ export default function AutoComposePage() {
         )}
         
         <div className="flex flex-col items-start">
-          <button 
-            onClick={handleSubmit}
-            className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-lg font-semibold"
-            disabled={selectedSchools.length === 0 || !selectedTemplate}
-          >
-            Queue Emails
-          </button>
           
           <div className="mt-6">
             <QueueStatus status={queueStatus} />
