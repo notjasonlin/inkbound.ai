@@ -64,11 +64,11 @@ const Hero: React.FC = () => {
           transition={{ duration: 0.8 }}
         >
           <Image
-            className="rounded-lg shadow-2xl w-full h-[400px] md:h-auto object-cover" // Adjusted height
+            className="rounded-lg shadow-2xl object-cover" // Reverted back to original style
             src="/inkbound-home-pic.png"
             alt="Inkbound Home"
-            width={2400}  // Set width for larger sizes
-            height={1800}  // Set default height for larger sizes
+            width={1200}  // Original size for large displays
+            height={900}  // Original size for large displays
             priority={true}
           />
         </motion.div>

@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import LoginButton from '@/components/LoginLogoutButton'; // Import the LoginButton component
-import { Shrikhand } from 'next/font/google'; // Import the Shrikhand font
 import { FaBars, FaTimes } from 'react-icons/fa'; // Icons for the hamburger menu
+import { Shrikhand } from 'next/font/google'; // Import the Shrikhand font
 
 const shrikhand = Shrikhand({ subsets: ['latin'], weight: '400' });
 
@@ -49,7 +48,7 @@ export default function Navbar() {
   return (
     <nav className="w-full bg-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between h-20">
+        <div className="flex justify-between h-20"> {/* Adjusted height */}
           <div className="flex-shrink-0 flex items-center">
             {/* Apply gradient to the text */}
             <h1
@@ -86,8 +85,6 @@ export default function Navbar() {
             >
               About Us
             </button>
-            {/* Login Button */}
-            <LoginButton/>
           </div>
 
           {/* Hamburger Icon for Mobile */}
@@ -134,7 +131,7 @@ export default function Navbar() {
                 FAQ
               </button>
               <button
-                className="text-black hover:text-babyblue-600"
+                className="text-black hover:text-babyblue-600 mb-4" // Add spacing at the bottom
                 onClick={() => {
                   scrollToSection('about-us');
                   setMenuOpen(false); // Close menu after navigation
@@ -142,11 +139,6 @@ export default function Navbar() {
               >
                 About Us
               </button>
-
-              {/* Mobile Login Button */}
-              <div className="w-full">
-                <LoginButton />
-              </div>
             </div>
           </div>
         )}
