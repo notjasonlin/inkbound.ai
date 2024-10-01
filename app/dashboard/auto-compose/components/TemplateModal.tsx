@@ -12,8 +12,8 @@ const TemplateModal: React.FC<TemplateModalProps> = ({ isOpen, onClose, template
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded-lg max-w-2xl w-full">
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+      <div className="bg-white p-6 rounded-lg max-w-2xl w-full shadow-lg relative z-50">
         <h2 className="text-2xl font-bold mb-4">Select a Template</h2>
         {templates.length === 0 ? (
           <p>No templates available.</p>
@@ -32,7 +32,7 @@ const TemplateModal: React.FC<TemplateModalProps> = ({ isOpen, onClose, template
         )}
         <button 
           onClick={onClose}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
         >
           Close
         </button>

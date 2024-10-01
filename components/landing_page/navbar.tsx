@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import LoginButton from '@/components/LoginLogoutButton'; // Import the LoginButton component
-import { Shrikhand } from 'next/font/google'; // Import the Shrikhand font
 import { FaBars, FaTimes } from 'react-icons/fa'; // Icons for the hamburger menu
+import { Shrikhand } from 'next/font/google'; // Import the Shrikhand font
+import LoginButton from '../LoginLogoutButton';
 
 const shrikhand = Shrikhand({ subsets: ['latin'], weight: '400' });
 
@@ -49,16 +49,24 @@ export default function Navbar() {
   return (
     <nav className="w-full bg-white shadow-lg">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between h-20"> {/* Adjusted height */}
           <div className="flex-shrink-0 flex items-center">
             {/* Apply gradient to the text */}
-            <h1 className={`text-3xl font-bold bg-gradient-to-r from-babyblue-500 to-blue-500 bg-clip-text text-transparent ${shrikhand.className}`}>
+            <h1
+              className={`text-4xl px-2 font-bold bg-gradient-to-r from-babyblue-500 to-blue-500 bg-clip-text text-transparent ${shrikhand.className}`}
+              style={{ lineHeight: '1.2', paddingBottom: '0.25rem' }} // Adjusted line height and padding
+            >
               Inkbound
             </h1>
           </div>
-          
+
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-6">
+            {/* <div className="hidden md:flex items-center space-x-4"> */}
+              {/* Sign in and Get Started buttons */}
+              {/* <LoginButton label="Sign in" />
+              <LoginButton label="Get Started" /> */}
+            {/* </div> */}
             <button
               className="text-black hover:text-babyblue-600"
               onClick={() => scrollToSection('features')}
@@ -95,13 +103,6 @@ export default function Navbar() {
               )}
             </button>
           </div>
-
-          {/* Desktop Right-side buttons */}
-          <div className="hidden md:flex items-center space-x-4">
-            {/* Sign in and Get Started buttons */}
-            <LoginButton label="Sign in" />
-            <LoginButton label="Get Started" />
-          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -136,7 +137,7 @@ export default function Navbar() {
                 FAQ
               </button>
               <button
-                className="text-black hover:text-babyblue-600"
+                className="text-black hover:text-babyblue-600 mb-4" // Add spacing at the bottom
                 onClick={() => {
                   scrollToSection('about-us');
                   setMenuOpen(false); // Close menu after navigation
@@ -144,11 +145,7 @@ export default function Navbar() {
               >
                 About Us
               </button>
-              {/* Mobile Login Buttons */}
-              <div className="flex flex-col space-y-4">
-                <LoginButton label="Sign in" />
-                <LoginButton label="Get Started" />
-              </div>
+              
             </div>
           </div>
         )}
