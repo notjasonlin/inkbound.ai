@@ -6,6 +6,8 @@ import { SchoolData } from '@/types/school/index';
 import { createClient } from "@/utils/supabase/client";
 import DivisionList from './DivisionList';
 import LocationList from './LocationList';
+import { FaBars } from 'react-icons/fa'; // Hamburger icon
+import { FaChevronDown } from 'react-icons/fa'; // Down arrow icon for improved clarity
 
 interface SidebarProps {
   onSelectSchool: (school: SchoolData) => void;
@@ -20,6 +22,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Sidebar toggle state
 
   useEffect(() => {
     const fetchFavoriteSchools = async () => {
@@ -36,8 +39,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
           return;
         }
 
-        console.log("Fetching favorite schools for user:", user.id);
-
         const { data, error } = await supabase
           .from("favorite_schools")
           .select("data")
@@ -51,15 +52,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
           return;
         }
 
-        console.log("Received data:", data);
-
         if (data && data.data) {
           const schoolsData = Array.isArray(data.data) ? data.data : [];
-          console.log("Setting schools:", schoolsData);
           setSchools(schoolsData);
           setFilteredSchools(schoolsData);
         } else {
-          console.log("No schools data found, setting empty array");
           setSchools([]);
           setFilteredSchools([]);
         }
@@ -130,45 +127,75 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
     } else if (activeTab === 'Division') {
       return <DivisionList schools={filteredSchools} onSelectSchool={onSelectSchool} />;
     } else if (activeTab === 'Location') {
-      // Placeholder for location-based filtering, assuming you would implement it later
       return <LocationList schools={filteredSchools} onSelectSchool={onSelectSchool} />;
     }
     return null;
   };
 
   return (
-    <aside className="w-80 bg-white shadow-md flex flex-col">
-      <div className="p-4">
-        <h2 className="text-xl font-bold text-gray-800">Favorites</h2>
-      </div>
-
-      <Tabs activeTab={activeTab} setActiveTab={setActiveTab} />
-
-      <div className="p-4">
-        <input
-          type="text"
-          className="w-full px-3 py-2 border border-gray-300 rounded"
-          placeholder="Search schools..."
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-        />
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4">
-        <SchoolDisplay />
-      </div>
-
-      <div className="p-4">
+    <>
+      {/* Mobile Toggle Button */}
+      <div className="md:hidden p-4 fixed top-0 left-0 z-50">
         <button
-          onClick={() => setIsModalOpen(true)}
-          className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          className="text-gray-600 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-600 transition-colors"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         >
-          Add School
+          {isSidebarOpen ? 'Close School Selector' : 'Open School Selector'}
+          <FaChevronDown className="inline ml-2" />
         </button>
       </div>
 
-      {isModalOpen && <AddSchoolModal onAddSchool={handleAddSchool} onClose={() => setIsModalOpen(false)} />}
-    </aside>
+      {/* Sidebar */}
+      <aside
+        className={`fixed top-0 left-0 md:static md:block md:w-80 w-full h-full bg-white shadow-md flex flex-col transition-transform duration-300 ${
+          isSidebarOpen ? 'transform translate-x-0' : 'transform -translate-x-full'
+        } md:transform-none z-40`}
+      >
+        <div className="p-4">
+          <h2 className="text-xl font-bold text-black">Favorites</h2>
+        </div>
+
+        <Tabs activeTab={activeTab} setActiveTab={setActiveTab} />
+
+        <div className="p-4">
+          <input
+            type="text"
+            className="w-full px-3 py-2 border border-gray-300 rounded"
+            placeholder="Search schools..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4">
+          <SchoolDisplay />
+        </div>
+
+        <div className="p-4">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Add School
+          </button>
+        </div>
+
+        {isModalOpen && (
+          <AddSchoolModal
+            onAddSchool={handleAddSchool}
+            onClose={() => setIsModalOpen(false)}
+          />
+        )}
+      </aside>
+
+      {/* Background overlay when sidebar is open */}
+      {isSidebarOpen && (
+        <div
+          className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-30"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+    </>
   );
 };
 
