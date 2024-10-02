@@ -110,35 +110,24 @@ export default function AutoComposePage() {
 
   const sendEmail = async (emailData: EmailPreviewData, schoolId: string, schoolName: string) => {
     try {
+      console.log(`Starting email process for ${schoolName} (ID: ${schoolId})`);
       setQueueStatus(prev => prev.map(item => 
         item.schoolId === schoolId ? { ...item, status: 'sending' } : item
       ));
 
-      console.log('Fetching coach information...');
-      const { data: coachinformation, error: coachinformationError } = await supabase
-        .from('coachinformation')
-        .select('*')
-        .eq('school_id', schoolId);
-
-      if (coachinformationError) {
-        console.error('Failed to fetch coach information:', coachinformationError);
-        throw new Error('Failed to fetch coach information');
-      }
-
-      console.log('Coach information fetched:', coachinformation);
-
-      const coachEmails = coachinformation.reduce((acc, coach) => {
-        if (coach.email) {
-          acc[coach.name || 'Unknown'] = coach.email;
-        }
+      // Parse coach emails from the 'to' field
+      const coachEmails = emailData.to.split(', ').reduce<Record<string, string>>((acc, email, index) => {
+        acc[`Coach ${index + 1}`] = email.trim();
         return acc;
       }, {});
+
+      console.log('Coach emails prepared:', coachEmails);
 
       console.log('Storing coach emails...');
       const { error: storeError } = await supabase
         .from('school_coach_emails')
         .upsert({
-          user_id: supabase.auth.getUser().then(({ data: { user } }) => user?.id),
+          user_id: (await supabase.auth.getUser()).data.user?.id,
           school_id: schoolId,
           coach_emails: coachEmails
         }, {
@@ -147,7 +136,7 @@ export default function AutoComposePage() {
 
       if (storeError) {
         console.error('Failed to store coach emails:', storeError);
-        throw new Error('Failed to store coach emails');
+        throw new Error(`Failed to store coach emails: ${storeError.message}`);
       }
 
       console.log('Coach emails stored successfully');
@@ -155,9 +144,7 @@ export default function AutoComposePage() {
       console.log('Sending email...');
       const response = await fetch('/api/sendEmail', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...emailData,
           coachEmails,
@@ -169,10 +156,11 @@ export default function AutoComposePage() {
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Failed to send email:', errorData);
-        throw new Error(`Failed to send email: ${errorData.error}`);
+        throw new Error(`Failed to send email: ${JSON.stringify(errorData)}`);
       }
 
-      console.log('Email sent successfully');
+      const responseData = await response.json();
+      console.log('Email sent successfully:', responseData);
 
       setQueueStatus(prev => prev.map(item => 
         item.schoolId === schoolId 
@@ -180,7 +168,7 @@ export default function AutoComposePage() {
           : item
       ));
     } catch (error) {
-      console.error('Error in sendEmail function:', error);
+      console.error(`Error sending email for ${schoolName} (ID: ${schoolId}):`, error);
       setQueueStatus(prev => prev.map(item => 
         item.schoolId === schoolId 
           ? { ...item, status: 'failed', timestamp: new Date().toISOString() }
