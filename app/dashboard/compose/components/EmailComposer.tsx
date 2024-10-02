@@ -12,18 +12,13 @@ interface EmailComposerProps {
   onRemoveSchool: (schoolId: string) => void;
 }
 
-
-// HAVE CONSOLE LOG TO CHECK IF SUPABASE GRAB IS CALLED MULTIPLE TIMES (I.E. this component is opened per school)
 const EmailComposer: React.FC<EmailComposerProps> = ({ schools, onRemoveSchool }) => {
-  console.log('onRemoveSchool:', onRemoveSchool);
   const [activeSchoolIndex, setActiveSchoolIndex] = useState<number>(0);
   const [sentSchools, setSentSchools] = useState<Set<string>>(new Set());
   const [templates, setTemplates] = useState<TemplateData[]>();
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateData | null>(null);
   const supabase = createClient();
-
-  console.log("OPEN!!!!");
 
   useEffect(() => {
     const grabTemplates = async () => {
@@ -33,27 +28,25 @@ const EmailComposer: React.FC<EmailComposerProps> = ({ schools, onRemoveSchool }
       const { data, error } = await supabase
         .from('templates')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', user.id);
 
       if (error) {
         console.error(error.message);
       }
 
       if (data) {
-        const tempsToAdd: TemplateData[] = [];
-        data.map((curr) => {
-          const temp: TemplateData = {id: curr.id, content: curr.content, title: curr.title, updated_at: curr.updated_at};
-          tempsToAdd.push(temp);
-        })
+        const tempsToAdd: TemplateData[] = data.map((curr: any) => ({
+          id: curr.id,
+          content: curr.content,
+          title: curr.title,
+          updated_at: curr.updated_at
+        }));
         setTemplates(tempsToAdd);
-        // console.log("TEMPLATES", tempsToAdd);
       }
-
-    }
+    };
 
     grabTemplates();
-  }, [])
-
+  }, []);
 
   const closeSchoolTab = async (index: number) => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -75,9 +68,6 @@ const EmailComposer: React.FC<EmailComposerProps> = ({ schools, onRemoveSchool }
           onRemoveSchool(schoolToClose.id);
         }
       }
-    } else {
-      console.error('onRemoveSchool is not a function');
-      // Optionally, you can handle this case, e.g., by updating local state
     }
 
     if (index === activeSchoolIndex) {
@@ -89,18 +79,26 @@ const EmailComposer: React.FC<EmailComposerProps> = ({ schools, onRemoveSchool }
 
   const handleEmailSent = (schoolId: string) => {
     setSentSchools(prev => new Set(prev).add(schoolId));
-    // Optionally close the tab automatically
-    // closeSchoolTab(schools.findIndex(school => school.id === schoolId));
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      {templates && <TemplateModal templates={templates} isOpen={isModalOpen} setIsOpen={setIsModalOpen} modalButtonsOnClick={setSelectedTemplate}/>}
-      <div className="flex border-b">
+    <div className="w-full max-w-4xl mx-auto">
+      {/* Modal for Templates */}
+      {templates && (
+        <TemplateModal 
+          templates={templates} 
+          isOpen={isModalOpen} 
+          setIsOpen={setIsModalOpen} 
+          modalButtonsOnClick={setSelectedTemplate} 
+        />
+      )}
+
+      {/* Responsive School Tabs */}
+      <div className="flex flex-wrap border-b overflow-x-auto">
         {schools.map((school, index) => (
           <div
             key={school.id}
-            className={`px-4 py-2 cursor-pointer ${index === activeSchoolIndex ? 'bg-white border-t border-l border-r' : 'bg-gray-200'}`}
+            className={`px-4 py-2 cursor-pointer whitespace-nowrap ${index === activeSchoolIndex ? 'bg-white border-t border-l border-r' : 'bg-gray-200'}`}
             onClick={() => setActiveSchoolIndex(index)}
           >
             {school.school}
@@ -119,6 +117,8 @@ const EmailComposer: React.FC<EmailComposerProps> = ({ schools, onRemoveSchool }
           </div>
         ))}
       </div>
+
+      {/* Email Sender Component */}
       {schools[activeSchoolIndex] && templates && (
         <EmailSender
           key={schools[activeSchoolIndex].id}
@@ -126,7 +126,6 @@ const EmailComposer: React.FC<EmailComposerProps> = ({ schools, onRemoveSchool }
           onEmailSent={handleEmailSent}
           setIsOpen={setIsModalOpen}
           selectedTemplate={selectedTemplate}
-          
         />
       )}
     </div>

@@ -2,30 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Keep your custom variables but remove the body background that causes issues */
+/* Define color variables */
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --foreground-rgb: 0, 0, 0; /* Default text color is black */
+  --background-start-rgb: 255, 255, 255; /* Default background color is white */
+  --background-end-rgb: 255, 255, 255; /* Default background end color */
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
+    --foreground-rgb: 0, 0, 0; /* Text should be black in light mode */
+    --background-start-rgb: 255, 255, 255; /* Background should be white in light mode */
+    --background-end-rgb: 255, 255, 255;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255; /* Text should be white in dark mode */
+    --background-start-rgb: 0, 0, 0; /* Background should be black in dark mode */
     --background-end-rgb: 0, 0, 0;
   }
 }
 
-/* This will not affect individual page backgrounds */
+/* Apply text color globally */
 body {
   color: rgb(var(--foreground-rgb));
-  /* Removed the background gradient for the entire body */
+  background: rgb(var(--background-start-rgb)); /* Ensure proper background for light mode */
 }
 
-/* Keep your custom utility class */
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* Apply background and text colors for all elements */
+* {
+  background: transparent; /* Set default background to transparent to avoid conflicts */
+  color: inherit; /* Ensure color inheritance */
 }
+
+/* Ensure consistent layout background and text color */
+.main-content, .sidebar, .header, .footer {
+  background: rgb(var(--background-start-rgb)); /* Ensure light background */
+  color: rgb(var(--foreground-rgb)); /* Ensure proper text color */
+}
+
