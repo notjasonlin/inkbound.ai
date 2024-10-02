@@ -1,23 +1,24 @@
-import { createBrowserClient } from '@supabase/ssr'
+import { CoachData } from "@/types/school";
+import { createBrowserClient } from "@supabase/ssr";
 
 export function createClient() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  );
 }
 
 export async function getCoaches() {
   const supabase = createClient();
   const { data, error } = await supabase
-    .from('coachinformation')
-    .select('*');
-  
+    .from("coachinformation")
+    .select("*");
+
   if (error) {
-    console.error('Error fetching coaches:', error);
+    console.error("Error fetching coaches:", error);
     return [];
   }
-  
+
   return data || [];
 }
 
@@ -29,14 +30,16 @@ export async function getUniqueSchools() {
 
   while (true) {
     const { data, error } = await supabase
-      .from('coachinformation')
-      .select('school, state, division')
+      .from("coachinformation")
+      .select("*")
       .range(page * pageSize, (page + 1) * pageSize - 1);
-    
+
     if (error) {
-      console.error('Error fetching schools:', error);
+      console.error("Error fetching schools:", error);
       return [];
     }
+
+    console.log("SCHOOLS", data)
 
     if (data.length === 0) break;
 
@@ -46,42 +49,49 @@ export async function getUniqueSchools() {
     if (data.length < pageSize) break;
   }
 
-  //console.log('Total records fetched:', allData.length);
+  const uniqueSchoolsMap = new Map();
 
-  // Use a Map to keep track of all schools and their counts
-  const schoolCounts = new Map();
-  
-  allData.forEach(item => {
+  allData.forEach((item) => {
     if (item && item.school) {
       const schoolKey = item.school.trim().toLowerCase();
-      schoolCounts.set(schoolKey, (schoolCounts.get(schoolKey) || 0) + 1);
+
+      // Check if the school is already in the map
+      if (uniqueSchoolsMap.has(schoolKey)) {
+        // Merge coaches array from the current item
+        const existingSchool = uniqueSchoolsMap.get(schoolKey);
+        // console.log(existingSchool);
+        const newCoach: CoachData = {
+          name: item.name,
+          position: item.position,
+          email: item.email,
+        }
+        existingSchool.coaches.push(newCoach);
+      } else {
+        // Add new school entry to the map
+        const coach = {
+          name: item.name, 
+          position: item.position, 
+          email: item.email
+        }
+        uniqueSchoolsMap.set(schoolKey, { 
+          id: item.id,
+          school: item.school,
+          coaches: [coach],
+          division: item.division,
+          state: item.state,
+          conference: item.conference
+        });
+      }
     } else {
-      console.warn('Found an item with null or undefined school:', item);
+      console.warn("Found an item with null or undefined school:", item);
     }
   });
-  
-  const uniqueSchools = Array.from(schoolCounts.entries()).map(([school, count]) => ({
-    school: allData.find(item => item && item.school && item.school.trim().toLowerCase() === school)!,
-    count
-  }));
-  
-  //console.log('Unique schools found:', uniqueSchools.length);
-  
-  // Log the first few and last few schools to check
-  //console.log('First 5 schools:', uniqueSchools.slice(0, 5));
-  //console.log('Last 5 schools:', uniqueSchools.slice(-5));
 
-  // Log summary of entry counts
-  const entryCounts = new Map();
-  uniqueSchools.forEach(({ count }) => {
-    entryCounts.set(count, (entryCounts.get(count) || 0) + 1);
-  });
-  
-  //console.log('Summary of entry counts:');
-  for (const [count, schools] of Object.entries(Object.fromEntries(entryCounts))) {
-    //console.log(`Schools with ${count} ${count === 1 ? 'entry' : 'entries'}: ${schools}`);
-  }
+  // Convert the Map back to an array
+  const uniqueSchools = Array.from(uniqueSchoolsMap.values());
 
-  return uniqueSchools.map(({ school }) => school);
+
+  console.log("Unique", uniqueSchools);
+
+  return uniqueSchools;
 }
-

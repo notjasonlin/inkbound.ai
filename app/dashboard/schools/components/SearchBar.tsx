@@ -29,7 +29,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
 
   return (
     <form onSubmit={handleSubmit} className="mb-4 p-4 bg-gray-100 rounded-lg">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div>
           <label htmlFor="schoolName" className="block mb-1">School Name</label>
           <input
@@ -69,11 +69,11 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
             <option value="III">Division III</option>
           </select>
         </div>
-      </div>
-      <div className="mt-4">
-        <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-          Search
-        </button>
+        <div className="mt-4">
+          <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+            Search
+          </button>
+        </div>
       </div>
     </form>
   );
