@@ -16,7 +16,7 @@ const TemplateModal: React.FC<TemplateModalProps> = ({ isOpen, onClose, template
       <div className="bg-white p-6 rounded-lg max-w-2xl w-full shadow-lg relative z-50">
         <h2 className="text-2xl font-bold mb-4">Select a Template</h2>
         {templates.length === 0 ? (
-          <p>No templates available.</p>
+          <p>You haven't created any templates yet.</p>
         ) : (
           <ul>
             {templates.map((template) => (

@@ -49,6 +49,7 @@ export async function getUniqueSchools() {
     if (data.length < pageSize) break;
   }
 
+
   const uniqueSchoolsMap = new Map();
 
   allData.forEach((item) => {
@@ -89,7 +90,6 @@ export async function getUniqueSchools() {
 
   // Convert the Map back to an array
   const uniqueSchools = Array.from(uniqueSchoolsMap.values());
-
 
   console.log("Unique", uniqueSchools);
 
