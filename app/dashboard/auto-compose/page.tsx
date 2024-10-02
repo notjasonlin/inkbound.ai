@@ -15,14 +15,22 @@ interface EmailPreviewData {
   content: string;
 }
 
+interface QueueStatusItem {
+  schoolId: string;
+  schoolName: string;
+  status: 'queued' | 'sending' | 'sent' | 'failed';
+  timestamp: string;
+}
+
 export default function AutoComposePage() {
   const [favoriteSchools, setFavoriteSchools] = useState<SchoolData[]>([]);
   const [selectedSchools, setSelectedSchools] = useState<SchoolData[]>([]);
   const [templates, setTemplates] = useState<TemplateData[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateData | null>(null);
-  const [queueStatus, setQueueStatus] = useState<string[]>([]);
+  const [queueStatus, setQueueStatus] = useState<QueueStatusItem[]>([]);
   const [previewEmails, setPreviewEmails] = useState<{ [key: string]: EmailPreviewData }>({});
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -55,17 +63,15 @@ export default function AutoComposePage() {
 
   const fetchTemplates = async () => {
     try {
-      const { data, error } = await supabase
-        .from('templates')
-        .select('*');
-
-      if (error) {
-        throw error;
+      const response = await fetch('/api/templates');
+      if (!response.ok) {
+        throw new Error('Failed to fetch templates');
       }
-
+      const data = await response.json();
       setTemplates(data);
     } catch (error) {
       console.error('Error fetching templates:', error);
+      // Optionally, set an error state here to display to the user
     }
   };
 
@@ -102,39 +108,136 @@ export default function AutoComposePage() {
     setPreviewEmails(newPreviews);
   };
 
+  const sendEmail = async (emailData: EmailPreviewData, schoolId: string, schoolName: string) => {
+    try {
+      setQueueStatus(prev => prev.map(item => 
+        item.schoolId === schoolId ? { ...item, status: 'sending' } : item
+      ));
+
+      console.log('Fetching coach information...');
+      const { data: coachinformation, error: coachinformationError } = await supabase
+        .from('coachinformation')
+        .select('*')
+        .eq('school_id', schoolId);
+
+      if (coachinformationError) {
+        console.error('Failed to fetch coach information:', coachinformationError);
+        throw new Error('Failed to fetch coach information');
+      }
+
+      console.log('Coach information fetched:', coachinformation);
+
+      const coachEmails = coachinformation.reduce((acc, coach) => {
+        if (coach.email) {
+          acc[coach.name || 'Unknown'] = coach.email;
+        }
+        return acc;
+      }, {});
+
+      console.log('Storing coach emails...');
+      const { error: storeError } = await supabase
+        .from('school_coach_emails')
+        .upsert({
+          user_id: supabase.auth.getUser().then(({ data: { user } }) => user?.id),
+          school_id: schoolId,
+          coach_emails: coachEmails
+        }, {
+          onConflict: 'user_id,school_id'
+        });
+
+      if (storeError) {
+        console.error('Failed to store coach emails:', storeError);
+        throw new Error('Failed to store coach emails');
+      }
+
+      console.log('Coach emails stored successfully');
+
+      console.log('Sending email...');
+      const response = await fetch('/api/sendEmail', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...emailData,
+          coachEmails,
+          schoolName,
+          schoolId
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Failed to send email:', errorData);
+        throw new Error(`Failed to send email: ${errorData.error}`);
+      }
+
+      console.log('Email sent successfully');
+
+      setQueueStatus(prev => prev.map(item => 
+        item.schoolId === schoolId 
+          ? { ...item, status: 'sent', timestamp: new Date().toISOString() }
+          : item
+      ));
+    } catch (error) {
+      console.error('Error in sendEmail function:', error);
+      setQueueStatus(prev => prev.map(item => 
+        item.schoolId === schoolId 
+          ? { ...item, status: 'failed', timestamp: new Date().toISOString() }
+          : item
+      ));
+    }
+  };
+
+  const processQueue = async (queue: { emailData: EmailPreviewData, schoolId: string, schoolName: string }[]) => {
+    const processNextBatch = async () => {
+      if (queue.length === 0) {
+        setIsSending(false);
+        return;
+      }
+
+      const batch = queue.slice(0, 2);  // Process 2 emails at a time
+      queue = queue.slice(2);
+
+      await Promise.all(batch.map(item => sendEmail(item.emailData, item.schoolId, item.schoolName)));
+
+      // Wait for 1 second before processing the next batch
+      setTimeout(() => processNextBatch(), 1000);
+    };
+
+    await processNextBatch();
+  };
+
   const handleSubmit = async () => {
     if (selectedSchools.length === 0 || !selectedTemplate) {
       alert("Please select schools and a template.");
       return;
     }
 
-    for (const school of selectedSchools) {
-      try {
-        const emailData = previewEmails[school.id];
-        const response = await fetch('/api/queueEmail', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            schoolId: school.id,
-            to: emailData.to,
-            subject: emailData.subject,
-            content: emailData.content,
-          }),
-        });
+    setIsSending(true);
 
-        if (!response.ok) {
-          throw new Error('Failed to queue email');
-        }
+    const emailQueue = selectedSchools.map(school => ({
+      emailData: previewEmails[school.id],
+      schoolId: school.id,
+      schoolName: school.school  // Assuming the school object has a 'school' property with the name
+    }));
 
-        setQueueStatus(prev => [...prev, `Email queued for ${school.school}`]);
-      } catch (error) {
-        console.error('Error queueing email:', error);
-        setQueueStatus(prev => [...prev, `Failed to queue email for ${school.school}`]);
-      }
-    }
+    setQueueStatus(emailQueue.map(item => ({
+      schoolId: item.schoolId,
+      schoolName: item.schoolName,
+      status: 'queued',
+      timestamp: new Date().toISOString()
+    })));
+
+    processQueue(emailQueue);
   };
+
+  useEffect(() => {
+    const statusElement = document.getElementById('queue-status');
+    if (statusElement) {
+      statusElement.scrollTop = statusElement.scrollHeight;
+    }
+  }, [queueStatus]);
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-100">
@@ -158,9 +261,9 @@ export default function AutoComposePage() {
         <button 
           onClick={handleSubmit}
           className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-lg font-semibold"
-          disabled={selectedSchools.length === 0 || !selectedTemplate}
-        >––
-          Queue Emails
+          disabled={selectedSchools.length === 0 || !selectedTemplate || isSending}
+        >
+          {isSending ? 'Sending...' : 'Send Emails'}
         </button>
 
         <TemplateModal 

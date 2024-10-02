@@ -46,42 +46,44 @@ export async function getUniqueSchools() {
     if (data.length < pageSize) break;
   }
 
-  //console.log('Total records fetched:', allData.length);
-
-  // Use a Map to keep track of all schools and their counts
-  const schoolCounts = new Map();
+  // Use a Map to keep track of unique schools
+  const uniqueSchools = new Map();
   
   allData.forEach(item => {
     if (item && item.school) {
       const schoolKey = item.school.trim().toLowerCase();
-      schoolCounts.set(schoolKey, (schoolCounts.get(schoolKey) || 0) + 1);
+      if (!uniqueSchools.has(schoolKey)) {
+        uniqueSchools.set(schoolKey, {
+          school: item.school,
+          state: item.state,
+          division: item.division,
+          coachCount: 1
+        });
+      } else {
+        uniqueSchools.get(schoolKey).coachCount++;
+      }
     } else {
       console.warn('Found an item with null or undefined school:', item);
     }
   });
   
-  const uniqueSchools = Array.from(schoolCounts.entries()).map(([school, count]) => ({
-    school: allData.find(item => item && item.school && item.school.trim().toLowerCase() === school)!,
-    count
-  }));
+  const schoolsArray = Array.from(uniqueSchools.values());
   
-  //console.log('Unique schools found:', uniqueSchools.length);
-  
-  // Log the first few and last few schools to check
-  //console.log('First 5 schools:', uniqueSchools.slice(0, 5));
-  //console.log('Last 5 schools:', uniqueSchools.slice(-5));
+  console.log('Unique schools found:', schoolsArray.length);
+  console.log('First 5 schools:', schoolsArray.slice(0, 5));
+  console.log('Last 5 schools:', schoolsArray.slice(-5));
 
-  // Log summary of entry counts
-  const entryCounts = new Map();
-  uniqueSchools.forEach(({ count }) => {
-    entryCounts.set(count, (entryCounts.get(count) || 0) + 1);
+  // Log summary of coach counts
+  const coachCounts = new Map();
+  schoolsArray.forEach(({ coachCount }) => {
+    coachCounts.set(coachCount, (coachCounts.get(coachCount) || 0) + 1);
   });
   
-  //console.log('Summary of entry counts:');
-  for (const [count, schools] of Object.entries(Object.fromEntries(entryCounts))) {
-    //console.log(`Schools with ${count} ${count === 1 ? 'entry' : 'entries'}: ${schools}`);
+  console.log('Summary of coach counts:');
+  for (const [count, schools] of Object.entries(coachCounts)) {
+    console.log(`Schools with ${count} ${Number(count) === 1 ? 'coach' : 'coaches'}: ${schools}`);
   }
 
-  return uniqueSchools.map(({ school }) => school);
+  return schoolsArray;
 }
 
