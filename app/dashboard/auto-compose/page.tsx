@@ -45,15 +45,15 @@ export default function AutoComposePage() {
   }, [selectedTemplate, selectedSchools]);
 
 
-  const beforeUnloadListener = (event) => {
-    // setTimeout(() => alert('hi!'));
-    event.preventDefault();
+  // const beforeUnloadListener = (event) => {
+  //   // setTimeout(() => alert('hi!'));
+  //   event.preventDefault();
 
-    // Modern browsers require setting the returnValue property of the event for confirmation dialogs
-    event.returnValue = "Are you sure you want to exit?";
-  };
+  //   // Modern browsers require setting the returnValue property of the event for confirmation dialogs
+  //   event.returnValue = "Are you sure you want to exit?";
+  // };
 
-  window.addEventListener("beforeunload", beforeUnloadListener);
+  // window.addEventListener("beforeunload", beforeUnloadListener);
 
 
   const fetchFavoriteSchools = async () => {
