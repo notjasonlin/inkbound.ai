@@ -95,6 +95,7 @@ export async function getUniqueSchools() {
 
   const uniqueSchools = Array.from(schoolsMap.values());
 
+
   return uniqueSchools;
 }
 
