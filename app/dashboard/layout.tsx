@@ -13,6 +13,7 @@ const sidebarItems = [
   { name: "Profile", path: "/dashboard/profile", icon: FaUser },
   { name: "Upgrade", path: "/dashboard/upgrade", icon: FaDollarSign },
   { name: "Compose", path: "/dashboard/compose", icon: FaEdit },
+  { name: "Inbox", path: "/dashboard/inbox", icon: FaInbox }, // Added Inbox to sidebar
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -53,7 +54,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Top bar with inbox icon */}
         <div className="bg-white shadow-sm">
           <div className="container mx-auto px-6 py-3 flex justify-end items-center">
-            <Link href="/dashboard/emails" className="mr-4">
+            <Link href="/dashboard/inbox" className="mr-4">
               <button className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors">
                 <FaInbox className="text-gray-600" size={20} />
               </button>
