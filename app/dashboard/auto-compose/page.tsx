@@ -5,7 +5,7 @@ import { SchoolData, CoachData } from '@/types/school/index';
 import { createClient } from "@/utils/supabase/client";
 import EmailPreview from './components/EmailPreview';
 import QueueStatus from './components/QueueStatus';
-import TemplateModal from './components/TemplateModal'; 
+import TemplateModal from './components/TemplateModal';
 import { TemplateData } from '@/types/template/index';
 import Sidebar from './components/Sidebar';
 
@@ -43,6 +43,18 @@ export default function AutoComposePage() {
       generatePreviews();
     }
   }, [selectedTemplate, selectedSchools]);
+
+
+  // const beforeUnloadListener = (event) => {
+  //   // setTimeout(() => alert('hi!'));
+  //   event.preventDefault();
+
+  //   // Modern browsers require setting the returnValue property of the event for confirmation dialogs
+  //   event.returnValue = "Are you sure you want to exit?";
+  // };
+
+  // window.addEventListener("beforeunload", beforeUnloadListener);
+
 
   const fetchFavoriteSchools = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -93,10 +105,10 @@ export default function AutoComposePage() {
       let subject = selectedTemplate.content.title || '';
 
       // Replace placeholders in content and subject
-      [content, subject] = [content, subject].map(text => 
+      [content, subject] = [content, subject].map(text =>
         text.replace(/\[schoolName\]/g, school.school)
-           .replace(/\[coachNames\]/g, school.coaches.map(coach => coach.name).join(', '))
-           .replace(/\[coachLastNames\]/g, school.coaches.map(coach => coach.name.split(' ').pop()).join(', '))
+          .replace(/\[coachNames\]/g, school.coaches.map(coach => coach.name).join(', '))
+          .replace(/\[coachLastNames\]/g, school.coaches.map(coach => coach.name.split(' ').pop()).join(', '))
       );
 
       newPreviews[school.id] = {
@@ -235,18 +247,18 @@ export default function AutoComposePage() {
 
       <div className="flex-1 p-6 w-full md:w-3/4">
         <h1 className="text-3xl font-bold mb-8 text-gray-800">Auto Compose</h1>
-        
+
         <div className="mb-8">
           <h2 className="text-xl font-semibold mb-4 text-gray-700">Choose Template</h2>
-          <button 
+          <button
             onClick={() => setShowTemplateModal(true)}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
           >
             Select Template
           </button>
         </div>
-        
-        <button 
+
+        <button
           onClick={handleSubmit}
           className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-lg font-semibold"
           disabled={selectedSchools.length === 0 || !selectedTemplate || isSending}
@@ -254,22 +266,22 @@ export default function AutoComposePage() {
           {isSending ? 'Sending...' : 'Send Emails'}
         </button>
 
-        <TemplateModal 
+        <TemplateModal
           isOpen={showTemplateModal}
           onClose={() => setShowTemplateModal(false)}
           templates={templates}
           onSelectTemplate={handleTemplateSelection}
         />
-        
+
         {selectedTemplate && selectedSchools.length > 0 && (
           <div className="mb-8">
-            <EmailPreview 
+            <EmailPreview
               schools={selectedSchools}
               previewEmails={previewEmails}
             />
           </div>
         )}
-        
+
         <div className="flex flex-col items-start">
           <div className="mt-6">
             <QueueStatus status={queueStatus} />
