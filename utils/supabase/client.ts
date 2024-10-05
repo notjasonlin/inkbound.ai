@@ -80,12 +80,9 @@ export async function getUniqueSchools() {
 
   const coaches = await getCoaches();
 
-  // console.log("COACHES", coaches);
-
   coaches.forEach((item) => {
     const curr = schoolsMap.get(item.schoolId);
     if (curr) {
-      // console.log("CURR", curr);
       const coach = {
         name: item.name,
         position: item.position,
@@ -102,47 +99,40 @@ export async function getUniqueSchools() {
 }
 
 export async function getSchool(schoolName: string) {
-  console.log(schoolName.trim());
-
-  console.log(schoolName === "Academy of Art University");
-  
   const supabase = createClient();
 
   const { data, error } = await supabase
     .from("school")
     .select("*")
-    .eq("school_name", schoolName.trim());
-    
+    .ilike("school_name", schoolName.trim());
 
   if (error) {
     console.error("Error fetching schools:", error);
-    return [];
+    return null;
   }
 
-  console.log(data);
+  const coaches = await getCoaches(data[0].id);
 
-  // console.log("NEW SCHOOLS", data);
+  const coachData: CoachData[] = [];
+  coaches.forEach((item) => {
+    const coach = {
+      name: item.name,
+      position: item.position,
+      email: item.email,
+    };
 
-  
+    coachData.push(coach);
+  });
 
-  // const coaches = await getCoaches();
+  const school = {
+    id: data[0].id,
+    school: data[0].school_name,
+    coaches: coachData,
+    division: data[0].division,
+    state: data[0].state,
+    conference: data[0].conference,
+  };
 
-  // console.log("COACHES", coaches);
-
-  // coaches.forEach((item) => {
-  //   const curr = schoolsMap.get(item.schoolId);
-  //   if (curr) {
-  //     // console.log("CURR", curr);
-  //     const coach = {
-  //       name: item.name,
-  //       position: item.position,
-  //       email: item.email,
-  //     };
-  //     curr.coaches.push(coach);
-  //     schoolsMap.set(item.schoolsId, curr);
-  //   }
-  // });
-
-
-  return [];
+  console.log(school);
+  return school;
 }
