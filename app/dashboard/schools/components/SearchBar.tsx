@@ -28,40 +28,46 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mb-4 p-4 bg-gray-100 rounded-lg">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <form onSubmit={handleSubmit} className="mb-6 bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg rounded-lg p-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4">
         <div>
-          <label htmlFor="schoolName" className="block mb-1">School Name</label>
+          <label htmlFor="schoolName" className="block text-sm font-semibold text-blue-800 mb-1">
+            School Name
+          </label>
           <input
             type="text"
             id="schoolName"
             name="schoolName"
             value={filters.schoolName}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border rounded-md"
+            className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter school name"
           />
         </div>
         <div>
-          <label htmlFor="state" className="block mb-1">State</label>
+          <label htmlFor="state" className="block text-sm font-semibold text-blue-800 mb-1">
+            State
+          </label>
           <input
             type="text"
             id="state"
             name="state"
             value={filters.state}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border rounded-md"
+            className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter state"
           />
         </div>
         <div>
-          <label htmlFor="division" className="block mb-1">Division</label>
+          <label htmlFor="division" className="block text-sm font-semibold text-blue-800 mb-1">
+            Division
+          </label>
           <select
             id="division"
             name="division"
             value={filters.division}
             onChange={handleInputChange}
-            className="w-full px-3 py-2 border rounded-md"
+            className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Divisions</option>
             <option value="I">Division I</option>
@@ -69,8 +75,11 @@ const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
             <option value="III">Division III</option>
           </select>
         </div>
-        <div className="mt-4">
-          <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+        <div className="flex items-end">
+          <button
+            type="submit"
+            className="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-700 text-white rounded-lg shadow-md hover:bg-blue-600 transition-all focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
             Search
           </button>
         </div>

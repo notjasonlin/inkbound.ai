@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient } from "@/utils/supabase/client";
 import { gmail_v1 } from 'googleapis';
 import SchoolSidebar from './components/SchoolSidebar';
-import EmailFilter from './components/EmailFilter';
 import GmailInbox from './components/GmailInbox';
 
 export default function Inbox() {
@@ -57,17 +56,19 @@ export default function Inbox() {
     : Object.values(coachEmails);
 
   return (
-    <div className="flex h-full">
-      <SchoolSidebar onSelectSchool={setSelectedSchoolId} />
+    <div className="flex flex-col md:flex-row h-full bg-blue-50">
+      <div className="w-full md:w-1/4 p-4">
+        <SchoolSidebar onSelectSchool={setSelectedSchoolId} />
+      </div>
       <div className="flex-1 p-6">
-        <h1 className="text-3xl font-semibold mb-4">Inbox</h1>
-        {selectedSchoolId ? (
-          <>
+        <div className="bg-blue-50 rounded-lg shadow-md p-6 h-full flex flex-col">
+          <h1 className="text-3xl font-semibold mb-4">Inbox</h1>
+          {selectedSchoolId ? (
             <GmailInbox coachEmails={coachEmails} />
-          </>
-        ) : (
-          <p>Select a school to view emails</p>
-        )}
+          ) : (
+            <p className="text-gray-500">Select a school to view emails.</p>
+          )}
+        </div>
       </div>
     </div>
   );

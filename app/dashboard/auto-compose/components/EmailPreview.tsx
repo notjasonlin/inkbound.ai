@@ -19,7 +19,7 @@ const EmailPreview: React.FC<EmailPreviewProps> = ({ schools, previewEmails }) =
       {schools.map(school => (
         <div key={school.id} className="mb-4">
           <h3 className="text-lg font-semibold">{school.school}</h3>
-          <div className="border border-gray-300 rounded p-4 mt-2">
+          <div className="border border-gray-300 rounded p-4 mt-2 bg-white">
             <p><strong>To:</strong> {previewEmails[school.id]?.to}</p>
             <p><strong>Subject:</strong> {previewEmails[school.id]?.subject}</p>
             <div dangerouslySetInnerHTML={{ __html: previewEmails[school.id]?.content || '' }} />
