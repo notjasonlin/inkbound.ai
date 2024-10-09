@@ -137,9 +137,6 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
                     {/* Favorite button with added right margin */}
                     <FavoriteButton userId={userID} schoolData={school} />
                   </div>
-
-
-
                 </li>
               ))}
             </ul>
