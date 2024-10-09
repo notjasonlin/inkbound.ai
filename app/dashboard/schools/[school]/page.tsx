@@ -20,7 +20,7 @@ async function SchoolPage({ params }: { params: { school: string } }) {
             <div className="flex items-center justify-center space-x-2">
               <h1 className="text-3xl font-bold mb-4 text-center">{schoolName}</h1>
               {user && (
-                <div className="relative -mt-2"> {/* Shift the heart up */}
+                <div className="relative -mt-2">
                   <FavoriteButton userId={user.id} schoolData={schoolData} />
                 </div>
               )}
