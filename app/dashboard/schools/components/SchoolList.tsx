@@ -108,7 +108,7 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
   return (
     <div className="flex flex-col h-screen">
       {/* Search bar fixed at the top, spanning across */}
-      <div className="p-4 bg-white z-10 w-full">
+      <div className="p-4 bg-blue-75 z-10 w-full">
         <SearchBar onSearch={handleSearch} />
       </div>
 

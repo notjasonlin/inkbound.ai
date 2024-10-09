@@ -151,10 +151,8 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent, setIsOpe
       const result = await response.json();
       console.log('Email sent successfully:', result);
       onEmailSent(school.id);
-      // Optionally, update UI to show success message
     } catch (error) {
       console.error('Error sending email:', error);
-      // Optionally, update UI to show error message
     }
   };
 
