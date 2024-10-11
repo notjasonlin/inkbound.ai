@@ -7,62 +7,52 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import PlanSelector from './components/PlanSelector';
 import UpgradeButton from './components/UpgradeButton';
 import { Plan, plans } from './constants';
-import { fetchOrCreateUserCredits } from './utils';
+import { fetchUserSubscription } from './utils';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 export default function UpgradePage() {
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [currentCredits, setCurrentCredits] = useState<number | null>(null);
+  const [currentSubscription, setCurrentSubscription] = useState<any>(null);
   const { user } = useUser();
   const supabase = createClientComponentClient();
 
   useEffect(() => {
     if (user) {
-      fetchOrCreateUserCredits(supabase, user.id).then(setCurrentCredits);
+      fetchUserSubscription(supabase, user.id).then(setCurrentSubscription);
     }
   }, [user]);
 
   const handleUpgrade = async () => {
-    console.log('handleUpgrade called', { selectedPlan, user });
     if (!selectedPlan || !user) return;
-    console.log('handleUpgrade function called');
-    console.log('Selected plan:', selectedPlan);
-    console.log('User:', user);
-
     setIsLoading(true);
     
     try {
-      console.log('Sending request to create checkout session');
-      const response = await fetch('/api/create-checkout-session', {
+      const response = await fetch('/api/create-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          credits: selectedPlan.credits,
+          planId: selectedPlan.id,
           userId: user.id
         }),
       });
-      console.log('Response received:', response);
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create checkout session');
+        throw new Error(errorData.error || 'Failed to create subscription');
       }
 
       const data = await response.json();
-      console.log('Response data:', data);
-
-      const { id: sessionId } = data;
+      const { sessionId } = data;
       const stripe = await stripePromise;
       if (!stripe) throw new Error('Stripe failed to load');
       
-      console.log('Redirecting to Stripe checkout');
       const { error } = await stripe.redirectToCheckout({ sessionId });
       if (error) throw error;
     } catch (error) {
-      console.error('Failed to create checkout session:', error);
-      // You might want to show an error message to the user here
+      console.error('Failed to create subscription:', error);
+      // Show an error message to the user
     } finally {
       setIsLoading(false);
     }
@@ -71,8 +61,8 @@ export default function UpgradePage() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Upgrade Your Account</h1>
-      {currentCredits !== null && (
-        <p className="text-xl mb-6">Your current credit balance: {currentCredits} credits</p>
+      {currentSubscription && (
+        <p className="text-xl mb-6">Your current plan: {currentSubscription.plan_name}</p>
       )}
       <PlanSelector plans={plans} selectedPlan={selectedPlan} onSelectPlan={setSelectedPlan} />
       <UpgradeButton

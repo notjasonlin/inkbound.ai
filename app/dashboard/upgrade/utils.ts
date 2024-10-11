@@ -25,3 +25,20 @@ export async function fetchOrCreateUserCredits(supabase: SupabaseClient, userId:
     return 0;
   }
 }
+
+export async function fetchUserSubscription(supabase: SupabaseClient, userId: string): Promise<any> {
+  try {
+    const { data, error } = await supabase
+      .from('user_subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error('Error fetching user subscription:', error);
+    return null;
+  }
+}

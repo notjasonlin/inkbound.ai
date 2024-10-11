@@ -1,7 +1,52 @@
-export type Plan = { credits: number; price: number; savings: number };
+export type Plan = {
+  id: string;
+  name: string;
+  price: number;
+  description: string;
+  features: string[];
+  stripePriceIdMonthly: string;
+  stripePriceIdYearly: string;
+};
 
 export const plans: Plan[] = [
-  { credits: 100, price: 20, savings: 0 },
-  { credits: 200, price: 25, savings: 15 },
-  { credits: 300, price: 30, savings: 30 },
+  {
+    id: 'basic',
+    name: 'Basic',
+    price: 0,
+    description: "You'll want to upgrade soon",
+    features: [
+      'Access to 1 school',
+      'Basic support',
+      'Limited email templates'
+    ],
+    stripePriceIdMonthly: '',
+    stripePriceIdYearly: ''
+  },
+  {
+    id: 'plus',
+    name: 'Plus',
+    price: 10,
+    description: 'For up to 20 schools',
+    features: [
+      'Access to 20 schools',
+      'Priority support',
+      'Advanced email templates'
+    ],
+    stripePriceIdMonthly: 'price_MONTHLY_PLUS_ID',
+    stripePriceIdYearly: 'price_YEARLY_PLUS_ID'
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    price: 30,
+    description: 'Unlimited schools access',
+    features: [
+      'Unlimited schools',
+      '24/7 premium support',
+      'Custom email templates',
+      'Personalized advice'
+    ],
+    stripePriceIdMonthly: 'price_MONTHLY_PRO_ID',
+    stripePriceIdYearly: 'price_YEARLY_PRO_ID'
+  }
 ];
