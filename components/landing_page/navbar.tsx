@@ -64,8 +64,8 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-6">
             {/* <div className="hidden md:flex items-center space-x-4"> */}
               {/* Sign in and Get Started buttons */}
-              {/* <LoginButton label="Sign in" />
-              <LoginButton label="Get Started" /> */}
+              {/* {/* <LoginButton label="Sign in" /> */}
+              {/* <LoginButton label="Get Started" /> */}
             {/* </div> */}
             <button
               className="text-black hover:text-babyblue-600"

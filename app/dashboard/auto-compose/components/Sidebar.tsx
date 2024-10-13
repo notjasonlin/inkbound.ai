@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SchoolData } from '@/types/school/index';
 import { createClient } from "@/utils/supabase/client";
-import { FiChevronRight, FiChevronDown, FiMenu } from "react-icons/fi"; // For menu icons
+import { FiChevronRight, FiChevronDown, FiMenu } from "react-icons/fi";
 import { FaChevronDown } from 'react-icons/fa';
 
 interface SidebarProps {
@@ -16,7 +16,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
   const [activeTab, setActiveTab] = useState<'All' | 'Division' | 'Location'>('All');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Toggle state for sidebar
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [openFolders, setOpenFolders] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
@@ -33,7 +33,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-
       if (!user) {
         setError("Please log in to view favorite schools");
         setIsLoading(false);
@@ -110,13 +109,20 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
     return (
       <div className="mb-2">
         <div className="flex items-center justify-between">
-          <button onClick={() => handleFolderToggle(name)} className="flex items-center space-x-2">
+          <button
+            onClick={() => handleFolderToggle(name)}
+            className="flex items-center space-x-2 text-gray-800 font-semibold"
+          >
             {isOpen ? <FiChevronDown /> : <FiChevronRight />}
-            <span className="font-semibold">{name}</span>
+            <span>{name}</span>
           </button>
-          <div>
-            <button onClick={() => handleCheckAll(schools)} className="text-sm text-blue-500 mr-2">Check All</button>
-            <button onClick={() => handleUncheckAll(schools)} className="text-sm text-blue-500">Uncheck All</button>
+          <div className="flex space-x-2">
+            <button onClick={() => handleCheckAll(schools)} className="text-sm text-blue-500 hover:underline">
+              Check All
+            </button>
+            <button onClick={() => handleUncheckAll(schools)} className="text-sm text-blue-500 hover:underline">
+              Uncheck All
+            </button>
           </div>
         </div>
         {isOpen && (
@@ -129,7 +135,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
                   onChange={() => handleSchoolSelection(school)}
                   className="mr-2"
                 />
-                <span>{school.school}</span>
+                <span className="text-gray-700">{school.school}</span>
               </li>
             ))}
           </ul>
@@ -138,52 +144,56 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
     );
   };
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (isLoading) return <div className="p-4 text-center">Loading...</div>;
+  if (error) return <div className="p-4 text-center text-red-600">{error}</div>;
 
   return (
     <>
       {/* Button to toggle sidebar on mobile */}
-      <div className="p-4 fixed top-0 left-0 z-50 md:hidden">
+      <div className="p-4 fixed top-4 left-4 z-50 md:hidden">
         <button
-          className="text-gray-600 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-600 transition-colors"
+          className="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors flex items-center space-x-2"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         >
-          {isSidebarOpen ? 'Close School Selector' : 'Open School Selector'}
-          <FaChevronDown className="inline ml-2" />
+          <FiMenu />
+          <span>{isSidebarOpen ? 'Close' : 'Open'} School Selector</span>
         </button>
       </div>
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-white shadow-lg z-40 transform transition-transform duration-300 md:w-80 w-full ${
+        className={`fixed top-0 left-0 h-full bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg z-40 transform transition-transform duration-300 md:w-80 w-full ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:relative md:translate-x-0`}
+        } md:relative md:translate-x-0 md:h-auto`}
       >
-        <div className="p-4">
-          <h2 className="text-xl font-bold text-gray-800">Schools</h2>
+        <div className="p-4 border-b border-blue-200">
+          <h2 className="text-xl font-bold text-blue-800">Schools</h2>
         </div>
         <div className="p-4">
           <input
             type="text"
-            className="w-full px-3 py-2 border border-gray-300 rounded"
+            className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Search schools..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="flex mb-4 px-4">
+        <div className="flex mb-4 px-4 space-x-2">
           {['All', 'Division', 'Location'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as 'All' | 'Division' | 'Location')}
-              className={`flex-1 py-2 ${activeTab === tab ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+              className={`flex-1 py-2 rounded-lg text-sm transition-colors ${
+                activeTab === tab
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-blue-200 text-blue-700 hover:bg-blue-300'
+              }`}
             >
               {tab}
             </button>
           ))}
         </div>
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {Object.entries(groupedSchools).map(([name, schools]) => (
             <SchoolFolder key={name} name={name} schools={schools} />
           ))}
@@ -193,7 +203,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
       {/* Overlay to close sidebar on mobile */}
       {isSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black opacity-50 z-30 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-40 z-30 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}

@@ -25,3 +25,54 @@ export async function fetchOrCreateUserCredits(supabase: SupabaseClient, userId:
     return 0;
   }
 }
+
+export async function fetchUserSubscription(supabase: SupabaseClient, userId: string): Promise<any> {
+  try {
+    const { data, error } = await supabase
+      .from('user_subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
+    if (error) throw error;
+
+    return data;
+  } catch (error) {
+    console.error('Error fetching user subscription:', error);
+    return null;
+  }
+}
+
+export async function fetchUserUsage(supabase: SupabaseClient, userId: string): Promise<any> {
+  try {
+    let { data, error } = await supabase
+      .from('user_usage')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (!data) {
+      // User doesn't have a record, create one with default values
+      const { data: newData, error: insertError } = await supabase
+        .from('user_usage')
+        .insert({ 
+          user_id: userId,
+          ai_calls_used: 0,
+          schools_sent: 0,
+          templates_used: 0
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+      data = newData;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error fetching or creating user usage:', error);
+    return null;
+  }
+}

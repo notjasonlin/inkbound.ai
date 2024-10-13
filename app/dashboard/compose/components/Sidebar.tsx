@@ -112,16 +112,11 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
     }
   };
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
-
-  // Conditionally render SchoolDisplay based on the activeTab
   const SchoolDisplay = () => {
+    if (filteredSchools.length === 0) {
+      return <p className="text-gray-500 text-center py-4">You haven't favorited any schools yet</p>;
+    }
+
     if (activeTab === 'All') {
       return <SchoolList schools={filteredSchools} onSelectSchool={onSelectSchool} />;
     } else if (activeTab === 'Division') {
@@ -131,6 +126,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
     }
     return null;
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>

@@ -1,13 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { SchoolData, CoachData } from '@/types/school/index';
+import { SchoolData } from '@/types/school/index';
 import { createClient } from "@/utils/supabase/client";
 import EmailPreview from './components/EmailPreview';
 import QueueStatus from './components/QueueStatus';
 import TemplateModal from './components/TemplateModal';
-import { TemplateData } from '@/types/template/index';
 import Sidebar from './components/Sidebar';
+import { TemplateData } from '@/types/template/index';
+import { motion } from 'framer-motion';
+import { checkUserLimits, incrementUsage } from '@/utils/checkUserLimits';
+import { User } from '@supabase/supabase-js';
 
 interface EmailPreviewData {
   to: string;
@@ -31,11 +34,14 @@ export default function AutoComposePage() {
   const [previewEmails, setPreviewEmails] = useState<{ [key: string]: EmailPreviewData }>({});
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const supabase = createClient();
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     fetchFavoriteSchools();
     fetchTemplates();
+    fetchUser();
   }, []);
 
   useEffect(() => {
@@ -43,18 +49,6 @@ export default function AutoComposePage() {
       generatePreviews();
     }
   }, [selectedTemplate, selectedSchools]);
-
-
-  // const beforeUnloadListener = (event) => {
-  //   // setTimeout(() => alert('hi!'));
-  //   event.preventDefault();
-
-  //   // Modern browsers require setting the returnValue property of the event for confirmation dialogs
-  //   event.returnValue = "Are you sure you want to exit?";
-  // };
-
-  // window.addEventListener("beforeunload", beforeUnloadListener);
-
 
   const fetchFavoriteSchools = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -83,8 +77,12 @@ export default function AutoComposePage() {
       setTemplates(data);
     } catch (error) {
       console.error('Error fetching templates:', error);
-      // Optionally, set an error state here to display to the user
     }
+  };
+
+  const fetchUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
   };
 
   const handleSchoolSelection = (schools: SchoolData[]) => {
@@ -104,7 +102,6 @@ export default function AutoComposePage() {
       let content = selectedTemplate.content.content || '';
       let subject = selectedTemplate.content.title || '';
 
-      // Replace placeholders in content and subject
       [content, subject] = [content, subject].map(text =>
         text.replace(/\[schoolName\]/g, school.school)
           .replace(/\[coachNames\]/g, school.coaches.map(coach => coach.name).join(', '))
@@ -120,97 +117,25 @@ export default function AutoComposePage() {
     setPreviewEmails(newPreviews);
   };
 
-  const sendEmail = async (emailData: EmailPreviewData, schoolId: string, schoolName: string) => {
-    try {
-      console.log(`Starting email process for ${schoolName} (ID: ${schoolId})`);
-      setQueueStatus(prev => prev.map(item => 
-        item.schoolId === schoolId ? { ...item, status: 'sending' } : item
-      ));
-
-      // Parse coach emails from the 'to' field
-      const coachEmails = emailData.to.split(', ').reduce<Record<string, string>>((acc, email, index) => {
-        acc[`Coach ${index + 1}`] = email.trim();
-        return acc;
-      }, {});
-
-      console.log('Coach emails prepared:', coachEmails);
-
-      console.log('Storing coach emails...');
-      const { error: storeError } = await supabase
-        .from('school_coach_emails')
-        .upsert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          school_id: schoolId,
-          coach_emails: coachEmails
-        }, {
-          onConflict: 'user_id,school_id'
-        });
-
-      if (storeError) {
-        console.error('Failed to store coach emails:', storeError);
-        throw new Error(`Failed to store coach emails: ${storeError.message}`);
-      }
-
-      console.log('Coach emails stored successfully');
-
-      console.log('Sending email...');
-      const response = await fetch('/api/sendEmail', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...emailData,
-          coachEmails,
-          schoolName,
-          schoolId
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Failed to send email:', errorData);
-        throw new Error(`Failed to send email: ${JSON.stringify(errorData)}`);
-      }
-
-      const responseData = await response.json();
-      console.log('Email sent successfully:', responseData);
-
-      setQueueStatus(prev => prev.map(item => 
-        item.schoolId === schoolId 
-          ? { ...item, status: 'sent', timestamp: new Date().toISOString() }
-          : item
-      ));
-    } catch (error) {
-      console.error(`Error sending email for ${schoolName} (ID: ${schoolId}):`, error);
-      setQueueStatus(prev => prev.map(item => 
-        item.schoolId === schoolId 
-          ? { ...item, status: 'failed', timestamp: new Date().toISOString() }
-          : item
-      ));
-    }
-  };
-
-  const processQueue = async (queue: { emailData: EmailPreviewData, schoolId: string, schoolName: string }[]) => {
-    const processNextBatch = async () => {
-      if (queue.length === 0) {
-        setIsSending(false);
-        return;
-      }
-
-      const batch = queue.slice(0, 2);  // Process 2 emails at a time
-      queue = queue.slice(2);
-
-      await Promise.all(batch.map(item => sendEmail(item.emailData, item.schoolId, item.schoolName)));
-
-      // Wait for 1 second before processing the next batch
-      setTimeout(() => processNextBatch(), 1000);
-    };
-
-    await processNextBatch();
-  };
-
   const handleSubmit = async () => {
-    if (selectedSchools.length === 0 || !selectedTemplate) {
-      alert("Please select schools and a template.");
+    if (!selectedTemplate || selectedSchools.length === 0 || !user) return;
+
+    const canSendEmails = await checkUserLimits((user as any)?.id, 'school');
+    const canUseTemplate = await checkUserLimits((user as any)?.id, 'template');
+    const canUseAI = await checkUserLimits((user as any)?.id, 'aiCall');
+
+    if (!canSendEmails) {
+      alert('You have reached your school limit. Please upgrade your plan to send more emails.');
+      return;
+    }
+
+    if (!canUseTemplate) {
+      alert('You have reached your template usage limit. Please upgrade your plan to use more templates.');
+      return;
+    }
+
+    if (!canUseAI) {
+      alert('You have reached your AI usage limit. Please upgrade your plan to use more AI features.');
       return;
     }
 
@@ -219,7 +144,7 @@ export default function AutoComposePage() {
     const emailQueue = selectedSchools.map(school => ({
       emailData: previewEmails[school.id],
       schoolId: school.id,
-      schoolName: school.school  // Assuming the school object has a 'school' property with the name
+      schoolName: school.school
     }));
 
     setQueueStatus(emailQueue.map(item => ({
@@ -232,62 +157,114 @@ export default function AutoComposePage() {
     processQueue(emailQueue);
   };
 
-  useEffect(() => {
-    const statusElement = document.getElementById('queue-status');
-    if (statusElement) {
-      statusElement.scrollTop = statusElement.scrollHeight;
+  const processQueue = async (queue: { emailData: EmailPreviewData, schoolId: string, schoolName: string }[]) => {
+    const processNextBatch = async () => {
+      if (queue.length === 0) {
+        setIsSending(false);
+        return;
+      }
+
+      const batch = queue.slice(0, 2);
+      queue = queue.slice(2);
+
+      await Promise.all(batch.map(item => sendEmail(item.emailData, item.schoolId, item.schoolName)));
+
+      setTimeout(() => processNextBatch(), 1000);
+    };
+
+    await processNextBatch();
+  };
+
+  const sendEmail = async (emailData: EmailPreviewData, schoolId: string, schoolName: string) => {
+    try {
+      console.log(`Starting email process for ${schoolName} (ID: ${schoolId})`);
+      setQueueStatus(prev => prev.map(item => 
+        item.schoolId === schoolId ? { ...item, status: 'sending' } : item
+      ));
+
+      const response = await fetch('/api/sendEmail', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(emailData),
+      });
+
+      if (!response.ok) throw new Error('Failed to send email');
+
+      setQueueStatus(prev => prev.map(item => 
+        item.schoolId === schoolId 
+          ? { ...item, status: 'sent', timestamp: new Date().toISOString() }
+          : item
+      ));
+
+      if (user && 'id' in user) {
+        await incrementUsage(user.id, 'school');
+      } else {
+        console.error('User is null or does not have an id property');
+      }
+    } catch (error) {
+      console.error(error);
+      setQueueStatus(prev => prev.map(item => 
+        item.schoolId === schoolId 
+          ? { ...item, status: 'failed', timestamp: new Date().toISOString() }
+          : item
+      ));
     }
-  }, [queueStatus]);
+  };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gray-100">
-      <div className="md:w-1/4 w-full">
-        <Sidebar onSelectSchools={handleSchoolSelection} />
-      </div>
+    <div className="flex flex-col md:flex-row h-screen bg-gradient-to-br from-blue-50 to-blue-100">
+      {/* Sidebar */}
+      <Sidebar onSelectSchools={handleSchoolSelection} />
 
-      <div className="flex-1 p-6 w-full md:w-3/4">
-        <h1 className="text-3xl font-bold mb-8 text-gray-800">Auto Compose</h1>
+      {/* Main Content Area */}
+      <motion.div
+        className="flex-1 p-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-50 to-babyblue-200 p-8 shadow-xl rounded-2xl">
+          <h1 className="text-3xl font-bold mb-6 text-blue-800">Auto Compose</h1>
 
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700">Choose Template</h2>
-          <button
-            onClick={() => setShowTemplateModal(true)}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-          >
-            Select Template
-          </button>
-        </div>
-
-        <button
-          onClick={handleSubmit}
-          className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-lg font-semibold"
-          disabled={selectedSchools.length === 0 || !selectedTemplate || isSending}
-        >
-          {isSending ? 'Sending...' : 'Send Emails'}
-        </button>
-
-        <TemplateModal
-          isOpen={showTemplateModal}
-          onClose={() => setShowTemplateModal(false)}
-          templates={templates}
-          onSelectTemplate={handleTemplateSelection}
-        />
-
-        {selectedTemplate && selectedSchools.length > 0 && (
-          <div className="mb-8">
-            <EmailPreview
-              schools={selectedSchools}
-              previewEmails={previewEmails}
-            />
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-2 text-blue-700">Choose Template</h2>
+            <button
+              onClick={() => setShowTemplateModal(true)}
+              className="px-4 py-2 bg-blue-400 text-black rounded-full hover:bg-blue-700 transition-colors shadow-md"
+            >
+              Select Template
+            </button>
           </div>
-        )}
 
-        <div className="flex flex-col items-start">
+          <button
+            onClick={handleSubmit}
+            className="w-full py-3 bg-blue-400 text-black rounded-full hover:bg-blue-700 transition-colors text-lg font-semibold shadow-md mb-4"
+            disabled={selectedSchools.length === 0 || !selectedTemplate || isSending}
+          >
+            {isSending ? 'Sending...' : 'Send Emails'}
+          </button>
+
+          <TemplateModal
+            isOpen={showTemplateModal}
+            onClose={() => setShowTemplateModal(false)}
+            templates={templates}
+            onSelectTemplate={handleTemplateSelection}
+          />
+
+          {selectedTemplate && selectedSchools.length > 0 && (
+            <div className="mt-6">
+              <EmailPreview
+                schools={selectedSchools}
+                previewEmails={previewEmails}
+              />
+            </div>
+          )}
+
           <div className="mt-6">
             <QueueStatus status={queueStatus} />
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

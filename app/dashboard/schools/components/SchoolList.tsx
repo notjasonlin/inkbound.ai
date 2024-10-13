@@ -6,6 +6,7 @@ import SearchBar, { SearchFilters } from './SearchBar';
 import { SchoolData } from '@/types/school';
 import SchoolPreview from './SchoolPreview';
 import FavoriteButton from '../[school]/components/FavoriteButton';
+import { useFavorites } from '../../schools/[school]/components/FavoritesProvider';
 
 interface SchoolListProps {
   schools: SchoolData[];
@@ -19,6 +20,7 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
   const [hoveredSchool, setHoveredSchool] = useState<SchoolData | null>(null);
   const [lastHoveredSchool, setLastHoveredSchool] = useState<SchoolData | null>(null);  // Track the last hovered school
   const schoolsPerPage = 10;
+  const { favorites, toggleFavorite } = useFavorites();
 
   useEffect(() => {
     console.log('Total schools:', schools.length);
@@ -108,7 +110,7 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
   return (
     <div className="flex flex-col h-screen">
       {/* Search bar fixed at the top, spanning across */}
-      <div className="p-4 bg-white z-10 w-full">
+      <div className="p-4 bg-blue-75 z-10 w-full">
         <SearchBar onSearch={handleSearch} />
       </div>
 
@@ -125,34 +127,22 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
                 <li
                   key={school.id || index}
                   className="flex justify-between items-center border p-3 rounded-lg text-base font-semibold hover:bg-gray-100 cursor-pointer"
-                  onMouseEnter={() => { setHoveredSchool(school); setLastHoveredSchool(school); }}  // Set hovered school and track it
-                  onMouseLeave={() => setHoveredSchool(null)}  // Reset on mouse leave
+                  onMouseEnter={() => { setHoveredSchool(school); setLastHoveredSchool(school); }}
+                  onMouseLeave={() => setHoveredSchool(null)}
                 >
-                  <Link href={`/dashboard/schools/${encodeURIComponent(school.school)}`}>
-                    {school.school}
-                  </Link>
-                  <FavoriteButton userId={userID} schoolData={school}/>
-                  <div className="relative">
-                    <button
-                      onClick={() => toggleDropdown(school.school)}
-                      className="bg-blue-500 text-white px-3 py-2 rounded-lg"
-                    >
-                      ⋮
-                    </button>
-                    {openDropdown === school.school && (
-                      <div className="absolute right-0 mt-2 w-48 bg-white border rounded shadow-lg">
-                        <Link
-                          href={`/dashboard/schools/${encodeURIComponent(school.school)}`}
-                          className="block px-4 py-2 hover:bg-gray-100"
-                        >
-                          View Details
-                        </Link>
-                      </div>
-                    )}
+                  <div className="flex items-center w-full space-x-4">
+                    {/* School name with link */}
+                    <Link href={`/dashboard/schools/${encodeURIComponent(school.school)}`} className="flex-grow">
+                      {school.school}
+                    </Link>
+
+                    {/* Favorite button with added right margin */}
+                    <FavoriteButton school={school} userId={userID} />
                   </div>
                 </li>
               ))}
             </ul>
+
           </div>
         </div>
 

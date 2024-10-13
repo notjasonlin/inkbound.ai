@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { debounce } from 'lodash';
+import AIChatHelper from './AIChatHelper';
 
 interface Template {
   id: string;
@@ -19,15 +20,28 @@ const placeholders = [
   { label: 'Coach', value: '[coachLastName]' }
 ];
 
+const handleDragStart = (e: React.DragEvent, value: string) => {
+  e.dataTransfer.setData('text/plain', value);
+};
+
 export default function TemplateEditor({ template, userId }: { template: Template; userId: string }) {
   const [title, setTitle] = useState(template.title);
   const [itemTitle, setItemTitle] = useState(template.content?.title || '');
   const [itemContent, setItemContent] = useState(template.content?.content || '');
   const [error, setError] = useState<string | null>(null);
+  const [selectedText, setSelectedText] = useState('');
+  const [showAIHelper, setShowAIHelper] = useState(false);
+  const [aiHelperPosition, setAIHelperPosition] = useState({ top: 0, left: 0 });
+  const [history, setHistory] = useState<string[]>([template.content?.content || '']);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const router = useRouter();
-  const editorRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLTextAreaElement>(null);
+  const isUpdatingRef = useRef(false);
 
   const saveTemplate = useCallback(async (newTitle: string, newItemTitle: string, newItemContent: string) => {
+    if (isUpdatingRef.current) return;
+    isUpdatingRef.current = true;
     setError(null);
     const supabase = createClient();
     
@@ -50,6 +64,8 @@ export default function TemplateEditor({ template, userId }: { template: Templat
     } catch (error) {
       console.error('Error saving template:', error);
       setError('Failed to save template. Please try again.');
+    } finally {
+      isUpdatingRef.current = false;
     }
   }, [template.id, userId, router]);
 
@@ -59,94 +75,84 @@ export default function TemplateEditor({ template, userId }: { template: Templat
     debouncedSave(title, itemTitle, itemContent);
   }, [title, itemTitle, itemContent, debouncedSave]);
 
-  const handleDragStart = (e: React.DragEvent, placeholder: string) => {
-    e.dataTransfer.setData('text/plain', placeholder);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const placeholder = e.dataTransfer.getData('text');
-    insertPlaceholder(placeholder);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const insertPlaceholder = (placeholder: string) => {
-    const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      const placeholderSpan = createPlaceholderSpan(placeholder);
-      range.deleteContents();
-      range.insertNode(placeholderSpan);
-      range.setStartAfter(placeholderSpan);
-      range.setEndAfter(placeholderSpan);
-      selection.removeAllRanges();
-      selection.addRange(range);
-      updateContent();
+  const updateContent = useCallback((newContent: string) => {
+    if (newContent !== itemContent) {
+      setItemContent(newContent);
+      setHistory(prev => [...prev.slice(0, historyIndex + 1), newContent]);
+      setHistoryIndex(prev => prev + 1);
     }
-  };
+  }, [itemContent, historyIndex]);
 
-  const createPlaceholderSpan = (placeholder: string) => {
-    const span = document.createElement('span');
-    span.className = 'bg-blue-100 text-blue-800 px-2 py-1 rounded-full inline-block';
-    span.contentEditable = 'false';
-    span.setAttribute('data-placeholder', placeholder);
-    span.textContent = placeholders.find(p => p.value === placeholder)?.label || placeholder;
-    return span;
-  };
+  const undo = useCallback(() => {
+    if (historyIndex > 0) {
+      setHistoryIndex(prev => prev - 1);
+      setItemContent(history[historyIndex - 1]);
+    }
+  }, [history, historyIndex]);
 
-  const updateContent = () => {
+  const redo = useCallback(() => {
+    if (historyIndex < history.length - 1) {
+      setHistoryIndex(prev => prev + 1);
+      setItemContent(history[historyIndex + 1]);
+    }
+  }, [history, historyIndex]);
+
+  const handleInput = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    updateContent(e.target.value);
+  }, [updateContent]);
+
+  const handleTextSelection = () => {
     if (editorRef.current) {
-      const content = editorRef.current.innerHTML;
-      setItemContent(content);
-    }
-  };
+      const start = editorRef.current.selectionStart;
+      const end = editorRef.current.selectionEnd;
+      setSelectedText(itemContent.substring(start, end));
 
-  const handleInput = () => {
-    const selection = window.getSelection();
-    if (!selection || !selection.rangeCount) return;
-
-    const range = selection.getRangeAt(0);
-    const node = range.startContainer;
-    
-    if (node.nodeType === Node.TEXT_NODE) {
-      const text = node.textContent || '';
-      const cursorPosition = range.startOffset;
-
-      for (const placeholder of placeholders) {
-        const placeholderIndex = text.lastIndexOf(placeholder.value, cursorPosition);
-        if (placeholderIndex !== -1 && placeholderIndex + placeholder.value.length === cursorPosition) {
-          const placeholderSpan = createPlaceholderSpan(placeholder.value);
-          const textBefore = text.substring(0, placeholderIndex);
-          const textAfter = text.substring(cursorPosition);
-
-          const newTextNode = document.createTextNode(textBefore + textAfter);
-          node.parentNode?.replaceChild(newTextNode, node);
-          newTextNode.parentNode?.insertBefore(placeholderSpan, newTextNode.nextSibling);
-
-          range.setStartAfter(placeholderSpan);
-          range.setEndAfter(placeholderSpan);
-          selection.removeAllRanges();
-          selection.addRange(range);
-
-          updateContent();
-          return; // Exit the function instead of using break
-        }
+      if (start !== end) {
+        const rect = editorRef.current.getBoundingClientRect();
+        setAIHelperPosition({
+          top: rect.bottom + window.scrollY,
+          left: rect.left + window.scrollX,
+        });
+        setShowAIHelper(true);
+      } else {
+        setShowAIHelper(false);
       }
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      document.execCommand('insertLineBreak');
+  const insertPlaceholder = (placeholder: string) => {
+    if (editorRef.current) {
+      const start = editorRef.current.selectionStart;
+      const end = editorRef.current.selectionEnd;
+      const newContent = itemContent.substring(0, start) + placeholder + itemContent.substring(end);
+      updateContent(newContent);
+      
+      // Set cursor position after the inserted placeholder
+      setTimeout(() => {
+        if (editorRef.current) {
+          editorRef.current.selectionStart = editorRef.current.selectionEnd = start + placeholder.length;
+          editorRef.current.focus();
+        }
+      }, 0);
     }
   };
 
-  const escapeRegExp = (string: string) => {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const applySuggestion = (suggestion: string) => {
+    if (editorRef.current) {
+      const start = editorRef.current.selectionStart;
+      const end = editorRef.current.selectionEnd;
+      const newContent = itemContent.substring(0, start) + suggestion + itemContent.substring(end);
+      updateContent(newContent);
+      
+      // Set cursor position after the inserted suggestion
+      setTimeout(() => {
+        if (editorRef.current) {
+          editorRef.current.selectionStart = editorRef.current.selectionEnd = start + suggestion.length;
+          editorRef.current.focus();
+        }
+      }, 0);
+    }
+    setSuggestions([]);
   };
 
   return (
@@ -187,18 +193,46 @@ export default function TemplateEditor({ template, userId }: { template: Templat
             ))}
           </div>
         </div>
-        <div
+        <div className="flex space-x-2 mb-2">
+          <button onClick={undo} className="px-2 py-1 bg-gray-200 rounded">Undo</button>
+          <button onClick={redo} className="px-2 py-1 bg-gray-200 rounded">Redo</button>
+        </div>
+        <textarea
           ref={editorRef}
-          contentEditable
-          onInput={handleInput}
-          onKeyDown={handleKeyDown}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          dangerouslySetInnerHTML={{ __html: itemContent }}
+          value={itemContent}
+          onChange={handleInput}
+          onSelect={handleTextSelection}
           className="block w-full p-3 min-h-[16rem] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-auto"
           style={{ whiteSpace: 'pre-wrap' }}
         />
       </div>
+      {showAIHelper && (
+        <div style={{ position: 'absolute', top: aiHelperPosition.top, left: aiHelperPosition.left }}>
+          <AIChatHelper 
+            selectedText={selectedText} 
+            onSuggest={setSuggestions} 
+            placeholders={placeholders}
+          />
+        </div>
+      )}
+      {suggestions.length > 0 && (
+        <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+          <h3 className="text-lg font-semibold mb-2">AI Suggestions:</h3>
+          <ul className="space-y-2">
+            {suggestions.map((suggestion, index) => (
+              <li key={index} className="flex items-center">
+                <button 
+                  onClick={() => applySuggestion(suggestion)}
+                  className="bg-blue-500 text-white px-2 py-1 rounded mr-2 hover:bg-blue-600"
+                >
+                  Apply
+                </button>
+                <span>{suggestion}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {error && <div className="text-red-500 mt-4">{error}</div>}
     </div>
   );
