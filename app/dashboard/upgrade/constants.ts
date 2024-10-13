@@ -6,6 +6,9 @@ export type Plan = {
   features: string[];
   stripePriceIdMonthly: string;
   stripePriceIdYearly: string;
+  schoolLimit: number;
+  templateLimit: number;
+  aiCallLimit: number;
 };
 
 export const plans: Plan[] = [
@@ -20,7 +23,10 @@ export const plans: Plan[] = [
       'Limited email templates'
     ],
     stripePriceIdMonthly: '',
-    stripePriceIdYearly: ''
+    stripePriceIdYearly: '',
+    schoolLimit: 1,
+    templateLimit: 5,
+    aiCallLimit: 10
   },
   {
     id: 'plus',
@@ -33,7 +39,10 @@ export const plans: Plan[] = [
       'Advanced email templates'
     ],
     stripePriceIdMonthly: 'price_MONTHLY_PLUS_ID',
-    stripePriceIdYearly: 'price_YEARLY_PLUS_ID'
+    stripePriceIdYearly: 'price_YEARLY_PLUS_ID',
+    schoolLimit: 20,
+    templateLimit: 20,
+    aiCallLimit: 100
   },
   {
     id: 'pro',
@@ -47,6 +56,9 @@ export const plans: Plan[] = [
       'Personalized advice'
     ],
     stripePriceIdMonthly: 'price_MONTHLY_PRO_ID',
-    stripePriceIdYearly: 'price_YEARLY_PRO_ID'
+    stripePriceIdYearly: 'price_YEARLY_PRO_ID',
+    schoolLimit: Infinity,
+    templateLimit: Infinity,
+    aiCallLimit: Infinity
   }
 ];

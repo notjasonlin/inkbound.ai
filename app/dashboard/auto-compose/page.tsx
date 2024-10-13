@@ -9,6 +9,8 @@ import TemplateModal from './components/TemplateModal';
 import Sidebar from './components/Sidebar';
 import { TemplateData } from '@/types/template/index';
 import { motion } from 'framer-motion';
+import { checkUserLimits, incrementUsage } from '@/utils/checkUserLimits';
+import { User } from '@supabase/supabase-js';
 
 interface EmailPreviewData {
   to: string;
@@ -34,10 +36,12 @@ export default function AutoComposePage() {
   const [isSending, setIsSending] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const supabase = createClient();
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     fetchFavoriteSchools();
     fetchTemplates();
+    fetchUser();
   }, []);
 
   useEffect(() => {
@@ -76,6 +80,11 @@ export default function AutoComposePage() {
     }
   };
 
+  const fetchUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  };
+
   const handleSchoolSelection = (schools: SchoolData[]) => {
     setSelectedSchools(schools);
   };
@@ -109,8 +118,24 @@ export default function AutoComposePage() {
   };
 
   const handleSubmit = async () => {
-    if (selectedSchools.length === 0 || !selectedTemplate) {
-      alert("Please select schools and a template.");
+    if (!selectedTemplate || selectedSchools.length === 0 || !user) return;
+
+    const canSendEmails = await checkUserLimits((user as any)?.id, 'school');
+    const canUseTemplate = await checkUserLimits((user as any)?.id, 'template');
+    const canUseAI = await checkUserLimits((user as any)?.id, 'aiCall');
+
+    if (!canSendEmails) {
+      alert('You have reached your school limit. Please upgrade your plan to send more emails.');
+      return;
+    }
+
+    if (!canUseTemplate) {
+      alert('You have reached your template usage limit. Please upgrade your plan to use more templates.');
+      return;
+    }
+
+    if (!canUseAI) {
+      alert('You have reached your AI usage limit. Please upgrade your plan to use more AI features.');
       return;
     }
 
@@ -170,6 +195,12 @@ export default function AutoComposePage() {
           ? { ...item, status: 'sent', timestamp: new Date().toISOString() }
           : item
       ));
+
+      if (user && 'id' in user) {
+        await incrementUsage(user.id, 'school');
+      } else {
+        console.error('User is null or does not have an id property');
+      }
     } catch (error) {
       console.error(error);
       setQueueStatus(prev => prev.map(item => 

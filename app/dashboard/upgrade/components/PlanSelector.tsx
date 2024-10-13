@@ -36,9 +36,10 @@ export default function PlanSelector({ plans, selectedPlan, onSelectPlan }: Plan
       </div>
       <div className="flex flex-col md:flex-row justify-center items-stretch space-y-6 md:space-y-0 md:space-x-6 px-4 mb-8">
         {plans.map((plan, index) => {
-          const monthlyPrice = billingInterval === 'month' ? plan.price : plan.price * 10 / 12;
-          const yearlyPrice = plan.price * 10;
           const bgColor = index === 0 ? 'bg-white' : index === 1 ? 'bg-blue-50' : 'bg-blue-100';
+          const monthlyPrice = plan.name === 'Plus' ? 10 : plan.name === 'Pro' ? 30 : 0;
+          const yearlyPrice = Math.floor(monthlyPrice * 12 * 0.8); // 20% discount, rounded down
+          const displayPrice = billingInterval === 'year' ? Math.floor(yearlyPrice / 12) : monthlyPrice;
 
           return (
             <motion.div
@@ -51,16 +52,14 @@ export default function PlanSelector({ plans, selectedPlan, onSelectPlan }: Plan
               <div>
                 <h3 className="text-2xl font-semibold mb-2">{plan.name}</h3>
                 <p className="text-sm text-gray-600 mb-4">{plan.description}</p>
-                <div className="h-15"> {/* Fixed height container for price */}
-                  <p className="text-4xl font-bold text-gray-800 mb-1">
-                    <span className="inline-block w-32">
-                      {plan.price === 0 ? 'Free' : `$${monthlyPrice.toFixed(2)}`}
-                    </span>
-                    <span className={`text-xl ${billingInterval === 'month' ? 'invisible' : ''}`}>/month</span>
+                <div className="mb-4">
+                  <p className="text-4xl font-bold text-gray-800 flex items-baseline">
+                    <span className="mr-1">{monthlyPrice === 0 ? 'Free' : `$${displayPrice}`}</span>
+                    <span className="text-xl text-gray-600">/mo</span>
                   </p>
-                  {plan.price > 0 && (
-                    <p className="text-sm text-gray-600 mb-4 h-5">
-                      {billingInterval === 'year' ? `$${yearlyPrice.toFixed(2)} billed annually` : '\u00A0'}
+                  {monthlyPrice > 0 && billingInterval === 'year' && (
+                    <p className="text-sm text-gray-600">
+                      ${yearlyPrice} billed annually
                     </p>
                   )}
                 </div>
