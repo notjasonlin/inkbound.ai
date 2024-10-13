@@ -2,75 +2,88 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { plans } from '@/app/dashboard/upgrade/constants';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-06-20', // Use the latest API version
+const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY!, {
+  apiVersion: '2024-06-20',
 });
 
 export async function POST(req: Request) {
-  if (req.method === 'POST') {
-    try {
-      const { planId, userId } = await req.json();
+  try {
+    const { planId, userId, interval } = await req.json();
 
-      // Initialize Supabase client
-      const supabase = createRouteHandlerClient({ cookies });
+    if (!planId || !userId || !interval) {
+      return NextResponse.json({ error: 'Missing planId, userId, or interval' }, { status: 400 });
+    }
 
-      // Fetch the user's data
-      const { data: userData, error: userError } = await supabase
+    const plan = plans.find(p => p.id === planId);
+    if (!plan) {
+      return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
+    }
+
+    const priceId = interval === 'month' ? plan.stripePriceIdMonthly : plan.stripePriceIdYearly;
+    if (!priceId) {
+      return NextResponse.json({ error: 'Invalid price for the selected plan and interval' }, { status: 400 });
+    }
+
+    const supabase = createRouteHandlerClient({ cookies });
+
+    const { data: userData, error: userError } = await supabase
+      .from('user_subscriptions')
+      .select('stripe_customer_id')
+      .eq('user_id', userId)
+      .single();
+
+    if (userError) throw userError;
+
+    let customerId = userData?.stripe_customer_id;
+
+    if (!customerId) {
+      const { data: userEmail } = await supabase
         .from('users')
-        .select('stripe_customer_id')
+        .select('email')
         .eq('id', userId)
         .single();
 
-      if (userError) throw userError;
-
-      let customerId = userData?.stripe_customer_id;
-
-      // If the user doesn't have a Stripe customer ID, create one
-      if (!customerId) {
-        const { data: { user } } = await supabase.auth.getUser();
-        const customer = await stripe.customers.create({
-          email: user?.email,
-          metadata: { userId },
-        });
-        customerId = customer.id;
-
-        // Save the Stripe customer ID to the user's record
-        await supabase
-          .from('users')
-          .update({ stripe_customer_id: customerId })
-          .eq('id', userId);
-      }
-
-      // Fetch the plan details
-      const { data: planData, error: planError } = await supabase
-        .from('plans')
-        .select('stripe_price_id')
-        .eq('id', planId)
-        .single();
-
-      if (planError) throw planError;
-
-      // Create a Checkout Session
-      const session = await stripe.checkout.sessions.create({
-        customer: customerId,
-        line_items: [
-          {
-            price: planData.stripe_price_id,
-            quantity: 1,
-          },
-        ],
-        mode: 'subscription',
-        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/upgrade`,
+      const customer = await stripe.customers.create({
+        email: userEmail?.email,
+        metadata: { userId },
       });
+      customerId = customer.id;
 
-      return NextResponse.json({ sessionId: session.id });
-    } catch (error) {
-      console.error('Error creating subscription:', error);
-      return NextResponse.json({ error: 'Failed to create subscription' }, { status: 500 });
+      await supabase
+        .from('user_subscriptions')
+        .update({ stripe_customer_id: customerId })
+        .eq('user_id', userId);
     }
-  } else {
-    return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      mode: 'subscription',
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard/upgrade`,
+      metadata: { 
+        userId, 
+        planId, 
+        interval,
+        schoolLimit: plan.schoolLimit.toString(),
+        templateLimit: plan.templateLimit.toString(),
+        aiCallLimit: plan.aiCallLimit.toString(),
+      },
+    });
+
+    return NextResponse.json({ url: session.url });
+  } catch (error) {
+    console.error('Error:', error);
+    if (error instanceof Stripe.errors.StripeError) {
+      console.error('Stripe error details:', error.message);
+    }
+    
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return NextResponse.json(
+      { error: 'Failed to create subscription', details: errorMessage }, 
+      { status: 500 }
+    );
   }
 }

@@ -1,7 +1,8 @@
 export type Plan = {
   id: string;
   name: string;
-  price: number;
+  priceMonthly: number;
+  priceYearly: number;
   description: string;
   features: string[];
   stripePriceIdMonthly: string;
@@ -15,7 +16,8 @@ export const plans: Plan[] = [
   {
     id: 'basic',
     name: 'Basic',
-    price: 0,
+    priceMonthly: 0,
+    priceYearly: 0,
     description: "You'll want to upgrade soon",
     features: [
       'Access to 1 school',
@@ -31,15 +33,16 @@ export const plans: Plan[] = [
   {
     id: 'plus',
     name: 'Plus',
-    price: 10,
+    priceMonthly: 10,
+    priceYearly: 96,
     description: 'For up to 20 schools',
     features: [
       'Access to 20 schools',
       'Priority support',
       'Advanced email templates'
     ],
-    stripePriceIdMonthly: 'price_MONTHLY_PLUS_ID',
-    stripePriceIdYearly: 'price_YEARLY_PLUS_ID',
+    stripePriceIdMonthly: 'price_1Q9YqsGqe0TKVbR1FaJAjC3b',
+    stripePriceIdYearly: 'price_1Q9YqsGqe0TKVbR12kgmVhwP',
     schoolLimit: 20,
     templateLimit: 20,
     aiCallLimit: 100
@@ -47,7 +50,8 @@ export const plans: Plan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    price: 30,
+    priceMonthly: 30,
+    priceYearly: 288,
     description: 'Unlimited schools access',
     features: [
       'Unlimited schools',
@@ -55,10 +59,10 @@ export const plans: Plan[] = [
       'Custom email templates',
       'Personalized advice'
     ],
-    stripePriceIdMonthly: 'price_MONTHLY_PRO_ID',
-    stripePriceIdYearly: 'price_YEARLY_PRO_ID',
-    schoolLimit: Infinity,
-    templateLimit: Infinity,
-    aiCallLimit: Infinity
+    stripePriceIdMonthly: 'price_1Q9YrqGqe0TKVbR1zdGLM31V',
+    stripePriceIdYearly: 'price_1Q9YrqGqe0TKVbR16RwbB8bh',
+    schoolLimit: 9999,
+    templateLimit: 9999,
+    aiCallLimit: 9999
   }
 ];

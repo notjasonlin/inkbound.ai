@@ -38,12 +38,14 @@ export default function UpgradePage() {
     setIsLoading(true);
     
     try {
+      const productId = interval === 'month' ? plan.stripePriceIdMonthly : plan.stripePriceIdYearly;
       const response = await fetch('/api/create-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          planId: plan.id,
+          productId,
           userId: user.id,
+          planId: plan.id,
           interval
         }),
       });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { plans } from '@/app/dashboard/upgrade/constants';
 
 const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY!, {
   apiVersion: '2024-06-20',
@@ -17,7 +18,6 @@ export const runtime = 'edge';
 export async function POST(req: NextRequest) {
   const signature = req.headers.get('stripe-signature');
   console.log('Received webhook request');
-  console.log('Headers:', JSON.stringify(Object.fromEntries(req.headers)));
 
   if (!signature) {
     console.error('Missing Stripe signature');
@@ -41,36 +41,80 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Webhook signature verification failed: ' + err.message }, { status: 400 });
     }
 
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
-      const userId = session.client_reference_id;
-      const credits = parseInt(session.metadata?.credits || '0', 10);
-
-      console.log('Processing checkout.session.completed', { userId, credits });
-
-      if (userId && credits) {
-        console.log('Adding credits to user', userId);
-        const { data, error } = await supabase.rpc('add_credits', {
-          p_user_id: userId,
-          p_credit_amount: credits
-        });
-
-        if (error) {
-          console.error('Error adding credits:', error);
-          return NextResponse.json({ error: 'Failed to add credits: ' + error.message }, { status: 500 });
-        }
-
-        console.log('Credits added successfully:', data);
-        return NextResponse.json({ received: true, credits_added: credits, new_balance: data }, { status: 200 });
-      } else {
-        console.error('Missing userId or credits in session');
-        return NextResponse.json({ error: 'Missing userId or credits' }, { status: 400 });
-      }
+    switch (event.type) {
+      case 'checkout.session.completed':
+        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
+      case 'customer.subscription.updated':
+      case 'customer.subscription.deleted':
+        await handleSubscriptionUpdate(event.data.object as Stripe.Subscription);
+        break;
+      // Add more cases as needed
     }
 
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (err: any) {
     console.error('Error processing webhook:', err);
     return NextResponse.json({ error: 'Webhook error: ' + err.message }, { status: 400 });
+  }
+}
+
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+  const userId = session.client_reference_id;
+  const subscriptionId = session.subscription as string;
+
+  if (userId && subscriptionId) {
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    await updateUserSubscription(userId, subscription);
+  } else {
+    console.error('Missing userId or subscriptionId in session');
+  }
+}
+
+async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
+  const userId = subscription.metadata.userId;
+  if (userId) {
+    await updateUserSubscription(userId, subscription);
+  } else {
+    console.error('Missing userId in subscription metadata');
+  }
+}
+
+async function updateUserSubscription(userId: string, subscription: Stripe.Subscription) {
+  const priceId = subscription.items.data[0].price.id;
+  const plan = plans.find(p => p.stripePriceIdMonthly === priceId || p.stripePriceIdYearly === priceId);
+
+  if (!plan) {
+    console.error('No matching plan found for price:', priceId);
+    return;
+  }
+
+  const { error: subscriptionError } = await supabase
+    .from('user_subscriptions')
+    .upsert({
+      user_id: userId,
+      stripe_subscription_id: subscription.id,
+      stripe_customer_id: subscription.customer as string,
+      plan_id: plan.id,
+      status: subscription.status,
+      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+    });
+
+  if (subscriptionError) {
+    console.error('Error updating user_subscriptions:', subscriptionError);
+  }
+
+  const { error: userError } = await supabase
+    .from('users')
+    .update({
+      subscription_tier: plan.name,
+      school_limit: plan.schoolLimit,
+      template_limit: plan.templateLimit,
+      ai_call_limit: plan.aiCallLimit,
+    })
+    .eq('id', userId);
+
+  if (userError) {
+    console.error('Error updating users:', userError);
   }
 }
