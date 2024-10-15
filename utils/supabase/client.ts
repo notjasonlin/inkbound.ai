@@ -25,7 +25,8 @@ export async function getCoaches(schoolId?: string) {
   } else {
     const { data, error } = await supabase
       .from("coachinformation")
-      .select("*");
+      .select("*")
+      .limit(20000);
 
     if (error) {
       console.error("Error fetching coaches:", error);

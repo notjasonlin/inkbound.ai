@@ -7,6 +7,8 @@ const SCHOOL = '<span class=\"bg-blue-100 text-blue-800 px-2 py-1 rounded-full i
 export default function readTemplate(template: TemplateData, school?: SchoolData) {
     let content = template.content.content;
 
+    console.log("CONTENT", content);
+
     if (content) {
         const placeholders: string[] = [COACH, SCHOOL];
         let replacements: string[];

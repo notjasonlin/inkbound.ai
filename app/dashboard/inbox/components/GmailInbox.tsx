@@ -64,11 +64,13 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
   };
 
   const handleSendMessage = async () => {
+    console.log("ENTER!");
+
     if (!newMessage.trim() || !selectedCoachEmail || !threadId) return;
 
     setIsSending(true);
     try {
-      const response = await fetch('/api/gmail/sendMessage', {
+      const response = await fetch('/api/gmail', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

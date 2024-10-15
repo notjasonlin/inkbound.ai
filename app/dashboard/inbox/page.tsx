@@ -20,6 +20,7 @@ export default function Inbox() {
         throw new Error('Failed to initialize Gmail client');
       }
       const gmail = await response.json();
+
       setGmailClient(gmail);
     } catch (error) {
       console.error('Error initializing Gmail client:', error);
