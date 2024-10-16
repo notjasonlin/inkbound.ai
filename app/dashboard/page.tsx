@@ -26,7 +26,7 @@ export default async function Dashboard() {
           <DashboardCard title="Profile Completion" value="0%" />
         </div>
         <div className="mt-8">
-          <EmailWidget />
+          {/* <EmailWidget /> */}
         </div>
       </div>
     </div>

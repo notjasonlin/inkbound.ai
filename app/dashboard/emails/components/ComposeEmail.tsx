@@ -4,7 +4,7 @@
 import React, { useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useForm } from 'react-hook-form';
-import Modal from './Modal'; // Adjust the import path as needed
+import Modal from '../../../../components/ui/Modal'; // Adjust the import path as needed
 import 'react-quill/dist/quill.snow.css';
 
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false }) as any;
