@@ -10,12 +10,12 @@ interface School {
 }
 
 interface SchoolSelectorProps {
-  onSelectSchool: (schoolId: string) => void;
+  onSelectSchool: (school: School) => void;
 }
 
 export default function SchoolSelector({ onSelectSchool }: SchoolSelectorProps) {
   const [schools, setSchools] = useState<School[]>([]);
-  const [selectedSchoolId, setSelectedSchoolId] = useState<string | null>(null);
+  const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,7 +33,7 @@ export default function SchoolSelector({ onSelectSchool }: SchoolSelectorProps) 
 
       const { data, error } = await supabase
         .from('school_coach_emails')
-        .select('school_id')
+        .select('school_id, school_name')
         .eq('user_id', user.id);
 
       if (error) {
@@ -42,9 +42,9 @@ export default function SchoolSelector({ onSelectSchool }: SchoolSelectorProps) 
         return;
       }
 
-      const schoolList = data.map((item: { school_id: string }) => ({
+      const schoolList = data.map((item: { school_id: string, school_name: string }) => ({
         id: item.school_id,
-        name: item.school_id, // Replace with school name if available
+        name: item.school_name ? item.school_name : item.school_id, // Replace with school name if available
       }));
 
       setSchools(schoolList);
@@ -54,9 +54,9 @@ export default function SchoolSelector({ onSelectSchool }: SchoolSelectorProps) 
     fetchSchools();
   }, [supabase]);
 
-  const handleSchoolClick = (schoolId: string) => {
-    setSelectedSchoolId(schoolId);
-    onSelectSchool(schoolId);
+  const handleSchoolClick = (school: School) => {
+    setSelectedSchool(school);
+    onSelectSchool(school);
     setIsModalOpen(false);
   };
 
@@ -70,7 +70,7 @@ export default function SchoolSelector({ onSelectSchool }: SchoolSelectorProps) 
         onClick={() => setIsModalOpen(true)}
         className="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors text-left"
       >
-        {selectedSchoolId ? `Selected School: ${selectedSchoolId}` : 'Select a School'}
+        {selectedSchool && selectedSchool.name ? `Selected School: ${selectedSchool.name}` : 'Select a School'}
       </button>
 
       {isModalOpen && (
@@ -102,9 +102,9 @@ export default function SchoolSelector({ onSelectSchool }: SchoolSelectorProps) 
                   <li
                     key={school.id}
                     className={`p-3 hover:bg-blue-100 cursor-pointer transition-colors duration-300 ${
-                      selectedSchoolId === school.id ? 'bg-blue-200' : ''
+                      selectedSchool?.id === school.id ? 'bg-blue-200' : ''
                     }`}
-                    onClick={() => handleSchoolClick(school.id)}
+                    onClick={() => handleSchoolClick(school)}
                   >
                     <span className="text-blue-900 font-medium">{school.name}</span>
                   </li>

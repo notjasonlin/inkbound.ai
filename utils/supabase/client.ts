@@ -33,6 +33,10 @@ export async function getCoaches(schoolId?: string) {
       return [];
     }
 
+    console.log(data.find((item) => {
+      item.school === "Aaron School";
+    }))
+
     return data || [];
   }
 }
@@ -81,6 +85,9 @@ export async function getUniqueSchools() {
 
   const coaches = await getCoaches();
 
+  // const aaron = await getCoaches("842f81af-36e2-4262-801a-05da4498c89e");
+  // console.log(aaron);
+
   coaches.forEach((item) => {
     const curr = schoolsMap.get(item.schoolId);
     if (curr) {
@@ -100,7 +107,7 @@ export async function getUniqueSchools() {
   return uniqueSchools;
 }
 
-export async function getSchool(schoolName: string) {
+export async function getSchool(schoolName: string ) {
   const supabase = createClient();
 
   const { data, error } = await supabase
@@ -138,3 +145,4 @@ export async function getSchool(schoolName: string) {
   console.log(school);
   return school;
 }
+
