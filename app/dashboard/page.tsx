@@ -1,7 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from 'next/navigation';
 import DashboardMenu from './components/DashboardMenu';
-import EmailWidget from "./components/EmailWidget";
+// import EmailWidget from "./components/EmailWidget";
 
 export default async function Dashboard() {
   const supabase = createClient();
