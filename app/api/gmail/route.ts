@@ -66,6 +66,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  console.log("ENTER POST");
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
 

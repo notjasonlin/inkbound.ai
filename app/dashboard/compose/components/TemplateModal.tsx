@@ -1,5 +1,5 @@
 import { TemplateData } from "@/types/template";
-import Modal from "../../emails/components/Modal";
+import Modal from "../../../../components/ui/Modal";
 import readTemplate from "@/functions/readTemplate";
 import TemplateDisplay from "../../profile/templates/components/TemplateDisplay";
 
