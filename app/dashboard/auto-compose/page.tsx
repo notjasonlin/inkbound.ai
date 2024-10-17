@@ -11,6 +11,7 @@ import { TemplateData } from '@/types/template/index';
 import { motion } from 'framer-motion';
 import { checkUserLimits, incrementUsage } from '@/utils/checkUserLimits';
 import { User } from '@supabase/supabase-js';
+import readTemplate from "@/functions/readTemplate";
 
 interface EmailPreviewData {
   to: string;
@@ -99,19 +100,13 @@ export default function AutoComposePage() {
 
     const newPreviews: { [key: string]: EmailPreviewData } = {};
     selectedSchools.forEach(school => {
-      let content = selectedTemplate.content.content || '';
-      let subject = selectedTemplate.content.title || '';
-
-      [content, subject] = [content, subject].map(text =>
-        text.replace(/\[schoolName\]/g, school.school)
-          .replace(/\[coachNames\]/g, school.coaches.map(coach => coach.name).join(', '))
-          .replace(/\[coachLastNames\]/g, school.coaches.map(coach => coach.name.split(' ').pop()).join(', '))
-      );
+      const content = readTemplate(selectedTemplate, school);
+      const subject = selectedTemplate.content.title.replace(/\[schoolName\]/g, school.school);
 
       newPreviews[school.id] = {
         to: school.coaches.map(coach => coach.email).join(', '),
         subject,
-        content
+        content: content || ''
       };
     });
     setPreviewEmails(newPreviews);

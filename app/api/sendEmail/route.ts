@@ -27,18 +27,18 @@ export async function POST(request: Request) {
 
     // Construct email content with coach information
     let emailContent = content;
-    emailContent += '<h2>Coach Information:</h2>';
+    // emailContent += '<h2>Coach Information:</h2>';
 
-    if (coachEmails && Object.keys(coachEmails).length > 0) {
-      emailContent += `<h3>${schoolName} (ID: ${schoolId})</h3>`;
-      emailContent += '<ul>';
-      for (const [coachName, email] of Object.entries(coachEmails)) {
-        emailContent += `<li>${coachName}: ${email}</li>`;
-      }
-      emailContent += '</ul>';
-    } else {
-      emailContent += '<p>No coach information available for this school.</p>';
-    }
+    // if (coachEmails && Object.keys(coachEmails).length > 0) {
+    //   emailContent += `<h3>${schoolName} (ID: ${schoolId})</h3>`;
+    //   emailContent += '<ul>';
+    //   for (const [coachName, email] of Object.entries(coachEmails)) {
+    //     emailContent += `<li>${coachName}: ${email}</li>`;
+    //   }
+    //   emailContent += '</ul>';
+    // } else {
+    //   emailContent += '<p>No coach information available for this school.</p>';
+    // }
 
     // Construct email
     let message = [
