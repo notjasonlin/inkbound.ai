@@ -1,7 +1,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from 'next/navigation';
 import DashboardMenu from './components/DashboardMenu';
-import EmailWidget from "./components/EmailWidget";
+// import EmailWidget from "./components/EmailWidget";
 
 export default async function Dashboard() {
   const supabase = createClient();
@@ -26,7 +26,7 @@ export default async function Dashboard() {
           <DashboardCard title="Profile Completion" value="0%" />
         </div>
         <div className="mt-8">
-          <EmailWidget />
+          {/* <EmailWidget /> */}
         </div>
       </div>
     </div>
