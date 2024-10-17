@@ -37,8 +37,8 @@ export default function PlanSelector({ plans, selectedPlan, onSelectPlan }: Plan
       <div className="flex flex-col md:flex-row justify-center items-stretch space-y-6 md:space-y-0 md:space-x-6 px-4 mb-8">
         {plans.map((plan, index) => {
           const bgColor = index === 0 ? 'bg-white' : index === 1 ? 'bg-blue-50' : 'bg-blue-100';
-          const monthlyPrice = plan.name === 'Plus' ? 10 : plan.name === 'Pro' ? 30 : 0;
-          const yearlyPrice = Math.floor(monthlyPrice * 12 * 0.8); // 20% discount, rounded down
+          const monthlyPrice = plan.name === 'Plus' ? 9 : plan.name === 'Pro' ? 29 : 0;
+          const yearlyPrice = plan.name === 'Plus' ? 72 : plan.name === 'Pro' ? 240 : 0;
           const displayPrice = billingInterval === 'year' ? Math.floor(yearlyPrice / 12) : monthlyPrice;
 
           return (
