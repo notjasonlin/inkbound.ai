@@ -8,6 +8,7 @@ import AIChatHelper from './AIChatHelper';
 
 interface Template {
   id: string;
+  user_id: string;
   title: string;
   content: {
     title: string;
@@ -24,7 +25,7 @@ const handleDragStart = (e: React.DragEvent, value: string) => {
   e.dataTransfer.setData('text/plain', value);
 };
 
-export default function TemplateEditor({ template, userId }: { template: Template; userId: string }) {
+export default function TemplateEditor({ templateId }: { templateId: string; }) {
   const [title, setTitle] = useState(template.title);
   const [itemTitle, setItemTitle] = useState(template.content?.title || '');
   const [itemContent, setItemContent] = useState(template.content?.content || '');
@@ -39,6 +40,12 @@ export default function TemplateEditor({ template, userId }: { template: Templat
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const isUpdatingRef = useRef(false);
 
+  useEffect(() => {
+
+  }, [])
+
+
+
   const saveTemplate = useCallback(async (newTitle: string, newItemTitle: string, newItemContent: string) => {
     if (isUpdatingRef.current) return;
     isUpdatingRef.current = true;
@@ -48,7 +55,7 @@ export default function TemplateEditor({ template, userId }: { template: Templat
     try {
       const { error } = await supabase
         .from('templates')
-        .update({ 
+        .upsert({ 
           title: newTitle, 
           content: { 
             title: newItemTitle, 
@@ -56,7 +63,7 @@ export default function TemplateEditor({ template, userId }: { template: Templat
           } 
         })
         .eq('id', template.id)
-        .eq('user_id', userId);
+        .eq('user_id', template.user_id);
 
       if (error) throw error;
 
@@ -67,7 +74,7 @@ export default function TemplateEditor({ template, userId }: { template: Templat
     } finally {
       isUpdatingRef.current = false;
     }
-  }, [template.id, userId, router]);
+  }, [template.id, template.user_id, router]);
 
   const debouncedSave = useCallback(debounce(saveTemplate, 1000), [saveTemplate]);
 
