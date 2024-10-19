@@ -37,6 +37,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
   const [history, setHistory] = useState<string[]>(['']);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const isUpdatingRef = useRef(false);
@@ -49,6 +50,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
         .select('*')
         .eq("title", templateTitle);
 
+      console.log("TITLE", templateTitle);
       console.log("templates", data);
 
       if (error) {
@@ -68,6 +70,8 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
         setHistory([data[0].content?.content])
       }
 
+      setLoading(false);
+
     }
     grabTemplate();
   }, [])
@@ -80,8 +84,8 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     setError(null);
     const supabase = createClient();
 
-    console.log("ID",template?.id)
-    console.log("USER",template?.user_id);
+    console.log("ID", template?.id)
+    console.log("USER", template?.user_id);
 
 
     try {
@@ -196,83 +200,91 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <Link href="/dashboard/templates" className="text-blue-600 hover:text-blue-800 font-semibold">
-          ← Back to Templates
-        </Link>
-        <h1 className="text-3xl font-bold text-gray-800">{title}</h1>
-      </div>
-      <input
-        type="text"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        className="text-2xl font-bold mb-6 p-3 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        placeholder="Template Title"
-      />
-      <div className="space-y-4 bg-white shadow-md rounded-lg p-6">
-        <input
-          type="text"
-          value={itemTitle}
-          onChange={(e) => setItemTitle(e.target.value)}
-          placeholder="Item Title"
-          className="block w-full text-xl font-semibold mb-4 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold mb-2 text-gray-700">Placeholders</h3>
-          <div className="flex flex-wrap gap-2">
-            {placeholders.map((placeholder) => (
-              <div
-                key={placeholder.value}
-                draggable
-                onDragStart={(e) => handleDragStart(e, placeholder.value)}
-                className="bg-blue-100 text-blue-800 px-3 py-2 rounded-full cursor-move hover:bg-blue-200 transition-colors duration-200"
-              >
-                {placeholder.label}
-              </div>
-            ))}
+      {loading ? (  // NEW: Display loading state
+        <div className="flex justify-center items-center h-96">
+          <div className="text-2xl font-semibold">Loading template...</div>
+        </div>
+      ) : (
+        <>
+          <div className="flex justify-between items-center mb-6">
+            <Link href="/dashboard/templates" className="text-blue-600 hover:text-blue-800 font-semibold">
+              ← Back to Templates
+            </Link>
+            <h1 className="text-3xl font-bold text-gray-800">{title}</h1>
           </div>
-        </div>
-        <div className="flex space-x-2 mb-2">
-          <button onClick={undo} className="px-2 py-1 bg-gray-200 rounded">Undo</button>
-          <button onClick={redo} className="px-2 py-1 bg-gray-200 rounded">Redo</button>
-        </div>
-        <textarea
-          ref={editorRef}
-          value={itemContent}
-          onChange={handleInput}
-          onSelect={handleTextSelection}
-          className="block w-full p-3 min-h-[16rem] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-auto"
-          style={{ whiteSpace: 'pre-wrap' }}
-        />
-      </div>
-      {showAIHelper && (
-        <div style={{ position: 'absolute', top: aiHelperPosition.top, left: aiHelperPosition.left }}>
-          <AIChatHelper
-            selectedText={selectedText}
-            onSuggest={setSuggestions}
-            placeholders={placeholders}
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="text-2xl font-bold mb-6 p-3 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Template Title"
           />
-        </div>
+          <div className="space-y-4 bg-white shadow-md rounded-lg p-6">
+            <input
+              type="text"
+              value={itemTitle}
+              onChange={(e) => setItemTitle(e.target.value)}
+              placeholder="Item Title"
+              className="block w-full text-xl font-semibold mb-4 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold mb-2 text-gray-700">Placeholders</h3>
+              <div className="flex flex-wrap gap-2">
+                {placeholders.map((placeholder) => (
+                  <div
+                    key={placeholder.value}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, placeholder.value)}
+                    className="bg-blue-100 text-blue-800 px-3 py-2 rounded-full cursor-move hover:bg-blue-200 transition-colors duration-200"
+                  >
+                    {placeholder.label}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex space-x-2 mb-2">
+              <button onClick={undo} className="px-2 py-1 bg-gray-200 rounded">Undo</button>
+              <button onClick={redo} className="px-2 py-1 bg-gray-200 rounded">Redo</button>
+            </div>
+            <textarea
+              ref={editorRef}
+              value={itemContent}
+              onChange={handleInput}
+              onSelect={handleTextSelection}
+              className="block w-full p-3 min-h-[16rem] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-auto"
+              style={{ whiteSpace: 'pre-wrap' }}
+            />
+          </div>
+          {showAIHelper && (
+            <div style={{ position: 'absolute', top: aiHelperPosition.top, left: aiHelperPosition.left }}>
+              <AIChatHelper
+                selectedText={selectedText}
+                onSuggest={setSuggestions}
+                placeholders={placeholders}
+              />
+            </div>
+          )}
+          {suggestions.length > 0 && (
+            <div className="mt-4 p-4 bg-gray-100 rounded-lg">
+              <h3 className="text-lg font-semibold mb-2">AI Suggestions:</h3>
+              <ul className="space-y-2">
+                {suggestions.map((suggestion, index) => (
+                  <li key={index} className="flex items-center">
+                    <button
+                      onClick={() => applySuggestion(suggestion)}
+                      className="bg-blue-500 text-white px-2 py-1 rounded mr-2 hover:bg-blue-600"
+                    >
+                      Apply
+                    </button>
+                    <span>{suggestion}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {error && <div className="text-red-500 mt-4">{error}</div>}
+        </>
       )}
-      {suggestions.length > 0 && (
-        <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">AI Suggestions:</h3>
-          <ul className="space-y-2">
-            {suggestions.map((suggestion, index) => (
-              <li key={index} className="flex items-center">
-                <button
-                  onClick={() => applySuggestion(suggestion)}
-                  className="bg-blue-500 text-white px-2 py-1 rounded mr-2 hover:bg-blue-600"
-                >
-                  Apply
-                </button>
-                <span>{suggestion}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {error && <div className="text-red-500 mt-4">{error}</div>}
     </div>
   );
 }

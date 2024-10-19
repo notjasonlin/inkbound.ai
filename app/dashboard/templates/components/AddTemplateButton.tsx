@@ -14,8 +14,8 @@ const AddTemplateButton = () => {
     const title = "New Template " + now.getTime().toString();
     await createBlankTemplate(title);
     setIsModalOpen(false);
-    // Redirect to the add-template page, passing uuid as a query parameter
-    window.location.href = `/dashboard/templates/${encodeURIComponent(title)}`
+    const encodedTitle = encodeURIComponent(title);
+    window.location.href = `/dashboard/templates/${encodeURIComponent(encodedTitle)}`;
   };
 
   const createBlankTemplate = async (title: string) => {
