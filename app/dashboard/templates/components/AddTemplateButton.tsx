@@ -11,20 +11,20 @@ const AddTemplateButton = () => {
   const now = new Date();
 
   const handleConfirm = async () => {
-    const uuid = uuidv4();
-    await createBlankTemplate(uuid);
+    const title = "New Template " + now.getTime().toString();
+    await createBlankTemplate(title);
     setIsModalOpen(false);
     // Redirect to the add-template page, passing uuid as a query parameter
-    window.location.href = `/templates/add-template?uuid=${uuid}`;
+    window.location.href = `/dashboard/templates/${encodeURIComponent(title)}`
   };
 
-  const createBlankTemplate = async (uuid: string) => {
+  const createBlankTemplate = async (title: string) => {
     const { data: { user } } = await supabase.auth.getUser();
 
     const template = {
-      id: uuid,
+      id: uuidv4(),
       user_id: user?.id,
-      title: "New Template " + now.getTime().toString(),
+      title: title,
       content: {
         title: "",
         content: "",

@@ -29,7 +29,7 @@ export default function TemplateItem({ template }: { template: TemplateData }) {
     <>
       {template && <div className="bg-gray-100 dark:bg-gray-900 rounded-lg shadow-md p-6 mb-4 flex flex-col justify-between items-center">
         <div className="w-full">
-          <Link href={`/dashboard/profile/templates/${template.id}`} className="text-xl font-semibold text-blue-600 hover:no-underline">
+          <Link href={`/dashboard/templates/${template.title}`} className="text-xl font-semibold text-blue-600 hover:no-underline">
             <div className="mb-2"> {/* Add margin bottom for spacing */}
               <TemplateDisplay template={template} />
             </div>

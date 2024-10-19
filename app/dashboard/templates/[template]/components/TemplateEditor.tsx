@@ -25,23 +25,51 @@ const handleDragStart = (e: React.DragEvent, value: string) => {
   e.dataTransfer.setData('text/plain', value);
 };
 
-export default function TemplateEditor({ templateId }: { templateId: string; }) {
-  const [title, setTitle] = useState(template.title);
-  const [itemTitle, setItemTitle] = useState(template.content?.title || '');
-  const [itemContent, setItemContent] = useState(template.content?.content || '');
+export default function TemplateEditor({ templateTitle }: { templateTitle: string; }) {
+  const [template, setTemplate] = useState<Template | null>(null)
+  const [title, setTitle] = useState(templateTitle);
+  const [itemTitle, setItemTitle] = useState("");
+  const [itemContent, setItemContent] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [selectedText, setSelectedText] = useState('');
   const [showAIHelper, setShowAIHelper] = useState(false);
   const [aiHelperPosition, setAIHelperPosition] = useState({ top: 0, left: 0 });
-  const [history, setHistory] = useState<string[]>([template.content?.content || '']);
+  const [history, setHistory] = useState<string[]>(['']);
   const [historyIndex, setHistoryIndex] = useState(0);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const router = useRouter();
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const isUpdatingRef = useRef(false);
+  const supabase = createClient();
 
   useEffect(() => {
+    const grabTemplate = async () => {
+      let { data, error } = await supabase
+        .from('templates')
+        .select('*')
+        .eq("title", templateTitle);
 
+      console.log("templates", data);
+
+      if (error) {
+        console.error(error);
+      } else if (data) {
+        setTemplate({
+          id: data[0].id,
+          user_id: data[0].user_id,
+          title: templateTitle,
+          content: {
+            title: data[0].content?.title,
+            content: data[0].content?.content,
+          }
+        });
+        setItemTitle(data[0].content?.title);
+        setItemContent(data[0].content?.content);
+        setHistory([data[0].content?.content])
+      }
+
+    }
+    grabTemplate();
   }, [])
 
 
@@ -51,19 +79,23 @@ export default function TemplateEditor({ templateId }: { templateId: string; }) 
     isUpdatingRef.current = true;
     setError(null);
     const supabase = createClient();
-    
+
+    console.log("ID",template?.id)
+    console.log("USER",template?.user_id);
+
+
     try {
       const { error } = await supabase
         .from('templates')
-        .upsert({ 
-          title: newTitle, 
-          content: { 
-            title: newItemTitle, 
-            content: newItemContent 
-          } 
+        .update({
+          title: newTitle,
+          content: {
+            title: newItemTitle,
+            content: newItemContent
+          }
         })
-        .eq('id', template.id)
-        .eq('user_id', template.user_id);
+        .eq('id', template?.id)
+        .eq('user_id', template?.user_id);
 
       if (error) throw error;
 
@@ -74,7 +106,7 @@ export default function TemplateEditor({ templateId }: { templateId: string; }) 
     } finally {
       isUpdatingRef.current = false;
     }
-  }, [template.id, template.user_id, router]);
+  }, [template, template?.id, template?.user_id, router]);
 
   const debouncedSave = useCallback(debounce(saveTemplate, 1000), [saveTemplate]);
 
@@ -133,7 +165,7 @@ export default function TemplateEditor({ templateId }: { templateId: string; }) 
       const end = editorRef.current.selectionEnd;
       const newContent = itemContent.substring(0, start) + placeholder + itemContent.substring(end);
       updateContent(newContent);
-      
+
       // Set cursor position after the inserted placeholder
       setTimeout(() => {
         if (editorRef.current) {
@@ -150,7 +182,7 @@ export default function TemplateEditor({ templateId }: { templateId: string; }) 
       const end = editorRef.current.selectionEnd;
       const newContent = itemContent.substring(0, start) + suggestion + itemContent.substring(end);
       updateContent(newContent);
-      
+
       // Set cursor position after the inserted suggestion
       setTimeout(() => {
         if (editorRef.current) {
@@ -165,7 +197,7 @@ export default function TemplateEditor({ templateId }: { templateId: string; }) 
   return (
     <div className="space-y-4 max-w-4xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <Link href="/dashboard/profile/templates" className="text-blue-600 hover:text-blue-800 font-semibold">
+        <Link href="/dashboard/templates" className="text-blue-600 hover:text-blue-800 font-semibold">
           ← Back to Templates
         </Link>
         <h1 className="text-3xl font-bold text-gray-800">{title}</h1>
@@ -215,9 +247,9 @@ export default function TemplateEditor({ templateId }: { templateId: string; }) 
       </div>
       {showAIHelper && (
         <div style={{ position: 'absolute', top: aiHelperPosition.top, left: aiHelperPosition.left }}>
-          <AIChatHelper 
-            selectedText={selectedText} 
-            onSuggest={setSuggestions} 
+          <AIChatHelper
+            selectedText={selectedText}
+            onSuggest={setSuggestions}
             placeholders={placeholders}
           />
         </div>
@@ -228,7 +260,7 @@ export default function TemplateEditor({ templateId }: { templateId: string; }) 
           <ul className="space-y-2">
             {suggestions.map((suggestion, index) => (
               <li key={index} className="flex items-center">
-                <button 
+                <button
                   onClick={() => applySuggestion(suggestion)}
                   className="bg-blue-500 text-white px-2 py-1 rounded mr-2 hover:bg-blue-600"
                 >
