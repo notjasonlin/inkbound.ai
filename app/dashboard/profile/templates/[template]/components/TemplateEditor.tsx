@@ -4,7 +4,8 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { debounce } from 'lodash';
-import AIChatHelper from './AIChatHelper';
+import AIChatInterface from './AIChatInterface';
+import { checkUserLimits, incrementUsage, getUserUsage } from '@/utils/checkUserLimits';
 
 interface Template {
   id: string;
@@ -38,6 +39,11 @@ export default function TemplateEditor({ template, userId }: { template: Templat
   const router = useRouter();
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const isUpdatingRef = useRef(false);
+  const [showAIChat, setShowAIChat] = useState(false);
+  const [userUsage, setUserUsage] = useState<{
+    ai_calls_used: number;
+    ai_call_limit: number;
+  } | null>(null);
 
   const saveTemplate = useCallback(async (newTitle: string, newItemTitle: string, newItemContent: string) => {
     if (isUpdatingRef.current) return;
@@ -74,6 +80,20 @@ export default function TemplateEditor({ template, userId }: { template: Templat
   useEffect(() => {
     debouncedSave(title, itemTitle, itemContent);
   }, [title, itemTitle, itemContent, debouncedSave]);
+
+  useEffect(() => {
+    const fetchUsage = async () => {
+      const usage = await getUserUsage(userId);
+      if (usage) {
+        setUserUsage({
+          ai_calls_used: usage.ai_calls_used,
+          ai_call_limit: usage.ai_call_limit,
+        });
+      }
+    };
+
+    fetchUsage();
+  }, [userId]);
 
   const updateContent = useCallback((newContent: string) => {
     if (newContent !== itemContent) {
@@ -155,84 +175,109 @@ export default function TemplateEditor({ template, userId }: { template: Templat
     setSuggestions([]);
   };
 
+  const handleSendMessageToAI = async (message: string) => {
+    const canUseAI = await checkUserLimits(userId, 'aiCall');
+    if (!canUseAI) {
+      return 'You have reached your AI usage limit. Please upgrade your plan to continue using AI features.';
+    }
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: message,
+          placeholders,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const data = await response.json();
+      await incrementUsage(userId, 'aiCall');
+      setUserUsage(prev => prev ? {
+        ...prev,
+        ai_calls_used: prev.ai_calls_used + 1
+      } : null);
+      return data.content;
+    } catch (error) {
+      console.error('Error sending message to AI:', error);
+      return 'Sorry, there was an error processing your request.';
+    }
+  };
+
   return (
-    <div className="space-y-4 max-w-4xl mx-auto p-6">
+    <div className="space-y-4 max-w-6xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <Link href="/dashboard/profile/templates" className="text-blue-600 hover:text-blue-800 font-semibold">
           ← Back to Templates
         </Link>
         <h1 className="text-3xl font-bold text-gray-800">{title}</h1>
+        <button
+          onClick={() => setShowAIChat(!showAIChat)}
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          {showAIChat ? 'Hide AI Chat' : 'Show AI Chat'}
+        </button>
       </div>
-      <input
-        type="text"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        className="text-2xl font-bold mb-6 p-3 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        placeholder="Template Title"
-      />
-      <div className="space-y-4 bg-white shadow-md rounded-lg p-6">
-        <input
-          type="text"
-          value={itemTitle}
-          onChange={(e) => setItemTitle(e.target.value)}
-          placeholder="Item Title"
-          className="block w-full text-xl font-semibold mb-4 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold mb-2 text-gray-700">Placeholders</h3>
-          <div className="flex flex-wrap gap-2">
-            {placeholders.map((placeholder) => (
-              <div
-                key={placeholder.value}
-                draggable
-                onDragStart={(e) => handleDragStart(e, placeholder.value)}
-                className="bg-blue-100 text-blue-800 px-3 py-2 rounded-full cursor-move hover:bg-blue-200 transition-colors duration-200"
-              >
-                {placeholder.label}
-              </div>
-            ))}
+      <div className="flex">
+        <div className={`space-y-4 bg-white shadow-md rounded-lg p-6 ${showAIChat ? 'w-2/3' : 'w-full'}`}>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="text-2xl font-bold mb-6 p-3 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Template Title"
+          />
+          <input
+            type="text"
+            value={itemTitle}
+            onChange={(e) => setItemTitle(e.target.value)}
+            placeholder="Item Title"
+            className="block w-full text-xl font-semibold mb-4 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2 text-gray-700">Placeholders</h3>
+            <div className="flex flex-wrap gap-2">
+              {placeholders.map((placeholder) => (
+                <div
+                  key={placeholder.value}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, placeholder.value)}
+                  onClick={() => insertPlaceholder(placeholder.value)}
+                  className="bg-blue-100 text-blue-800 px-3 py-2 rounded-full cursor-pointer hover:bg-blue-200 transition-colors duration-200"
+                >
+                  {placeholder.label}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-        <div className="flex space-x-2 mb-2">
-          <button onClick={undo} className="px-2 py-1 bg-gray-200 rounded">Undo</button>
-          <button onClick={redo} className="px-2 py-1 bg-gray-200 rounded">Redo</button>
-        </div>
-        <textarea
-          ref={editorRef}
-          value={itemContent}
-          onChange={handleInput}
-          onSelect={handleTextSelection}
-          className="block w-full p-3 min-h-[16rem] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-auto"
-          style={{ whiteSpace: 'pre-wrap' }}
-        />
-      </div>
-      {showAIHelper && (
-        <div style={{ position: 'absolute', top: aiHelperPosition.top, left: aiHelperPosition.left }}>
-          <AIChatHelper 
-            selectedText={selectedText} 
-            onSuggest={setSuggestions} 
-            placeholders={placeholders}
+          <div className="flex space-x-2 mb-2">
+            <button onClick={undo} className="px-2 py-1 bg-gray-200 rounded">Undo</button>
+            <button onClick={redo} className="px-2 py-1 bg-gray-200 rounded">Redo</button>
+          </div>
+          <textarea
+            ref={editorRef}
+            value={itemContent}
+            onChange={handleInput}
+            onSelect={handleTextSelection}
+            className="block w-full p-3 min-h-[16rem] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-auto"
+            style={{ whiteSpace: 'pre-wrap' }}
           />
         </div>
-      )}
-      {suggestions.length > 0 && (
-        <div className="mt-4 p-4 bg-gray-100 rounded-lg">
-          <h3 className="text-lg font-semibold mb-2">AI Suggestions:</h3>
-          <ul className="space-y-2">
-            {suggestions.map((suggestion, index) => (
-              <li key={index} className="flex items-center">
-                <button 
-                  onClick={() => applySuggestion(suggestion)}
-                  className="bg-blue-500 text-white px-2 py-1 rounded mr-2 hover:bg-blue-600"
-                >
-                  Apply
-                </button>
-                <span>{suggestion}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+        {showAIChat && (
+          <div className="w-1/3 ml-4">
+            <AIChatInterface 
+              userCredits={userUsage ? userUsage.ai_call_limit - userUsage.ai_calls_used : 0} 
+              onSendMessage={handleSendMessageToAI} 
+            />
+          </div>
+        )}
+      </div>
       {error && <div className="text-red-500 mt-4">{error}</div>}
     </div>
   );
