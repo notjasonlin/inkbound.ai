@@ -19,9 +19,9 @@ const sidebarItems = [
   { name: "Home", path: "/dashboard", icon: FaHome },
   { name: "Schools", path: "/dashboard/schools", icon: FaSchool },
   { name: "Profile", path: "/dashboard/profile", icon: FaUser },
-  { name: "Upgrade", path: "/dashboard/upgrade", icon: FaDollarSign },
   { name: "Compose", path: "/dashboard/compose", icon: FaEdit },
   { name: "Inbox", path: "/dashboard/inbox", icon: FaInbox },
+  { name: "Upgrade", path: "/dashboard/upgrade", icon: FaDollarSign }
 ];
 
 export default function DashboardLayout({

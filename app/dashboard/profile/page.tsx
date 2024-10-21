@@ -2,13 +2,11 @@ import { createClient } from "@/utils/supabase/server";
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import EnterUrl from "./components/EnterUrl";
-import { useEffect } from "react";
 
 interface Player {
   stats: { [key: string]: any },
   highlights: string[],
 }
-
 
 export default async function OutlinePage() {
   const supabase = createClient();
@@ -40,16 +38,6 @@ export default async function OutlinePage() {
               <li>Pre-designed outlines</li>
               <li>Quick start for common topics</li>
               <li>Customizable structures</li>
-            </ul>
-          </div>
-        </Link>
-        <Link href="/dashboard/profile/outline-helper" className="block">
-          <div className="bg-white dark:bg-white rounded-lg p-6 transition-shadow hover:shadow-lg">
-            <h2 className="text-2xl font-semibold mb-4">Outline Helper</h2>
-            <ul className="list-disc list-inside mb-4">
-              <li>Step-by-step guidance</li>
-              <li>AI-powered suggestions</li>
-              <li>Flexible outline creation</li>
             </ul>
           </div>
         </Link>

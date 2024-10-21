@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from "@/utils/supabase/client";
 import { FiSend, FiChevronDown } from 'react-icons/fi';
+import { CoachData } from '@/types/school';
 
 interface Message {
   id: string;
@@ -14,7 +15,7 @@ interface Message {
 }
 
 interface GmailInboxProps {
-  coachEmails: Record<string, string>;
+  coachEmails: CoachData[];
 }
 
 export default function GmailInbox({ coachEmails }: GmailInboxProps) {
@@ -29,6 +30,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
   // Fetch messages when a coach is selected
   useEffect(() => {
     if (selectedCoachEmail) {
+      // console.log("SELECTED", selectedCoachEmail);
       fetchMessages(selectedCoachEmail);
     }
   }, [selectedCoachEmail]);
@@ -48,12 +50,13 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         content: message.snippet,
         from: message.from,
         date: message.date,
-        isCoachMessage: message.from === coachEmail,
-        threadId: message.threadId, // Store the thread ID
+        isCoachMessage: message.from.includes(coachEmail),
+        threadId: message.id, // Store the thread ID
       }));
 
       setMessages(processedMessages.reverse());
       if (processedMessages.length > 0) {
+        console.log(processedMessages[0].threadId);
         setThreadId(processedMessages[0].threadId); // Use the first message's threadId for replying.
       }
     } catch (error) {
@@ -64,8 +67,17 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
   };
 
   const handleSendMessage = async () => {
+    console.log("ENTER")
+
+    console.log(newMessage.trim());
+    console.log(selectedCoachEmail);
+    console.log(threadId)
+
+
     if (!newMessage.trim() || !selectedCoachEmail || !threadId) return;
 
+    console.log("ENTER2")
+  
     setIsSending(true);
     try {
       const response = await fetch('/api/gmail/sendMessage', {
@@ -74,14 +86,15 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         body: JSON.stringify({
           coachEmail: selectedCoachEmail,
           message: newMessage,
-          threadId, // Send as part of the existing thread.
+          threadId, // Send as part of the existing thread if needed
         }),
       });
-
+  
       if (!response.ok) {
         throw new Error('Failed to send message');
       }
-
+  
+      const { id } = await response.json();
       const sentMessage = {
         id: `temp-${Date.now()}`,
         content: newMessage,
@@ -90,7 +103,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         isCoachMessage: false,
         threadId,
       };
-
+  
       setMessages((prevMessages) => [sentMessage, ...prevMessages]);
       setNewMessage('');
     } catch (error) {
@@ -99,6 +112,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
       setIsSending(false);
     }
   };
+  
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-b text-black from-blue-50 to-blue-100 rounded-lg shadow-lg">
@@ -107,13 +121,16 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         <div className="relative">
           <select
             value={selectedCoachEmail || ''}
-            onChange={(e) => setSelectedCoachEmail(e.target.value)}
+            onChange={(e) => {
+              // console.log("E", e);
+              setSelectedCoachEmail(e.target.value)
+            }}
             className="w-full py-2 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Coaches</option>
-            {Object.entries(coachEmails).map(([coachName, email]) => (
-              <option key={email} value={email}>
-                {coachName}
+            {coachEmails.map(coach => (
+              <option key={coach.email} value={coach.email}>
+                {coach.name + " — " + coach.position}
               </option>
             ))}
           </select>
@@ -128,14 +145,12 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           messages.map((message) => (
             <div
               key={message.id}
-              className={`flex ${
-                message.isCoachMessage ? 'justify-start' : 'justify-end'
-              }`}
+              className={`flex ${message.isCoachMessage ? 'justify-start' : 'justify-end'
+                }`}
             >
               <div
-                className={`max-w-xs p-3 rounded-lg shadow-md ${
-                  message.isCoachMessage ? 'bg-white text-black' : 'bg-blue-500 text-black'
-                }`}
+                className={`max-w-xs p-3 rounded-lg shadow-md ${message.isCoachMessage ? 'bg-gray-300 text-black' : 'bg-blue-500 text-white'
+                  }`}
               >
                 <p className="text-sm">{message.content}</p>
                 <p className="text-xs mt-2 text-black">
@@ -148,6 +163,8 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           <div className="text-center text-black">No messages found.</div>
         )}
       </div>
+
+
 
       <div className="p-4 border-t bg-gradient-to-b from-blue-50 to-blue-100 rounded-b-lg flex items-center space-x-2">
         <input

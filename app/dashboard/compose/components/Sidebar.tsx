@@ -105,22 +105,28 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
     }
   };
 
-  // Component to display filtered school lists based on active tab
   const SchoolDisplay = () => {
-    switch (activeTab) {
-      case 'Division':
-        return <DivisionList schools={filteredSchools} onSelectSchool={onSelectSchool} />;
-      case 'Location':
-        return <LocationList schools={filteredSchools} onSelectSchool={onSelectSchool} />;
-      default:
-        return <SchoolList schools={filteredSchools} onSelectSchool={onSelectSchool} />;
+    if (filteredSchools.length === 0) {
+      return <p className="text-gray-500 text-center py-4">You haven't favorited any schools yet</p>;
+    }
+
+    if (activeTab === 'All') {
+      return <SchoolList schools={filteredSchools} onSelectSchool={onSelectSchool} />;
+    } else if (activeTab === 'Division') {
+      return <DivisionList schools={filteredSchools} onSelectSchool={onSelectSchool} />;
+    } else if (activeTab === 'Location') {
+      return <LocationList schools={filteredSchools} onSelectSchool={onSelectSchool} />;
     }
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
       {/* Mobile Toggle Button */}
-      <div className="md:hidden p-4 fixed top-4 left-4 z-50">
+      <div className="md:hidden p-4 fixed top-4 left-4">
         <button
           className="text-white bg-blue-500 px-4 py-2 rounded-lg shadow-lg hover:bg-blue-600 transition-colors flex items-center space-x-2"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -132,7 +138,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
 
       {/* Sidebar */}
       <motion.aside
-        className={`fixed top-0 left-0 md:static md:block md:w-80 w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg flex flex-col transition-transform duration-300 z-40 ${
+        className={`fixed top-0 left-0 md:static md:block md:w-80 w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg flex flex-col transition-transform duration-300 ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0`}
         initial={{ opacity: 0 }}
@@ -184,7 +190,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
       {/* Background overlay when sidebar is open on mobile */}
       {isSidebarOpen && (
         <motion.div
-          className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-30"
+          className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 "
           onClick={() => setIsSidebarOpen(false)}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

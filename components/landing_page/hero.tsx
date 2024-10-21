@@ -29,7 +29,7 @@ const Hero: React.FC = () => {
         Welcome to Inkbound.ai!
       </h1>
       <p className="text-lg md:text-xl text-blue-900 max-w-lg text-center md:text-left">
-        AI for Aspiring College Athletes.
+        AI Coach for College Athletic Recruiting.
       </p>
 
       {/* Waitlist Button */}

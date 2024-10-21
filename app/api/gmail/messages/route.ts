@@ -32,8 +32,8 @@ export async function POST(request: Request) {
 
   const gmail = google.gmail({ version: 'v1', auth });
 
-  // Use the provided coach email in the query
-  const query = `to:${coachEmail}`;
+  // Modify the query to include both emails sent to and from the coach
+  const query = `to:${coachEmail} OR from:${coachEmail}`;
   
   console.log('Query:', query); // Log the query
 

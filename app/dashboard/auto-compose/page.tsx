@@ -9,6 +9,9 @@ import TemplateModal from './components/TemplateModal';
 import Sidebar from './components/Sidebar';
 import { TemplateData } from '@/types/template/index';
 import { motion } from 'framer-motion';
+import { checkUserLimits, incrementUsage } from '@/utils/checkUserLimits';
+import { User } from '@supabase/supabase-js';
+import readTemplate from "@/functions/readTemplate";
 
 interface EmailPreviewData {
   to: string;
@@ -34,10 +37,12 @@ export default function AutoComposePage() {
   const [isSending, setIsSending] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const supabase = createClient();
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
     fetchFavoriteSchools();
     fetchTemplates();
+    fetchUser();
   }, []);
 
   useEffect(() => {
@@ -76,6 +81,11 @@ export default function AutoComposePage() {
     }
   };
 
+  const fetchUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  };
+
   const handleSchoolSelection = (schools: SchoolData[]) => {
     setSelectedSchools(schools);
   };
@@ -90,27 +100,37 @@ export default function AutoComposePage() {
 
     const newPreviews: { [key: string]: EmailPreviewData } = {};
     selectedSchools.forEach(school => {
-      let content = selectedTemplate.content.content || '';
-      let subject = selectedTemplate.content.title || '';
-
-      [content, subject] = [content, subject].map(text =>
-        text.replace(/\[schoolName\]/g, school.school)
-          .replace(/\[coachNames\]/g, school.coaches.map(coach => coach.name).join(', '))
-          .replace(/\[coachLastNames\]/g, school.coaches.map(coach => coach.name.split(' ').pop()).join(', '))
-      );
+      const content = readTemplate(selectedTemplate, school);
+      const subject = selectedTemplate.content.title.replace(/\[schoolName\]/g, school.school);
 
       newPreviews[school.id] = {
         to: school.coaches.map(coach => coach.email).join(', '),
         subject,
-        content
+        content: content || ''
       };
     });
     setPreviewEmails(newPreviews);
   };
 
   const handleSubmit = async () => {
-    if (selectedSchools.length === 0 || !selectedTemplate) {
-      alert("Please select schools and a template.");
+    if (!selectedTemplate || selectedSchools.length === 0 || !user) return;
+
+    const canSendEmails = await checkUserLimits((user as any)?.id, 'school');
+    const canUseTemplate = await checkUserLimits((user as any)?.id, 'template');
+    const canUseAI = await checkUserLimits((user as any)?.id, 'aiCall');
+
+    if (!canSendEmails) {
+      alert('You have reached your school limit. Please upgrade your plan to send more emails.');
+      return;
+    }
+
+    if (!canUseTemplate) {
+      alert('You have reached your template usage limit. Please upgrade your plan to use more templates.');
+      return;
+    }
+
+    if (!canUseAI) {
+      alert('You have reached your AI usage limit. Please upgrade your plan to use more AI features.');
       return;
     }
 
@@ -170,6 +190,12 @@ export default function AutoComposePage() {
           ? { ...item, status: 'sent', timestamp: new Date().toISOString() }
           : item
       ));
+
+      if (user && 'id' in user) {
+        await incrementUsage(user.id, 'school');
+      } else {
+        console.error('User is null or does not have an id property');
+      }
     } catch (error) {
       console.error(error);
       setQueueStatus(prev => prev.map(item => 
@@ -196,7 +222,6 @@ export default function AutoComposePage() {
           <h1 className="text-3xl font-bold mb-6 text-blue-800">Auto Compose</h1>
 
           <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-2 text-blue-700">Choose Template</h2>
             <button
               onClick={() => setShowTemplateModal(true)}
               className="px-4 py-2 bg-blue-400 text-black rounded-full hover:bg-blue-700 transition-colors shadow-md"
