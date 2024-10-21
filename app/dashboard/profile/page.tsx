@@ -63,9 +63,6 @@ export default async function OutlinePage() {
           </div>
         </Link>
       </div>
-      <div>
-        {player_profiles && <EnterUrl highlights={[player_profiles[0].highlights]} userId={user.id}/>}
-      </div>
     </div>
   );
 }
