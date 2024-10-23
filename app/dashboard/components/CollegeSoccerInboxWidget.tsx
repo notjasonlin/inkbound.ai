@@ -82,7 +82,13 @@ export default function CollegeSoccerInbox() {
         threadId: message.id,
       }));
 
-      setMessages(processedMessages.reverse().slice(0, 5));
+      // Sort messages by date in descending order (latest first)
+      const sortedMessages = processedMessages.sort((a: Message, b: Message) => 
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+
+      // Take the first 5 messages (which will be the latest 5)
+      setMessages(sortedMessages.slice(0, 5));
     } catch (error) {
       console.error('Error fetching emails:', error);
       setError('Failed to load emails. Please try again later.');
