@@ -17,28 +17,12 @@ export async function POST(request: Request) {
   const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
 
   try {
-    const { to, subject, content, coachEmails, schoolName, schoolId } = await request.json();
+    const { to, subject, content, schoolId, schoolName } = await request.json();
 
     console.log('Received data:', { to, subject, schoolName, schoolId });
-    console.log('Coach Emails:', coachEmails);
 
     // Generate a boundary for multipart message
     const boundary = '-----' + Math.random().toString(36).slice(2);
-
-    // Construct email content with coach information
-    let emailContent = content;
-    // emailContent += '<h2>Coach Information:</h2>';
-
-    // if (coachEmails && Object.keys(coachEmails).length > 0) {
-    //   emailContent += `<h3>${schoolName} (ID: ${schoolId})</h3>`;
-    //   emailContent += '<ul>';
-    //   for (const [coachName, email] of Object.entries(coachEmails)) {
-    //     emailContent += `<li>${coachName}: ${email}</li>`;
-    //   }
-    //   emailContent += '</ul>';
-    // } else {
-    //   emailContent += '<p>No coach information available for this school.</p>';
-    // }
 
     // Construct email
     let message = [
@@ -50,7 +34,7 @@ export async function POST(request: Request) {
       `--${boundary}`,
       'Content-Type: text/html; charset=utf-8',
       '',
-      emailContent,
+      content,
       `--${boundary}--`
     ];
 
@@ -67,6 +51,22 @@ export async function POST(request: Request) {
     });
 
     console.log('Email sent successfully:', response.data);
+
+    // Save coach emails
+    const coachEmails = to.split(',').map((email: string) => email.trim());
+    const { error: coachEmailError } = await supabase
+      .from('school_coach_emails')
+      .upsert({
+        user_id: session.user.id,
+        school_id: schoolId,
+        coach_emails: coachEmails,
+      }, {
+        onConflict: 'user_id,school_id'
+      });
+
+    if (coachEmailError) {
+      console.error('Error saving coach emails:', coachEmailError);
+    }
 
     return NextResponse.json({ success: true, messageId: response.data.id });
   } catch (error: any) {
