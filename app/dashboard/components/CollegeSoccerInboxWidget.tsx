@@ -19,19 +19,52 @@ export default function CollegeSoccerInbox() {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [coachEmails, setCoachEmails] = useState<string[]>([]);
+  const supabase = createClient();
 
   useEffect(() => {
-    fetchRecentEmails();
+    fetchCoachEmails();
   }, []);
+
+  useEffect(() => {
+    if (coachEmails.length > 0) {
+      fetchRecentEmails();
+    }
+  }, [coachEmails]);
+
+  const fetchCoachEmails = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setError("User not authenticated");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("school_coach_emails")
+        .select("coach_emails")
+        .eq("user_id", user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      const allCoachEmails = data.flatMap(item => item.coach_emails);
+      setCoachEmails(allCoachEmails);
+    } catch (error) {
+      console.error('Error fetching coach emails:', error);
+      setError('Failed to load coach emails. Please try again later.');
+    }
+  };
 
   const fetchRecentEmails = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('/api/gmail/messages', {
+      const response = await fetch('/api/gmail/widgetMessages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ coachEmail: 'all' }),
+        body: JSON.stringify({ coachEmails }),
       });
 
       if (!response.ok) {
@@ -45,7 +78,7 @@ export default function CollegeSoccerInbox() {
         content: message.snippet,
         from: message.from,
         date: message.date,
-        isCoachMessage: true,
+        isCoachMessage: coachEmails.some(email => message.from.includes(email)),
         threadId: message.id,
       }));
 
