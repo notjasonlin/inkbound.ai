@@ -75,7 +75,6 @@ export default function DashboardLayout({
           <div className="container mx-auto px-6 py-2 flex justify-between items-center">
             {/* Active item title */}
             <h1 className="text-2xl font-semibold text-blue-900">
-              {activeItemName}
             </h1>
             {/* Inbox icon */}
             <Link href="/dashboard/inbox">
