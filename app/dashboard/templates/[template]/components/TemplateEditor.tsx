@@ -104,6 +104,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
   }, [updateTrigger]);
 
 
+  
   useEffect(() => {
     const grabTemplate = async () => {
       let { data, error } = await supabase
