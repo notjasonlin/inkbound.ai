@@ -185,7 +185,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
             onClose={() => setIsModalOpen(false)}
           />
         )} */}
-      </aside>
+      </motion.aside>
 
       {/* Background overlay when sidebar is open on mobile */}
       {isSidebarOpen && (
