@@ -4,8 +4,9 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { debounce } from 'lodash';
-import AIChatHelper from './AIChatHelper';
 import PlaceHolderModal from './PlaceHolderModal';
+import AIChatInterface from './AIChatInterface';
+import { checkUserLimits, incrementUsage, getUserUsage } from '@/utils/checkUserLimits';
 
 interface Template {
   id: string;
@@ -134,6 +135,11 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
   }, [])
 
 
+  const [showAIChat, setShowAIChat] = useState(false);
+  const [userUsage, setUserUsage] = useState<{
+    ai_calls_used: number;
+    ai_call_limit: number;
+  } | null>(null);
 
   const saveTemplate = useCallback(async (newTitle: string, newItemTitle: string, newItemContent: string) => {
     if (isUpdatingRef.current) return;
@@ -169,6 +175,20 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
   useEffect(() => {
     debouncedSave(title, itemTitle, itemContent);
   }, [title, itemTitle, itemContent, debouncedSave]);
+
+  useEffect(() => {
+    const fetchUsage = async () => {
+      const usage = await getUserUsage(userId);
+      if (usage) {
+        setUserUsage({
+          ai_calls_used: usage.ai_calls_used,
+          ai_call_limit: usage.ai_call_limit,
+        });
+      }
+    };
+
+    fetchUsage();
+  }, [userId]);
 
   const updateContent = useCallback((newContent: string) => {
     if (newContent !== itemContent) {
@@ -233,6 +253,41 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     setSuggestions([]);
   };
 
+  const handleSendMessageToAI = async (message: string) => {
+    const canUseAI = await checkUserLimits(userId, 'aiCall');
+    if (!canUseAI) {
+      return 'You have reached your AI usage limit. Please upgrade your plan to continue using AI features.';
+    }
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: message,
+          placeholders,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const data = await response.json();
+      await incrementUsage(userId, 'aiCall');
+      setUserUsage(prev => prev ? {
+        ...prev,
+        ai_calls_used: prev.ai_calls_used + 1
+      } : null);
+      return data.content;
+    } catch (error) {
+      console.error('Error sending message to AI:', error);
+      return 'Sorry, there was an error processing your request.';
+    }
+  };
+
   return (
     <div className="space-y-4 max-w-4xl mx-auto p-6">
       {loading ? (  // NEW: Display loading state
@@ -255,7 +310,16 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               ← Back to Templates
             </Link>
             <h1 className="text-3xl font-bold text-gray-800">{title}</h1>
+            <button
+              onClick={() => setShowAIChat(!showAIChat)}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+            >
+              {showAIChat ? 'Hide AI Chat' : 'Show AI Chat'}
+            </button>
           </div>
+      </div>
+      <div className="flex">
+        <div className={`space-y-4 bg-white shadow-md rounded-lg p-6 ${showAIChat ? 'w-2/3' : 'w-full'}`}>
           <input
             type="text"
             value={title}
@@ -284,29 +348,17 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               style={{ whiteSpace: 'pre-wrap' }}
             />
           </div>
-          {showAIHelper && (
-            <div style={{ position: 'absolute', top: aiHelperPosition.top, left: aiHelperPosition.left }}>
-              <AIChatHelper
-                selectedText={selectedText}
-                onSuggest={setSuggestions}
-                placeholders={placeholders}
-              />
-            </div>
-          )}
-          {suggestions.length > 0 && (
-            <ul className="absolute bg-white border border-gray-300 rounded shadow-md mt-2">
-              {suggestions.map((suggestion, index) => (
-                <li
-                  key={index}
-                  className="p-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => applySuggestion(suggestion)}
-                >
-                  {suggestion}
-                </li>
-              ))}
-            </ul>
-          )}
-        </>
+          {showAIChat && (
+          <div className="w-1/3 ml-4">
+            <AIChatInterface 
+              userCredits={userUsage ? userUsage.ai_call_limit - userUsage.ai_calls_used : 0} 
+              onSendMessage={handleSendMessageToAI} 
+            />
+          </div>
+        )}
+        </div>
+        {error && <div className="text-red-500 mt-4">{error}</div>}
+       </>
       )}
     </div>
   );
