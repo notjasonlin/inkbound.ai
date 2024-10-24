@@ -250,7 +250,8 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
           />}
 
           <div className="flex justify-between items-center mb-6">
-            <Link href="/dashboard/templates" className="text-blue-600 hover:text-blue-800 font-semibold">
+            {/* <Link href="/dashboard/templates" className="text-blue-600 hover:text-blue-800 font-semibold"> */}
+            <Link href="/dashboard/profile/templates" className="text-blue-600 hover:text-blue-800 font-semibold">
               ← Back to Templates
             </Link>
             <h1 className="text-3xl font-bold text-gray-800">{title}</h1>

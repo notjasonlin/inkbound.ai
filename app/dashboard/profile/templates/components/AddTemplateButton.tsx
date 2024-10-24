@@ -15,7 +15,9 @@ const AddTemplateButton = () => {
     await createBlankTemplate(title);
     setIsModalOpen(false);
     const encodedTitle = encodeURIComponent(title);
-    window.location.href = `/dashboard/templates/${encodeURIComponent(encodedTitle)}`;
+    // window.location.href = `/dashboard/templates/${encodeURIComponent(encodedTitle)}`;
+    window.location.href = `/dashboard/profile/templates/${encodeURIComponent(encodedTitle)}`;
+
   };
 
   const createBlankTemplate = async (title: string) => {
