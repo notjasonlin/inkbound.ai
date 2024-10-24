@@ -48,28 +48,28 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
   const addPlaceHolder = useCallback((event: KeyboardEvent) => {
     if (event.key === ":") {
       setSelectPlaceHolder(true);
-  
+
       if (editorRef.current) {
         const { top, left } = editorRef.current.getBoundingClientRect();
         const { selectionStart } = editorRef.current;
-  
+
         const textBeforeCursor = editorRef.current.value.substring(0, selectionStart);
         const textAreaStyle = window.getComputedStyle(editorRef.current);
         const lineHeight = parseInt(textAreaStyle.lineHeight, 10);
         const paddingLeft = parseInt(textAreaStyle.paddingLeft, 10);
         const paddingTop = parseInt(textAreaStyle.paddingTop, 10);
-        
+
         // Get the line and column where the cursor is
         const cursorLine = textBeforeCursor.split('\n').length - 1;
         const cursorColumn = textBeforeCursor.split('\n').pop()?.length || 0;
-  
+
         // Correct calculation of top position
         const topPosition = top + window.scrollY + paddingTop + (cursorLine * lineHeight) + lineHeight + 30;
-        
+
         // Correct calculation of left position (ensure no progressive shift)
         const charWidth = textAreaStyle.fontSize ? parseInt(textAreaStyle.fontSize, 10) * 0.6 : 7; // Adjust this multiplier based on font size
         const leftPosition = left + window.scrollX + paddingLeft + (cursorColumn * charWidth);
-  
+
         setModalPosition({ top: topPosition, left: leftPosition });
       }
     } else if ([" ", "Enter", "Tab", "Backspace"].includes(event.key)) {
@@ -88,20 +88,20 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
 
   useEffect(() => {
     if (placeHolder && editorRef.current) {
-        const { selectionStart, selectionEnd } = editorRef.current;
-        const newText = itemContent.substring(0, selectionStart-1) + placeHolder + itemContent.substring(selectionEnd);
-        
-        updateContent(newText);
+      const { selectionStart, selectionEnd } = editorRef.current;
+      const newText = itemContent.substring(0, selectionStart - 1) + placeHolder + itemContent.substring(selectionEnd);
 
-        // Move cursor to the end of the newly inserted placeholder
-        setTimeout(() => {
-            editorRef.current!.selectionStart = editorRef.current!.selectionEnd = selectionStart + placeHolder.length;
-            editorRef.current!.focus();
-        }, 0);
+      updateContent(newText);
 
-        setPlaceHolder(""); 
+      // Move cursor to the end of the newly inserted placeholder
+      setTimeout(() => {
+        editorRef.current!.selectionStart = editorRef.current!.selectionEnd = selectionStart + placeHolder.length;
+        editorRef.current!.focus();
+      }, 0);
+
+      setPlaceHolder("");
     }
-}, [updateTrigger]);
+  }, [updateTrigger]);
 
 
   useEffect(() => {
@@ -178,17 +178,20 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
 
   useEffect(() => {
     const fetchUsage = async () => {
-      const usage = await getUserUsage(userId);
-      if (usage) {
-        setUserUsage({
-          ai_calls_used: usage.ai_calls_used,
-          ai_call_limit: usage.ai_call_limit,
-        });
+      if (template) {
+        const usage = await getUserUsage(template.id);
+        if (usage) {
+          setUserUsage({
+            ai_calls_used: usage.ai_calls_used,
+            ai_call_limit: usage.ai_call_limit,
+          });
+        }
       }
+
     };
 
     fetchUsage();
-  }, [userId]);
+  }, [template, template?.id]);
 
   const updateContent = useCallback((newContent: string) => {
     if (newContent !== itemContent) {
@@ -254,37 +257,39 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
   };
 
   const handleSendMessageToAI = async (message: string) => {
-    const canUseAI = await checkUserLimits(userId, 'aiCall');
-    if (!canUseAI) {
-      return 'You have reached your AI usage limit. Please upgrade your plan to continue using AI features.';
-    }
-
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: message,
-          placeholders,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get AI response');
+    if (template) {
+      const canUseAI = await checkUserLimits(template.id, 'aiCall');
+      if (!canUseAI) {
+        return 'You have reached your AI usage limit. Please upgrade your plan to continue using AI features.';
       }
 
-      const data = await response.json();
-      await incrementUsage(userId, 'aiCall');
-      setUserUsage(prev => prev ? {
-        ...prev,
-        ai_calls_used: prev.ai_calls_used + 1
-      } : null);
-      return data.content;
-    } catch (error) {
-      console.error('Error sending message to AI:', error);
-      return 'Sorry, there was an error processing your request.';
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            prompt: message,
+            placeholders,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to get AI response');
+        }
+
+        const data = await response.json();
+        await incrementUsage(template.id, 'aiCall');
+        setUserUsage(prev => prev ? {
+          ...prev,
+          ai_calls_used: prev.ai_calls_used + 1
+        } : null);
+        return data.content;
+      } catch (error) {
+        console.error('Error sending message to AI:', error);
+        return 'Sorry, there was an error processing your request.';
+      }
     }
   };
 
@@ -296,17 +301,18 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
         </div>
       ) : (
         <>
-          {selectPlaceHolder && <PlaceHolderModal
-            isOpen={true}
-            onClose={() => setSelectPlaceHolder(false)}
-            setPlaceHolder={setPlaceHolder}
-            trigger={() => setUpdateTrigger(!updateTrigger)}
-            position={modalPosition}  // Pass modal position
-          />}
+          {selectPlaceHolder && (
+            <PlaceHolderModal
+              isOpen={true}
+              onClose={() => setSelectPlaceHolder(false)}
+              setPlaceHolder={setPlaceHolder}
+              trigger={() => setUpdateTrigger(!updateTrigger)}
+              position={modalPosition}  // Pass modal position
+            />
+          )}
 
           <div className="flex justify-between items-center mb-6">
-            {/* <Link href="/dashboard/templates" className="text-blue-600 hover:text-blue-800 font-semibold"> */}
-            <Link href="/dashboard/profile/templates" className="text-blue-600 hover:text-blue-800 font-semibold">
+            <Link href="/dashboard/templates" className="text-blue-600 hover:text-blue-800 font-semibold">
               ← Back to Templates
             </Link>
             <h1 className="text-3xl font-bold text-gray-800">{title}</h1>
@@ -317,48 +323,52 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               {showAIChat ? 'Hide AI Chat' : 'Show AI Chat'}
             </button>
           </div>
-      </div>
-      <div className="flex">
-        <div className={`space-y-4 bg-white shadow-md rounded-lg p-6 ${showAIChat ? 'w-2/3' : 'w-full'}`}>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="text-2xl font-bold mb-6 p-3 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Template Title"
-          />
-          <div className="space-y-4 bg-white shadow-md rounded-lg p-6">
-            <input
-              type="text"
-              value={itemTitle}
-              onChange={(e) => setItemTitle(e.target.value)}
-              placeholder="Item Title"
-              className="block w-full text-xl font-semibold mb-4 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <div className="flex space-x-2 mb-2">
-              <button onClick={undo} className="px-2 py-1 bg-gray-200 rounded">Undo</button>
-              <button onClick={redo} className="px-2 py-1 bg-gray-200 rounded">Redo</button>
+
+          <div className="flex">
+            <div className={`space-y-4 bg-white shadow-md rounded-lg p-6 ${showAIChat ? 'w-2/3' : 'w-full'}`}>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="text-2xl font-bold mb-6 p-3 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Template Title"
+              />
+
+              <div className="space-y-4 bg-white shadow-md rounded-lg p-6">
+                <input
+                  type="text"
+                  value={itemTitle}
+                  onChange={(e) => setItemTitle(e.target.value)}
+                  placeholder="Item Title"
+                  className="block w-full text-xl font-semibold mb-4 p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <div className="flex space-x-2 mb-2">
+                  <button onClick={undo} className="px-2 py-1 bg-gray-200 rounded">Undo</button>
+                  <button onClick={redo} className="px-2 py-1 bg-gray-200 rounded">Redo</button>
+                </div>
+                <textarea
+                  ref={editorRef}
+                  value={itemContent}
+                  onChange={handleInput}
+                  onSelect={handleTextSelection}
+                  className="block w-full p-3 min-h-[16rem] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-auto"
+                  style={{ whiteSpace: 'pre-wrap' }}
+                />
+              </div>
+
+              {error && <div className="text-red-500 mt-4">{error}</div>}
             </div>
-            <textarea
-              ref={editorRef}
-              value={itemContent}
-              onChange={handleInput}
-              onSelect={handleTextSelection}
-              className="block w-full p-3 min-h-[16rem] border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 overflow-auto"
-              style={{ whiteSpace: 'pre-wrap' }}
-            />
+
+            {showAIChat && (
+              <div className="w-1/3 ml-4">
+                <AIChatInterface
+                  userCredits={userUsage ? userUsage.ai_call_limit - userUsage.ai_calls_used : 0}
+                  onSendMessage={handleSendMessageToAI}
+                />
+              </div>
+            )}
           </div>
-          {showAIChat && (
-          <div className="w-1/3 ml-4">
-            <AIChatInterface 
-              userCredits={userUsage ? userUsage.ai_call_limit - userUsage.ai_calls_used : 0} 
-              onSendMessage={handleSendMessageToAI} 
-            />
-          </div>
-        )}
-        </div>
-        {error && <div className="text-red-500 mt-4">{error}</div>}
-       </>
+        </>
       )}
     </div>
   );
