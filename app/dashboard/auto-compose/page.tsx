@@ -180,7 +180,7 @@ export default function AutoComposePage() {
       const response = await fetch('/api/sendEmail', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(emailData),
+        body: JSON.stringify({ ...emailData, schoolId, schoolName }),
       });
 
       if (!response.ok) throw new Error('Failed to send email');

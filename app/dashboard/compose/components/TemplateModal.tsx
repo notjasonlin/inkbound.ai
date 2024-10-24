@@ -1,7 +1,7 @@
 import { TemplateData } from "@/types/template";
 import Modal from "../../../../components/ui/Modal";
 import readTemplate from "@/functions/readTemplate";
-import TemplateDisplay from "../../profile/templates/components/TemplateDisplay";
+import TemplateDisplay from "../../templates/components/TemplateDisplay";
 
 interface TemplateModalProps {
   templates: TemplateData[];

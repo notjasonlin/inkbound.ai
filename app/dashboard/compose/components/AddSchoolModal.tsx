@@ -1,161 +1,181 @@
-import React, { useState, useEffect } from 'react';
-import { CoachData, SchoolData } from '@/types/school/index';
-import { createClient } from "@/utils/supabase/client";
+// import React, { useState, useEffect } from 'react';
+// import { CoachData, SchoolData } from '@/types/school/index';
+// import { createClient } from "@/utils/supabase/client";
 
-interface AddSchoolModalProps {
-  onAddSchool: (school: SchoolData) => void;
-  onClose: () => void;
-}
+// interface AddSchoolModalProps {
+//   onAddSchool: (school: SchoolData) => void;
+//   onClose: () => void;
+// }
 
-interface CoachInformation {
-  id: string;
-  school: string;
-  confrence: string;
-  division: string;
-  state: string;
-  name: string;
-  position: string;
-  email: string;
-}
+// interface CoachInformation {
+//   id: string,
+//   school: string,
+//   confrence: string,
+//   division: string,
+//   state: string,
+//   name: string,
+//   position: string,
+//   email: string,
+// }
 
-const AddSchoolModal: React.FC<AddSchoolModalProps> = ({ onAddSchool, onClose }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [unfiltered, setUnfiltered] = useState<CoachInformation[]>([]); // Unfiltered list for handling coach info
-  const [searchResults, setSearchResults] = useState<CoachInformation[]>([]);
-  const [allSchools, setAllSchools] = useState<CoachInformation[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null); // Error handling state
-  const supabase = createClient();
+// const AddSchoolModal: React.FC<AddSchoolModalProps> = ({ onAddSchool, onClose }) => {
+//   const [searchQuery, setSearchQuery] = useState('');
+//   const [unfiltered, setUnfiltered] = useState<CoachInformation[]>([]); // to account for duplicate entries of a school, containing different coach info
+//   const [searchResults, setSearchResults] = useState<CoachInformation[]>([]);
+//   const [allSchools, setAllSchools] = useState<CoachInformation[]>([]);
+//   const [isLoading, setIsLoading] = useState(false);
+//   const supabase = createClient();
 
-  useEffect(() => {
-    fetchAllSchools();
-  }, []);
+//   useEffect(() => {
+//     fetchAllSchools();
+//   }, []);
 
-  const fetchAllSchools = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.from('coachinformation').select('*');
-      if (error) throw error;
-      setAllSchools(data || []);
-    } catch (error) {
-      setError('Error fetching schools');
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+//   const fetchAllSchools = async () => {
+//     setIsLoading(true);
+//     try {
+//       const { data, error } = await supabase
+//         .from('coachinformation')
+//         .select('*');
 
-  const handleSearch = () => {
-    setError(null); // Reset error state
+//       if (error) throw error;
 
-    const uniqueSchools = new Set<string>();
-    const filteredSchools = allSchools.filter(school => {
-      const schoolNameLower = school.school.toLowerCase();
-      return schoolNameLower.includes(searchQuery.toLowerCase());
-    });
 
-    setSearchResults([...filteredSchools.filter(school => !uniqueSchools.has(school.school.toLowerCase()))]);
-    setUnfiltered(filteredSchools);
-  };
+//       setAllSchools(data || []);
+//     } catch (error) {
+//       console.error('Error fetching schools:', error);
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
 
-  const handleSelectSchool = async (school: CoachInformation) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+//   const handleSearch = () => {
+//     console.log(allSchools);
 
-      const schoolData = makeSchoolData(school);
-      const { data: existingFavorites, error: fetchError } = await supabase
-        .from('favorite_schools')
-        .select('data')
-        .eq('uuid', user.id)
-        .single();
+//     const uniqueSchools = new Set<string>();
+//     const copies: CoachInformation[] = [];
 
-      if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+//     const filtered = allSchools.filter(school => {
+//       const schoolNameLower = school.school.toLowerCase();
+//       if (schoolNameLower.includes(searchQuery.toLowerCase())) {
+//         console.log("ENTER");
+//         copies.push(school);
+//         if (!uniqueSchools.has(schoolNameLower)) {
+//           uniqueSchools.add(schoolNameLower);
+//           return true;
+//         }
+//       }
+//       return false;
+//     });
+//     setUnfiltered(copies);
+//     setSearchResults(filtered);
+//   };
 
-      const updatedFavorites = existingFavorites ? [...existingFavorites.data, schoolData] : [schoolData];
 
-      const { error: upsertError } = await supabase
-        .from('favorite_schools')
-        .upsert({ uuid: user.id, data: updatedFavorites }, { onConflict: 'uuid' });
+//   const handleSelectSchool = async (school: CoachInformation) => {
+//     try {
+//       const { data: { user } } = await supabase.auth.getUser();
+//       if (!user) throw new Error('User not authenticated');
 
-      if (upsertError) throw upsertError;
+//       const schoolData: SchoolData = makeSchoolData(school);
 
-      onAddSchool(schoolData);
-      onClose();
-    } catch (error) {
-      console.error('Error adding school to favorites:', error);
-      setError('Failed to add school to favorites');
-    }
-  };
+//       const { data: existingFavorites, error: fetchError } = await supabase
+//         .from('favorite_schools')
+//         .select('data')
+//         .eq('uuid', user.id)
+//         .single();
 
-  const makeSchoolData = (school: CoachInformation) => {
-    const allCoaches = unfiltered.filter(data => data.school === school.school);
-    const coaches: CoachData[] = allCoaches.map(data => ({
-      name: data.name,
-      email: data.email,
-      position: data.position
-    }));
+//       if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
-    return {
-      id: school.id,
-      school: school.school,
-      coaches,
-      division: school.division,
-      state: school.state,
-      conference: school.confrence
-    };
-  };
+//       let updatedFavorites: SchoolData[];
+//       if (existingFavorites) {
+//         updatedFavorites = [...existingFavorites.data, school];
+//       } else {
+//         updatedFavorites = [schoolData];
+//       }
 
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white w-full max-w-lg p-6 rounded-lg shadow-lg relative">
-        <h3 className="text-lg font-semibold mb-4">Add a New School</h3>
-        <input
-          type="text"
-          className="w-full px-3 py-2 border border-gray-300 rounded mb-4"
-          placeholder="Search for a school..."
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-        />
-        <button
-          onClick={handleSearch}
-          className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors mb-4"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Loading...' : 'Search'}
-        </button>
+//       const { error: upsertError } = await supabase
+//         .from('favorite_schools')
+//         .upsert({ uuid: user.id, data: updatedFavorites }, { onConflict: 'uuid' });
 
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
+//       if (upsertError) throw upsertError;
 
-        <div className="max-h-60 overflow-y-auto">
-          {isLoading ? (
-            <p className="text-gray-600 text-center">Loading schools...</p>
-          ) : searchResults.length > 0 ? (
-            <ul className="space-y-2">
-              {searchResults.map(school => (
-                <li
-                  key={school.id}
-                  className="p-2 bg-gray-100 rounded-lg cursor-pointer hover:bg-gray-200 transition-colors"
-                  onClick={() => handleSelectSchool(school)}
-                >
-                  {school.school}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-600 text-center">No results found.</p>
-          )}
-        </div>
+//       onAddSchool(schoolData);
+//       onClose();
+//     } catch (error) {
+//       console.error('Error adding school to favorites:', error);
+//       // Optionally, show an error message to the user
+//     }
+//   };
 
-        <button
-          onClick={onClose}
-          className="mt-4 w-full px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
-        >
-          Close
-        </button>
-      </div>
-    </div>
-  );
-};
+//   const makeSchoolData = (school: CoachInformation) => {
+//     console.log("UNFILTERED", unfiltered);
 
-export default AddSchoolModal;
+
+//     const allData = unfiltered.filter(datum => datum.school === school.school);
+
+//     const coaches: CoachData[] = [];
+//     allData.map(datum => coaches.push({ name: datum.name, email: datum.email, position: datum.position }));
+
+//     return {
+//       id: school.id,
+//       school: school.school,
+//       coaches,
+//       division: school.division,
+//       state: school.state,
+//       conference: school.confrence
+//     }
+//   }
+
+//   return (
+//     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+//       <div className="bg-white w-96 p-6 rounded shadow-lg">
+//         <h3 className="text-lg font-semibold mb-4">Add a New School</h3>
+//         <input
+//           type="text"
+//           className="w-full px-3 py-2 border border-gray-300 rounded mb-4"
+//           placeholder="Search for a school..."
+//           value={searchQuery}
+//           onChange={e => setSearchQuery(e.target.value)}
+//         />
+//         <button
+//           onClick={handleSearch}
+//           className="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors mb-4"
+//           disabled={isLoading}
+//         >
+//           {isLoading ? 'Loading...' : 'Search'}
+//         </button>
+//         <div className="max-h-60 overflow-y-auto">
+//           {searchResults.length > 0 ? (
+//             <ul className="space-y-2">
+//               {searchResults.map(school => {
+//                 return (
+//                   <li
+//                     key={school.id}
+//                     className="p-2 bg-gray-100 rounded cursor-pointer hover:bg-gray-200"
+//                     onClick={() => handleSelectSchool(school)}
+//                   >
+//                     {school.school}
+//                   </li>
+//                 )
+//               }
+//               )}
+//             </ul>
+//           ) : (
+//             <p className="text-gray-600">
+//               {isLoading ? 'Loading schools...' : 'No results found.'}
+//             </p>
+//           )}
+//         </div>
+//         <button
+//           onClick={onClose}
+//           className="mt-4 w-full px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
+//         >
+//           Close
+//         </button>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default AddSchoolModal;
+

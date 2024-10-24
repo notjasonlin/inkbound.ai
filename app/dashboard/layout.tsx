@@ -11,6 +11,7 @@ import {
   FaDollarSign,
   FaSignOutAlt,
   FaCog,
+  FaListAlt,
 } from "react-icons/fa";
 import { Shrikhand } from "next/font/google";
 import { useEffect, useMemo, useState } from "react";
@@ -22,7 +23,8 @@ const shrikhand = Shrikhand({ subsets: ["latin"], weight: "400" });
 const sidebarItems = [
   { name: "Home", path: "/dashboard", icon: FaHome },
   { name: "Schools", path: "/dashboard/schools", icon: FaSchool },
-  { name: "Profile", path: "/dashboard/profile", icon: FaUser },
+  { name: "Profile", path: "/dashboard/background", icon: FaUser },
+  { name: "Templates", path: "/dashboard/templates", icon: FaListAlt},
   { name: "Compose", path: "/dashboard/compose", icon: FaEdit },
   { name: "Inbox", path: "/dashboard/inbox", icon: FaInbox },
   { name: "Upgrade", path: "/dashboard/upgrade", icon: FaDollarSign }

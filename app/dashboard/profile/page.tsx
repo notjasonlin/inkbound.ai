@@ -31,7 +31,7 @@ export default async function OutlinePage() {
     <div className="p-6">
       <h1 className="text-3xl font-semibold mb-8">Outline</h1>
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }} className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <Link href="/dashboard/profile/templates" className="block">
+        {/* <Link href="/dashboard/profile/templates" className="block">
           <div className="bg-white dark:bg-white rounded-lg p-6 transition-shadow hover:shadow-lg">
             <h2 className="text-2xl font-semibold mb-4">Templates</h2>
             <ul className="list-disc list-inside mb-4">
@@ -40,7 +40,7 @@ export default async function OutlinePage() {
               <li>Customizable structures</li>
             </ul>
           </div>
-        </Link>
+        </Link> */}
         <Link href="/dashboard/profile/background" className="block">
           <div className="bg-white dark:bg-white rounded-lg p-6 transition-shadow hover:shadow-lg">
             <h3 className="text-2xl font-semibold mb-4">Background</h3>
