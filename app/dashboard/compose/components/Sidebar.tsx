@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SchoolList from './SchoolList';
-import AddSchoolModal from './AddSchoolModal';
+// import AddSchoolModal from './AddSchoolModal';
 import Tabs from './Tabs';
 import { SchoolData } from '@/types/school/index';
 import { createClient } from "@/utils/supabase/client";
@@ -179,12 +179,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
           </button>
         </div>
 
-        {isModalOpen && (
+        {/* MUST FIX LATER!!!!!!!!!!! */}
+        {/* {isModalOpen && (
           <AddSchoolModal
             onAddSchool={handleAddSchool}
             onClose={() => setIsModalOpen(false)}
           />
-        )}
+        )} */}
       </aside>
 
       {/* Background overlay when sidebar is open */}
