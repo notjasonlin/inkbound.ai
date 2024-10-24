@@ -5,6 +5,7 @@ import Sidebar from "./components/Sidebar";
 import EmailComposer from "./components/EmailComposer";
 import { SchoolData } from "@/types/school/index";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function ComposePage() {
   const [selectedSchools, setSelectedSchools] = useState<SchoolData[]>([]);
@@ -22,37 +23,44 @@ export default function ComposePage() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-full min-h-screen">
-      {/* Sidebar - Responsive: hidden on mobile, visible on larger screens */}
+    <div className="flex flex-col md:flex-row min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
+      {/* Sidebar */}
       <Sidebar onSelectSchool={handleSelectSchool} />
 
-      {/* Main Content */}
-      <main className="flex-1 p-4 sm:p-6 bg-white shadow-lg">
-        {/* Header with navigation link */}
-        <div className="mb-4 sm:mb-6">
-          <Link href="/dashboard/auto-compose" className="text-blue-600 hover:underline text-sm sm:text-lg font-medium">
-            ← Go to Auto Compose
-          </Link>
-        </div>
+      {/* Main Content Area */}
+      <motion.main
+        className="flex-1 p-6"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-50 to-babyblue-200 p-8 shadow-xl rounded-2xl">
+          <div className="mb-6 flex justify-between items-center">
+            {/* Back link to Auto Compose */}
+            <Link href="/dashboard/auto-compose" className="text-blue-700 hover:underline text-sm font-medium">
+              ← Go to Auto Compose
+            </Link>
+          </div>
 
-        {/* Responsive email composer area */}
-        {selectedSchools.length > 0 ? (
-          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md space-y-4 sm:space-y-6">
-            <EmailComposer
-              schools={selectedSchools}
-              allSchools={allSchools}
-              onAddSchool={handleSelectSchool}
-              onRemoveSchool={handleRemoveSchool}
-            />
-          </div>
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-gray-600 text-center text-base sm:text-lg">
-              Select a school from the school selector to compose an email.
-            </p>
-          </div>
-        )}
-      </main>
+          {/* Email Composer Area */}
+          {selectedSchools.length > 0 ? (
+            <div className="bg-white p-6 rounded-lg shadow-md space-y-6">
+              <EmailComposer
+                schools={selectedSchools}
+                allSchools={allSchools}
+                onAddSchool={handleSelectSchool}
+                onRemoveSchool={handleRemoveSchool}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-600 text-center text-base sm:text-lg">
+                Select a school from the school selector to compose an email.
+              </p>
+            </div>
+          )}
+        </div>
+      </motion.main>
     </div>
   );
 }

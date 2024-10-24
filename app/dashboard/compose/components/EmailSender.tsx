@@ -32,7 +32,6 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent, setIsOpe
   const [saveStatus, setSaveStatus] = useState('');
   const [warning, setWarning] = useState<boolean>(false);
 
-
   useEffect(() => {
     const fetchDraft = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -61,12 +60,11 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent, setIsOpe
     fetchDraft();
   }, [school.id, supabase]);
 
-
-  useEffect(() => { // ALSO CHECK FOR CURRENT DRAFT
+  useEffect(() => { 
     if (selectedTemplate) {
       handleInputChange();
     }
-  }, [selectedTemplate])
+  }, [selectedTemplate]);
 
   const saveDraft = useCallback(async (draft: EmailDraft) => {
     setIsSaving(true);
@@ -122,12 +120,12 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent, setIsOpe
         emailsTo: school?.coaches?.map(coach => coach.email).join(', ') || '',
         subject: selectedTemplate.content.title,
         template: selectedTemplate.title,
-        customSection: readTemplate(selectedTemplate, school) || '', // Add fallback to empty string
-      }
+        customSection: readTemplate(selectedTemplate, school) || '', 
+      };
       setEmailDraft(updatedDraft);
       debouncedSave(updatedDraft);
     }
-  }
+  };
 
   const handleSend = async () => {
     try {
@@ -157,22 +155,22 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent, setIsOpe
   };
 
   return (
-    <div className="bg-white p-6 rounded shadow">
-      <h2 className="text-xl font-semibold mb-4">Compose Email for {school.school}</h2>
+    <div className="bg-gradient-to-br from-white to-blue-50 p-8 rounded-lg shadow-lg">
+      <h2 className="text-2xl font-bold mb-6 text-blue-800">Compose Email for {school.school}</h2>
 
       <button
         onClick={() => setIsOpen(true)}
-        className="px-3 py-2 text-blue-500 border border-blue-500 rounded hover:bg-blue-100 transition-colors"
+        className="mb-4 px-4 py-2 bg-gradient-to-r from-blue-400 to-blue-600 text-white rounded-full hover:from-blue-500 hover:to-blue-700 transition-all duration-300 shadow-md"
       >
         Select Template
       </button>
 
       <div className="mb-4">
-        <label className="block text-gray-700 mb-2">Emails Send To:</label>
+        <label className="block text-gray-700 font-medium mb-2">Emails Send To:</label>
         <input
           type="text"
           name="emailsTo"
-          className="w-full px-3 py-2 border border-gray-300 rounded"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={emailDraft.emailsTo}
           onChange={handleInputChange}
           placeholder="email1@example.com, email2@example.com"
@@ -181,23 +179,23 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent, setIsOpe
 
       {warning &&
         <Alert
-          header={"Overwritting Draft"}
-          message={"You currently have a draft saved, do you want to overwrite with template?"}
+          header={"Overwriting Draft"}
+          message={"You currently have a draft saved. Overwrite with the template?"}
           type={"warning"}
           onClose={() => setWarning(false)}
           onConfirm={() => {
             writeWithTemplate();
-            setWarning(false)
+            setWarning(false);
           }}
         />
       }
 
       <div className="mb-4">
-        <label className="block text-gray-700 mb-2">Subject:</label>
+        <label className="block text-gray-700 font-medium mb-2">Subject:</label>
         <input
           type="text"
           name="subject"
-          className="w-full px-3 py-2 border border-gray-300 rounded"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={emailDraft.subject}
           onChange={handleInputChange}
           placeholder="Email Subject"
@@ -205,25 +203,25 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent, setIsOpe
       </div>
 
       <div className="mb-4">
-        <label className="block text-gray-700 mb-2">Custom School Section:</label>
+        <label className="block text-gray-700 font-medium mb-2">Custom School Section:</label>
         <textarea
           name="customSection"
-          className="w-full px-3 py-2 border border-gray-300 rounded"
+          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={emailDraft.customSection}
           onChange={handleInputChange}
           placeholder="Enter custom information here..."
-          rows={3}
+          rows={4}
         ></textarea>
       </div>
 
       <button
         onClick={handleSend}
-        className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+        className="w-full py-3 bg-gradient-to-r from-green-400 to-green-600 text-white rounded-full hover:from-green-500 hover:to-green-700 transition-all duration-300 shadow-lg text-lg font-semibold"
       >
         Send Email
       </button>
 
-      {saveStatus && <p className="mt-2 text-sm text-gray-600">{saveStatus}</p>}
+      {saveStatus && <p className="mt-4 text-center text-gray-600">{saveStatus}</p>}
     </div>
   );
 };
