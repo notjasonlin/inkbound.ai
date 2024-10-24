@@ -32,7 +32,7 @@ export function LoginForm() {
         <h1 className={`text-4xl font-bold text-white mb-4 ${shrikhand.className}`}>
           Welcome to Inkbound.ai!
         </h1>
-        <p className="text-lg text-gray-200">AI for Aspiring College Athletes</p>
+        <p className="text-lg text-gray-200">AI College Athletic Recruitment Coach</p>
       </div>
 
       {/* Floating Card Section */}
@@ -48,7 +48,7 @@ export function LoginForm() {
             Terms and Conditions
           </a>{' '}
           and{' '}
-          <a href="policy/privacy-policy" className="text-blue-600 hover:underline">
+          <a href="policy/privacy" className="text-blue-600 hover:underline">
             Privacy Policy
           </a>.
         </p>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   FaInbox,
   FaHome,
@@ -9,29 +9,46 @@ import {
   FaUser,
   FaEdit,
   FaDollarSign,
+  FaSignOutAlt,
+  FaCog,
   FaListAlt,
 } from "react-icons/fa";
 import { Shrikhand } from "next/font/google";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { signout } from '../../lib/auth-actions';  // Import the signout function from your server actions
 
 const shrikhand = Shrikhand({ subsets: ["latin"], weight: "400" });
 
 const sidebarItems = [
   { name: "Home", path: "/dashboard", icon: FaHome },
   { name: "Schools", path: "/dashboard/schools", icon: FaSchool },
-  { name: "Profile", path: "/dashboard/profile", icon: FaUser },
-  { name: "Upgrade", path: "/dashboard/upgrade", icon: FaDollarSign },
+  { name: "Profile", path: "/dashboard/background", icon: FaUser },
   { name: "Templates", path: "/dashboard/templates", icon: FaListAlt},
   { name: "Compose", path: "/dashboard/compose", icon: FaEdit },
   { name: "Inbox", path: "/dashboard/inbox", icon: FaInbox },
+  { name: "Upgrade", path: "/dashboard/upgrade", icon: FaDollarSign }
 ];
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();  // Use the Next.js router for redirection
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const supabase = createClientComponentClient();  // Initialize Supabase client
+
+  // Fetch the user's email on component mount
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error('Error fetching user:', error.message);
+      } else if (user) {
+        setUserEmail(user.email || '');  // Store user email
+      }
+    };
+
+    fetchUserInfo();
+  }, [supabase]);
 
   // Determine the active sidebar item based on the pathname
   const activeItemName = useMemo(() => {
@@ -40,6 +57,16 @@ export default function DashboardLayout({
     );
     return activeItem ? activeItem.name : "Dashboard";
   }, [pathname]);
+
+  // Handle the sign-out process
+  const handleLogout = async () => {
+    try {
+      await signout();  // Call the server-side signout function
+      router.push("/");  // Redirect to the landing page after logout
+    } catch (error) {
+      console.error("Error during logout:", error);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-blue-50 to-blue-100 text-black">
@@ -72,13 +99,30 @@ export default function DashboardLayout({
 
       {/* Main content */}
       <main className="flex-1 overflow-x-hidden overflow-y-auto">
-        {/* Top bar with active item name */}
+        {/* Top bar with email, settings, and logout */}
         <div className="bg-white shadow-md">
           <div className="container mx-auto px-6 py-2 flex justify-between items-center">
-            {/* Active item title */}
-            <h1 className="text-2xl font-semibold text-blue-900">
-              {activeItemName}
-            </h1>
+            {/* User email and buttons */}
+            <div className="flex items-center space-x-4">
+              {/* Display the user's email */}
+              <span className="text-gray-700">{userEmail || 'Loading...'}</span>
+              
+              {/* Settings button */}
+              <button className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition">
+                <FaCog />
+                <span>Settings</span>
+              </button>
+
+              {/* Logout button */}
+              <button
+                onClick={handleLogout}
+                className="flex items-center space-x-2 bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition"
+              >
+                <FaSignOutAlt />
+                <span>Log Out</span>
+              </button>
+            </div>
+
             {/* Inbox icon */}
             <Link href="/dashboard/inbox">
               <button className="p-2 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 transition-colors shadow-md">

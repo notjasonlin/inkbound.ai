@@ -1,0 +1,78 @@
+import { google } from 'googleapis';
+import { createClient } from "@/utils/supabase/server";
+import { NextRequest, NextResponse } from 'next/server';
+import { gmail_v1 } from 'googleapis';
+
+export async function POST(request: Request) {
+    const supabase = createClient();
+    
+    // Get the current session
+    const { data: { session } } = await supabase.auth.getSession();
+  
+    if (!session) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+  
+    const accessToken = session.provider_token;
+  
+    if (!accessToken) {
+      return new Response('No access token available', { status: 401 });
+    }
+  
+    // Parse the request body to get the coach emails
+    const { coachEmails } = await request.json();
+  
+    if (!coachEmails || !Array.isArray(coachEmails) || coachEmails.length === 0) {
+      return new Response('Coach emails are required', { status: 400 });
+    }
+  
+    // Create a new OAuth2Client using the access token
+    const auth = new google.auth.OAuth2();
+    auth.setCredentials({ access_token: accessToken });
+  
+    const gmail = google.gmail({ version: 'v1', auth });
+  
+    // Create a query to filter emails from or to any of the coach emails
+    const query = coachEmails.map(email => `from:${email} OR to:${email}`).join(' OR ');
+    
+    console.log('Query:', query); // Log the query
+  
+    try {
+      const response = await gmail.users.messages.list({
+        userId: 'me',
+        q: query,
+      });
+  
+      console.log('Gmail API response:', response.data);
+  
+      // Fetch full details for each email
+      const fullEmails = await Promise.all(
+        (response.data.messages ?? []).map(async (message: gmail_v1.Schema$Message) => {
+          if (message.id) {
+            const emailResponse = await gmail.users.messages.get({
+              userId: 'me',
+              id: message.id,
+              format: 'full',
+            });
+            const emailData = emailResponse.data;
+            return {
+              id: emailData.id,
+              subject: emailData.payload?.headers?.find((h: gmail_v1.Schema$MessagePartHeader) => h.name === 'Subject')?.value || 'No Subject',
+              from: emailData.payload?.headers?.find((h: gmail_v1.Schema$MessagePartHeader) => h.name === 'From')?.value || 'Unknown',
+              date: emailData.payload?.headers?.find((h: gmail_v1.Schema$MessagePartHeader) => h.name === 'Date')?.value || 'Unknown',
+              snippet: emailData.snippet || 'No preview available',
+            };
+          }
+        })
+      );
+  
+      console.log('Fetched full email data:', fullEmails);
+  
+      return new Response(JSON.stringify({ messages: fullEmails }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (error) {
+      console.error('Error fetching emails:', error);
+      return new Response('Error fetching emails', { status: 500 });
+    }
+  }

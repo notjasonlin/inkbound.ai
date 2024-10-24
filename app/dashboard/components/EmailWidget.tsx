@@ -2,6 +2,7 @@
 
 // import Link from "next/link";
 // import { useEmails } from "../emails/hooks/useEmails";
+// import { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal, AwaitedReactNode } from "react";
 
 // const EmailWidget = () => {
 //   const { emails, loading, error } = useEmails(3);
@@ -11,7 +12,7 @@
 
 //   return (
 //     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-//       {emails.map((email) => (
+//       {emails.map((email: { id: Key | null | undefined; subject: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined; date: string | number | Date; from: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined; snippet: string | number | bigint | boolean | ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null | undefined; }) => (
 //         <div
 //           key={email.id}
 //           className="flex flex-col border border-gray-300 rounded-lg shadow-lg p-4 hover:shadow-xl transition-shadow duration-200"

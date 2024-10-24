@@ -1,43 +1,59 @@
-import { createClient } from "@/utils/supabase/server";
-import { redirect } from 'next/navigation';
-import DashboardMenu from './components/DashboardMenu';
-// import EmailWidget from "./components/EmailWidget";
+'use client';
 
-export default async function Dashboard() {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+import React, { useState, useEffect } from 'react';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import ProfileWidget from './components/ProfileWidget'; // Profile Widget Component
+import FavoriteSchoolsWidget from './components/FavoriteSchoolsWidget'; // Favorite Schools Widget Component
+import CollegeSoccerInbox from './components/CollegeSoccerInboxWidget'; // College Soccer Inbox Widget
+import RandomFactsWidget from './components/RandomFactsWidget'; // Random Facts Widget
 
-  if (!user) {
-    redirect('/login');
-  }
+// Main Dashboard Component
+export default function Dashboard() {
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>(null);
+  const supabase = createClientComponentClient(); // Initialize Supabase client
+
+  // Fetch the user's email and name on component mount
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        console.error('Error fetching user:', error.message);
+      } else if (user) {
+        setUserEmail(user.email || null);
+        setUserName(user.user_metadata?.full_name || 'User'); // Assuming 'full_name' is stored in user_metadata
+      }
+    };
+
+    fetchUserInfo();
+  }, [supabase]);
+
+  const userStats = {
+    totalSchools: '8',
+    emailsSent: '0',
+    profileCompletion: '100',
+  };
 
   return (
-    <div className="relative bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen">
-      {/* Top Navigation with Dashboard title */}
-        <div className="max-w-7xl mx-auto flex justify-between items-center py-4 px-6">
-          <DashboardMenu userEmail={user.email || ''} />
+    <div className="h-screen flex flex-col overflow-hidden">
+      {/* Main Content Area */}
+      <div className="flex-1 grid grid-cols-4 gap-6 p-6">
+        {/* Profile Widget - Top Left */}
+        <div className="col-span-1 flex flex-col space-y-4">
+          <ProfileWidget userName={userName || 'Loading...'} stats={userStats} />
+          <FavoriteSchoolsWidget />
         </div>
 
-      <div className="p-6 max-w-7xl mx-auto mt-6">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Dashboard cards */}
-          <DashboardCard title="Total Schools" value="0" />
-          <DashboardCard title="Emails Sent" value="0" />
-          <DashboardCard title="Profile Completion" value="0%" />
+        {/* Inbox Widget - Full Height in Middle */}
+        <div className="col-span-2 h-5/6">
+          <CollegeSoccerInbox />
         </div>
-        <div className="mt-8">
-          {/* <EmailWidget /> */}
+
+        {/* Random Facts Widget - Top Right */}
+        <div className="col-span-1 h-1/2">
+          <RandomFactsWidget />
         </div>
       </div>
-    </div>
-  );
-}
-
-function DashboardCard({ title, value }: { title: string; value: string }) {
-  return (
-    <div className="bg-gradient-to-br from-white to-blue-50 rounded-lg shadow-lg p-6 transition-transform transform hover:scale-105 hover:shadow-2xl">
-      <h2 className="text-xl font-semibold text-blue-800">{title}</h2>
-      <p className="text-4xl font-bold text-blue-900 mt-2">{value}</p>
     </div>
   );
 }

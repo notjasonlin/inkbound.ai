@@ -222,7 +222,6 @@ export default function AutoComposePage() {
           <h1 className="text-3xl font-bold mb-6 text-blue-800">Auto Compose</h1>
 
           <div className="mb-6">
-            <h2 className="text-lg font-semibold mb-2 text-blue-700">Choose Template</h2>
             <button
               onClick={() => setShowTemplateModal(true)}
               className="px-4 py-2 bg-blue-400 text-black rounded-full hover:bg-blue-700 transition-colors shadow-md"
