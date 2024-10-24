@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createClient } from "@/utils/supabase/client";
-import { FiChevronLeft } from 'react-icons/fi';
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 
 interface Message {
   id: string;
@@ -20,6 +20,8 @@ export default function CollegeSoccerInbox() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [coachEmails, setCoachEmails] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const messagesPerPage = 3;
   const supabase = createClient();
 
   useEffect(() => {
@@ -82,13 +84,11 @@ export default function CollegeSoccerInbox() {
         threadId: message.id,
       }));
 
-      // Sort messages by date in descending order (latest first)
       const sortedMessages = processedMessages.sort((a: Message, b: Message) => 
         new Date(b.date).getTime() - new Date(a.date).getTime()
       );
 
-      // Take the first 5 messages (which will be the latest 5)
-      setMessages(sortedMessages.slice(0, 5));
+      setMessages(sortedMessages);
     } catch (error) {
       console.error('Error fetching emails:', error);
       setError('Failed to load emails. Please try again later.');
@@ -105,6 +105,23 @@ export default function CollegeSoccerInbox() {
     setSelectedMessage(null);
   };
 
+  const handleNextPage = () => {
+    if (currentPage < Math.ceil(messages.length / messagesPerPage) - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const paginatedMessages = messages.slice(
+    currentPage * messagesPerPage,
+    (currentPage + 1) * messagesPerPage
+  );
+
   return (
     <div className="flex flex-col h-full bg-gradient-to-b from-blue-50 to-blue-100 rounded-lg shadow-lg">
       <div className="p-4 border-b rounded-t-lg">
@@ -112,39 +129,64 @@ export default function CollegeSoccerInbox() {
       </div>
 
       {selectedMessage === null ? (
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {loading ? (
-            <div className="text-center text-black">Loading emails...</div>
-          ) : error ? (
-            <div className="text-center text-red-500">{error}</div>
-          ) : messages.length > 0 ? (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className="bg-white shadow rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition"
-                onClick={() => openEmail(message)}
-              >
-                <h3 className="font-semibold text-blue-600">{message.subject}</h3>
-                <p className="text-sm text-gray-600">{message.from}</p>
-                <p className="text-xs text-gray-400">{new Date(message.date).toLocaleDateString()}</p>
-                <p className="text-sm mt-2 text-gray-700 truncate">{message.content}</p>
-              </div>
-            ))
-          ) : (
-            <div className="text-center text-black">No messages found.</div>
-          )}
-        </div>
+        <>
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {loading ? (
+              <div className="text-center text-black">Loading emails...</div>
+            ) : error ? (
+              <div className="text-center text-red-500">{error}</div>
+            ) : paginatedMessages.length > 0 ? (
+              paginatedMessages.map((message) => (
+                <div
+                  key={message.id}
+                  className="bg-white shadow rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition relative"
+                  onClick={() => openEmail(message)}
+                >
+                  <h3 className="font-semibold text-blue-600">{message.subject}</h3>
+                  <p className="text-sm text-gray-600">{message.from}</p>
+                  <p className="text-xs text-gray-400">{new Date(message.date).toLocaleDateString()}</p>
+                  <p className="text-sm mt-2 text-gray-700 truncate">{message.content}</p>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-black">No messages found.</div>
+            )}
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="p-4 flex justify-between items-center">
+            <button
+              onClick={handlePreviousPage}
+              disabled={currentPage === 0}
+              className={`p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition ${currentPage === 0 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              <FiChevronLeft className="text-blue-600" />
+            </button>
+            <span className="text-sm text-gray-600">
+              Page {currentPage + 1} of {Math.ceil(messages.length / messagesPerPage)}
+            </span>
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage >= Math.ceil(messages.length / messagesPerPage) - 1}
+              className={`p-2 bg-gray-200 rounded-full hover:bg-gray-300 transition ${currentPage >= Math.ceil(messages.length / messagesPerPage) - 1 ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              <FiChevronRight className="text-blue-600" />
+            </button>
+          </div>
+        </>
       ) : (
         <>
           <div className="p-4 border-b rounded-t-lg flex justify-between items-center">
+            {/* Custom Back to Inbox Button */}
             <button
               onClick={goBackToInbox}
-              className="flex items-center space-x-2 text-blue-600 hover:text-blue-800"
+              className="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-full text-white transition-transform transform hover:scale-110 hover:bg-blue-700"
             >
-              <FiChevronLeft />
-              <span>Back to Inbox</span>
+              <FiChevronLeft size={24} />
             </button>
-            <h2 className="text-lg font-bold text-gray-800">{selectedMessage.subject}</h2>
+            <h2 className="text-lg font-bold text-gray-800 ml-4"> {/* Added margin for spacing */}
+              {selectedMessage.subject}
+            </h2>
           </div>
           <div className="flex-1 overflow-y-auto p-4">
             <div className="bg-white shadow rounded-lg p-6">

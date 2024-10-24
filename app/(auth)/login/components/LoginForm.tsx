@@ -48,7 +48,7 @@ export function LoginForm() {
             Terms and Conditions
           </a>{' '}
           and{' '}
-          <a href="policy/privacy-policy" className="text-blue-600 hover:underline">
+          <a href="policy/privacy" className="text-blue-600 hover:underline">
             Privacy Policy
           </a>.
         </p>

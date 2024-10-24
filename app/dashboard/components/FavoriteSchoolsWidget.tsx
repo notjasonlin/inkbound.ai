@@ -63,7 +63,7 @@ const FavoriteSchoolsWidget = () => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-2" style={{ maxHeight: '100%', width: '100%' }}>
+    <div className="bg-white rounded-lg shadow-lg p-2" style={{ maxHeight: '120%', width: '100%' }}>
       <h2 className="text-sm font-semibold text-gray-800 mb-2">Favorites</h2>
 
       <div className="space-y-2">

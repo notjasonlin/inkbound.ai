@@ -3,7 +3,12 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
-const LoginButton = ({ label }: { label?: string }) => {
+interface LoginButtonProps {
+  label?: string;
+  className?: string; // Accept className prop for custom styling
+}
+
+const LoginButton: React.FC<LoginButtonProps> = ({ label, className }) => {
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
   const supabase = createClient();
@@ -17,7 +22,7 @@ const LoginButton = ({ label }: { label?: string }) => {
 
       // Redirect to dashboard if user is logged in
       if (user) {
-        router.push('/dashboard');
+        router.push("/dashboard");
       }
     };
     fetchUser();
@@ -29,7 +34,7 @@ const LoginButton = ({ label }: { label?: string }) => {
 
   return (
     <button
-      className="px-6 py-2 font-semibold text-white bg-babyblue-600 rounded-lg hover:bg-black hover:text-white whitespace-nowrap transition-colors duration-300"
+      className={`px-6 py-2 font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 hover:text-white whitespace-nowrap transition-colors duration-300 ${className}`} // Use className prop if passed
       onClick={() => {
         router.push("/login"); // Redirect to login page
       }}
