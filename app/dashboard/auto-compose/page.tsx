@@ -192,7 +192,7 @@ export default function AutoComposePage() {
       ));
 
       if (user && 'id' in user) {
-        await incrementUsage(user.id, 'school');
+        await incrementUsage(user.id, { schools_sent: 1 });
       } else {
         console.error('User is null or does not have an id property');
       }
