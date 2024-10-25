@@ -6,11 +6,13 @@ import ProfileWidget from './components/ProfileWidget'; // Profile Widget Compon
 import FavoriteSchoolsWidget from './components/FavoriteSchoolsWidget'; // Favorite Schools Widget Component
 import CollegeSoccerInbox from './components/CollegeSoccerInboxWidget'; // College Soccer Inbox Widget
 import RandomFactsWidget from './components/RandomFactsWidget'; // Random Facts Widget
+import OnboardingModal from '@/components/OnboardingModal';
 
 // Main Dashboard Component
 export default function Dashboard() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const supabase = createClientComponentClient(); // Initialize Supabase client
 
   // Fetch the user's email and name on component mount
@@ -26,7 +28,20 @@ export default function Dashboard() {
     };
 
     fetchUserInfo();
+
+    // Check if it's the user's first visit
+    const isFirstVisit = !localStorage.getItem('onboardingCompleted');
+    setShowOnboarding(isFirstVisit);
   }, [supabase]);
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    localStorage.setItem('onboardingCompleted', 'true');
+  };
+
+  const restartOnboarding = () => {
+    setShowOnboarding(true);
+  };
 
   const userStats = {
     totalSchools: '8',
@@ -36,6 +51,7 @@ export default function Dashboard() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
+      <OnboardingModal isOpen={showOnboarding} onClose={handleOnboardingComplete} />
       {/* Main Content Area */}
       <div className="flex-1 grid grid-cols-4 gap-6 p-6">
         {/* Profile Widget - Top Left */}
@@ -53,6 +69,16 @@ export default function Dashboard() {
         <div className="col-span-1 h-1/2">
           <RandomFactsWidget />
         </div>
+      </div>
+      
+      {/* Restart Onboarding Button */}
+      <div className="fixed bottom-4 right-4">
+        <button
+          onClick={restartOnboarding}
+          className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow"
+        >
+          Restart Onboarding
+        </button>
       </div>
     </div>
   );
