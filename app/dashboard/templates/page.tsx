@@ -1,15 +1,11 @@
 import { createClient } from "@/utils/supabase/server";
 import { notFound } from 'next/navigation';
-import TemplateList from './components/TemplateList';
-import TemplateAdd from './components/AddTemplateButton';
-import Link from "next/link";
+import DynamicTemplateList from './components/DynamicTemplateList';
 import AddTemplateButton from "./components/AddTemplateButton";
 
 export default async function TemplatesPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
-  console.log("USER", user);
 
   if (!user) {
     return notFound();
@@ -27,11 +23,13 @@ export default async function TemplatesPage() {
   }
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-semibold mb-6 text-gray-800">My Templates</h1>
-      <AddTemplateButton />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold text-gray-900">My Templates</h1>
+        <AddTemplateButton />
+      </div>
       <div className="mt-8">
-        <TemplateList templates={templates || []} />
+        <DynamicTemplateList initialTemplates={templates || []} userId={user.id} />
       </div>
     </div>
   );
