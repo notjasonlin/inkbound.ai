@@ -4,28 +4,30 @@ interface ConfirmModalProps {
   isOpen: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  isLoading: boolean;
 }
 
-const ConfirmModal: React.FC<ConfirmModalProps> = ({ isOpen, onConfirm, onCancel }) => {
+const ConfirmModal: React.FC<ConfirmModalProps> = ({ isOpen, onConfirm, onCancel, isLoading }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded shadow-md max-w-md w-full">
-        <h2 className="text-xl font-semibold mb-4">Confirm Action</h2>
-        <p className="mb-6">Are you sure you want to add a new template?</p>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+      <div className="bg-white p-6 rounded-lg">
+        <h2 className="text-xl mb-4">Create New Template?</h2>
         <div className="flex justify-end space-x-4">
-          <button
-            className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-            onClick={onCancel}
+          <button 
+            onClick={onCancel} 
+            className="px-4 py-2 bg-gray-200 rounded"
+            disabled={isLoading}
           >
             Cancel
           </button>
-          <button
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            onClick={onConfirm}
+          <button 
+            onClick={onConfirm} 
+            className="px-4 py-2 bg-blue-500 text-white rounded"
+            disabled={isLoading}
           >
-            Confirm
+            {isLoading ? 'Creating...' : 'Confirm'}
           </button>
         </div>
       </div>
