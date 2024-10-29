@@ -220,6 +220,11 @@ export default function AutoComposePage() {
       >
         <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-50 to-babyblue-200 p-8 shadow-xl rounded-2xl">
           <h1 className="text-3xl font-bold mb-6 text-blue-800">Auto Compose</h1>
+          <div className="mb-6 text-sm">
+            <a href="/dashboard/compose" className="text-blue-600 hover:text-blue-800 hover:underline">
+              Want to send customized emails to individual schools instead? Go to Manual Compose →
+            </a>
+          </div>
 
           <div className="mb-6">
             <button
