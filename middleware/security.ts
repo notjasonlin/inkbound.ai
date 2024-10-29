@@ -4,6 +4,11 @@ import type { NextRequest } from 'next/server'
 export function securityMiddleware(request: NextRequest) {
   const response = NextResponse.next()
   
+  // Add cache control headers
+  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, private')
+  response.headers.set('Pragma', 'no-cache')
+  response.headers.set('Expires', '0')
+  
   // Remove server information
   response.headers.delete('X-Powered-By');
   response.headers.delete('Server');
