@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  poweredByHeader: false,
   async headers() {
     return [
       {
+        // Dynamic content - requires revalidation
         source: '/:path*',
         headers: [
           {
@@ -44,65 +44,63 @@ const nextConfig = {
           },
           {
             key: 'Cache-Control',
-            value: 'no-store, no-cache, must-revalidate, private'
+            value: 'no-cache, must-revalidate, proxy-revalidate'
           },
           {
-            key: 'Pragma',
-            value: 'no-cache'
-          },
-          {
-            key: 'Expires',
-            value: '0'
+            key: 'ETag',
+            value: 'W/"dynamic"'
           }
-        ]
+        ],
       },
       {
+        // Static assets with strong validation
         source: '/_next/static/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
+            value: 'public, max-age=31536000, immutable, stale-while-revalidate=86400'
+          },
+          {
+            key: 'Vary',
+            value: 'Accept-Encoding'
           }
-        ]
+        ],
       },
       {
+        // Media files with validation
         source: '/_next/static/media/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable'
+            value: 'public, max-age=31536000, immutable, stale-while-revalidate=86400'
+          },
+          {
+            key: 'Vary',
+            value: 'Accept-Encoding'
           }
-        ]
+        ],
       },
       {
-        source: '/images/:path*',
+        // CSS and JS with validation
+        source: '/_next/static/(css|chunks)/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=86400, stale-while-revalidate=31536000'
-          }
-        ]
-      },
-      {
-        source: '/api/:path*',
-        headers: [
+            value: 'public, max-age=31536000, immutable, stale-while-revalidate=86400'
+          },
           {
-            key: 'Cache-Control',
-            value: 'no-store, no-cache, must-revalidate, private'
+            key: 'Vary',
+            value: 'Accept-Encoding'
           }
-        ]
-      },
-      {
-        source: '/auth/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-store, no-cache, must-revalidate, private'
-          }
-        ]
+        ],
       }
     ]
-  }
+  },
+  poweredByHeader: false,
+  generateEtags: true
 }
 
+module.exports = nextConfig
+module.exports = nextConfig
+module.exports = nextConfig
 module.exports = nextConfig

@@ -1,26 +1,35 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { createHash } from 'crypto';
 
 export function securityMiddleware(request: NextRequest) {
   const response = NextResponse.next()
   
   const url = request.nextUrl.pathname
   
-  // Set cache control based on route type
-  if (url.startsWith('/api/') || url.startsWith('/auth/') || url.includes('/dashboard/')) {
-    // No caching for sensitive routes
-    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  // Generate ETag based on content (simplified example)
+  const generateETag = (content: string) => {
+    return createHash('md5').update(content).digest('hex');
+  }
+  
+  if (url.startsWith('/api/') || url.includes('/dashboard/')) {
+    // Dynamic content - requires validation
+    response.headers.set('Cache-Control', 'no-cache, must-revalidate, private')
     response.headers.set('Pragma', 'no-cache')
-    response.headers.set('Expires', '0')
+    response.headers.set('Vary', 'Authorization, Accept-Encoding')
   } else if (url.startsWith('/_next/static/')) {
-    // Long-term caching for static assets
-    response.headers.set('Cache-Control', 'public, max-age=31536000, immutable')
-  } else if (url.startsWith('/images/')) {
-    // Short-term caching for images with revalidation
-    response.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=31536000')
+    // Static assets with validation
+    const isImmutableAsset = url.includes('/media/') || url.includes('.woff2');
+    response.headers.set('Cache-Control', 
+      isImmutableAsset 
+        ? 'public, max-age=31536000, immutable' 
+        : 'public, max-age=31536000, must-revalidate'
+    )
+    response.headers.set('Vary', 'Accept-Encoding')
   } else {
-    // Default - no caching
-    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+    // Default - validate always
+    response.headers.set('Cache-Control', 'no-cache, must-revalidate, private')
+    response.headers.set('Vary', 'Accept-Encoding')
   }
   
   // Remove server information
