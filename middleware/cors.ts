@@ -3,26 +3,31 @@ import type { NextRequest } from 'next/server';
 
 const allowedOrigins = [
   'https://inkbound.ai',
-  // Add any other trusted domains here
-];
+  process.env.NEXT_PUBLIC_FRONTEND_URL
+].filter(Boolean) as string[];
 
 export function corsMiddleware(request: NextRequest) {
-  const origin = request.headers.get('origin') || '';
-  const isAllowedOrigin = allowedOrigins.includes(origin);
+  const origin = request.headers.get('origin');
 
-  // Return early if it's not an allowed origin and it's not a preflight request
-  if (!isAllowedOrigin && request.method !== 'OPTIONS') {
-    return NextResponse.next();
+  // Handle preflight requests
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, {
+      headers: {
+        'Access-Control-Allow-Origin': allowedOrigins.includes(origin || '') ? origin! : allowedOrigins[0],
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Max-Age': '86400'
+      }
+    });
   }
 
+  // Handle actual requests
   const response = NextResponse.next();
 
-  // Set CORS headers only for allowed origins
-  if (isAllowedOrigin) {
+  if (origin && allowedOrigins.includes(origin)) {
     response.headers.set('Access-Control-Allow-Origin', origin);
     response.headers.set('Access-Control-Allow-Credentials', 'true');
-    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   }
 
   return response;
