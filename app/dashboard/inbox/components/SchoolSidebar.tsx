@@ -6,7 +6,7 @@ import { createClient } from "@/utils/supabase/client";
 import { FiSearch } from "react-icons/fi";
 
 interface SchoolSelectorProps {
-  onSelectSchool: (school: SchoolData) => void;
+  onSelectSchool: (school: School) => void;
 }
 
 type EmailStatus = 'sent' | 'needs_reply' | null;
@@ -22,6 +22,14 @@ interface CachedData {
 
 const CACHE_KEY = 'emailStatuses';
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+// Add School interface
+interface School {
+  id: string;
+  name: string;
+  school: string;
+  // Add other required properties from SchoolData
+}
 
 const SchoolSelector: React.FC<SchoolSelectorProps> = ({ onSelectSchool }) => {
   const supabase = createClient();
@@ -177,7 +185,13 @@ const SchoolSelector: React.FC<SchoolSelectorProps> = ({ onSelectSchool }) => {
 
   const handleSchoolClick = (school: SchoolData) => {
     setSelectedSchool(school);
-    onSelectSchool(school);
+    
+    const selectedSchool: School = {
+      id: school.id,
+      name: school.school,
+      school: school.school,
+    };
+    onSelectSchool(selectedSchool);
   };
 
   const getStatusText = (schoolId: string): string | null => {
