@@ -44,7 +44,7 @@ const nextConfig = {
           },
           {
             key: 'Cache-Control',
-            value: 'no-store, no-cache, must-revalidate, proxy-revalidate, private'
+            value: 'no-store, no-cache, must-revalidate, private'
           },
           {
             key: 'Pragma',
@@ -71,6 +71,33 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable'
+          }
+        ]
+      },
+      {
+        source: '/images/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, stale-while-revalidate=31536000'
+          }
+        ]
+      },
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, private'
+          }
+        ]
+      },
+      {
+        source: '/auth/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, private'
           }
         ]
       }

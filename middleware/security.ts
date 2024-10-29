@@ -4,10 +4,24 @@ import type { NextRequest } from 'next/server'
 export function securityMiddleware(request: NextRequest) {
   const response = NextResponse.next()
   
-  // Add cache control headers
-  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, private')
-  response.headers.set('Pragma', 'no-cache')
-  response.headers.set('Expires', '0')
+  const url = request.nextUrl.pathname
+  
+  // Set cache control based on route type
+  if (url.startsWith('/api/') || url.startsWith('/auth/') || url.includes('/dashboard/')) {
+    // No caching for sensitive routes
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+  } else if (url.startsWith('/_next/static/')) {
+    // Long-term caching for static assets
+    response.headers.set('Cache-Control', 'public, max-age=31536000, immutable')
+  } else if (url.startsWith('/images/')) {
+    // Short-term caching for images with revalidation
+    response.headers.set('Cache-Control', 'public, max-age=86400, stale-while-revalidate=31536000')
+  } else {
+    // Default - no caching
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+  }
   
   // Remove server information
   response.headers.delete('X-Powered-By');
@@ -21,7 +35,6 @@ export function securityMiddleware(request: NextRequest) {
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()')
   
   // Set appropriate Content-Type headers based on file extension
-  const url = request.nextUrl.pathname
   if (url.endsWith('.js')) {
     response.headers.set('Content-Type', 'application/javascript; charset=utf-8')
   } else if (url.endsWith('.css')) {
