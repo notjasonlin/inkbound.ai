@@ -12,9 +12,8 @@ export default function EmailFilter({ coachEmails, onSelectCoach }: EmailFilterP
       <select 
         className="w-full p-2 border rounded"
         onChange={(e) => onSelectCoach(e.target.value)}
-        defaultValue=""
+        defaultValue={Object.values(coachEmails)[0] || ''}
       >
-        <option value="">All Coaches</option>
         {Object.entries(coachEmails).map(([coach, email]) => (
           <option key={email} value={email}>
             {coach} ({email})
