@@ -11,5 +11,21 @@ export function securityMiddleware(request: NextRequest) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()')
   
+  // Set appropriate Content-Type headers based on file extension
+  const url = request.nextUrl.pathname
+  if (url.endsWith('.js')) {
+    response.headers.set('Content-Type', 'application/javascript; charset=utf-8')
+  } else if (url.endsWith('.css')) {
+    response.headers.set('Content-Type', 'text/css; charset=utf-8')
+  } else if (url.endsWith('.woff2')) {
+    response.headers.set('Content-Type', 'font/woff2')
+  } else if (url.endsWith('.json')) {
+    response.headers.set('Content-Type', 'application/json; charset=utf-8')
+  } else if (url.endsWith('.xml')) {
+    response.headers.set('Content-Type', 'application/xml; charset=utf-8')
+  } else if (url.endsWith('.txt')) {
+    response.headers.set('Content-Type', 'text/plain; charset=utf-8')
+  }
+  
   return response
 } 
