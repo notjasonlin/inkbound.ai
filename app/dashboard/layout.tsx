@@ -25,7 +25,7 @@ const sidebarItems = [
   { name: "Schools", path: "/dashboard/schools", icon: FaSchool },
   { name: "Profile", path: "/dashboard/profile/background", icon: FaUser },
   { name: "Templates", path: "/dashboard/templates", icon: FaListAlt},
-  { name: "Compose", path: "/dashboard/compose", icon: FaEdit },
+  { name: "Compose", path: "/dashboard/auto-compose", icon: FaEdit },
   { name: "Inbox", path: "/dashboard/inbox", icon: FaInbox },
   { name: "Upgrade", path: "/dashboard/upgrade", icon: FaDollarSign }
 ];
