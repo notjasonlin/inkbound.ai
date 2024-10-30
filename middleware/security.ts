@@ -39,28 +39,38 @@ export function securityMiddleware(request: NextRequest) {
   // Comprehensive CSP that allows all needed resources
   response.headers.set('Content-Security-Policy', 
     [
+      // Default fallback
       "default-src 'self'",
+            
       // Scripts - add specific vercel.live paths and script-src-elem
       "script-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
       "script-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live/_next-live/**",
-      // Styles - add vercel.live
+
+      // Styles
       "style-src 'self' https://fonts.googleapis.com https://*.vercel.live",
       "style-src-elem 'self' https://fonts.googleapis.com https://*.vercel.live",
-      // Fonts - add vercel.live
+
+      // Fonts
       "font-src 'self' https://fonts.gstatic.com https://*.vercel.live",
+
       // Images
       "img-src 'self' data: https: blob:",
-      // Connect (includes WebSocket)
+
+      // Connect sources
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live https://vercel.live",
+
       // Frames
       "frame-src 'self' https://*.stripe.com https://*.vercel.live https://vercel.live",
+
       // Frame ancestors
       "frame-ancestors 'none'",
+
       // Media
       "media-src 'self' https://*.vercel.live",
+
       // Object sources
       "object-src 'none'"
-    ].join('; ')
+      ].join('; ')
   );
   
   // Other security headers
