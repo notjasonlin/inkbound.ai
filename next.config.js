@@ -12,7 +12,16 @@ const nextConfig = {
           },
           {
             key: 'Content-Security-Policy',
-            value: "frame-ancestors 'none'; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com; frame-src 'self' https://*.stripe.com;"
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com https://vercel.live https://*.vercel.app",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com",
+              "img-src 'self' data: https: blob:",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://vercel.live https://*.vercel.app",
+              "frame-src 'self' https://*.stripe.com https://vercel.live",
+              "frame-ancestors 'none'"
+            ].join('; ')
           },
           {
             key: 'Access-Control-Allow-Origin',
@@ -100,7 +109,4 @@ const nextConfig = {
   generateEtags: true
 }
 
-module.exports = nextConfig
-module.exports = nextConfig
-module.exports = nextConfig
 module.exports = nextConfig

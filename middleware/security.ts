@@ -36,12 +36,32 @@ export function securityMiddleware(request: NextRequest) {
   response.headers.delete('X-Powered-By');
   response.headers.delete('Server');
   
-  // Add security headers
-  response.headers.set('X-Frame-Options', 'DENY')
-  response.headers.set('Content-Security-Policy', "frame-ancestors 'none'; default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.openai.com https://*.stripe.com; frame-src 'self' https://*.stripe.com;")
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()')
+  // Comprehensive CSP that allows all needed resources
+  response.headers.set('Content-Security-Policy', 
+    [
+      "default-src 'self'",
+      // Scripts - include Vercel's feedback script
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com https://vercel.live https://*.vercel.app",
+      // Styles
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      // Fonts
+      "font-src 'self' https://fonts.gstatic.com",
+      // Images
+      "img-src 'self' data: https: blob:",
+      // Connect (includes WebSocket)
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://vercel.live https://*.vercel.app",
+      // Frames
+      "frame-src 'self' https://*.stripe.com https://vercel.live",
+      // Frame ancestors
+      "frame-ancestors 'none'"
+    ].join('; ')
+  );
+  
+  // Other security headers
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
   
   // Set appropriate Content-Type headers based on file extension
   if (url.endsWith('.js')) {
