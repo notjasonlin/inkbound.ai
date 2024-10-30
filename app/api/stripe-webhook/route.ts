@@ -17,27 +17,22 @@ export const runtime = 'edge';
 
 export async function POST(req: NextRequest) {
   const signature = req.headers.get('stripe-signature');
-  console.log('Received webhook request');
 
   if (!signature) {
-    console.error('Missing Stripe signature');
+    console.error('Missing data');
     return NextResponse.json({ error: 'Missing Stripe signature' }, { status: 401 });
   }
 
   try {
     const rawBody = await req.text();
-    console.log('Raw body length:', rawBody.length);
-    console.log('Raw body preview:', rawBody.substring(0, 100));
 
     const stripeWebhookSecret = process.env.NEXT_PUBLIC_STRIPE_WEBHOOK_SECRET!;
-    console.log('Webhook secret:', stripeWebhookSecret.slice(0, 5) + '...');
 
     let event;
     try {
       event = await stripe.webhooks.constructEventAsync(rawBody, signature, stripeWebhookSecret);
-      console.log('Stripe signature verified successfully');
     } catch (err: any) {
-      console.error('Error verifying webhook signature:', err);
+      console.error('Error verifying data:', err);
       return NextResponse.json({ error: 'Webhook signature verification failed: ' + err.message }, { status: 400 });
     }
 
@@ -54,7 +49,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true }, { status: 200 });
   } catch (err: any) {
-    console.error('Error processing webhook:', err);
+    console.error('Error processing data:', err);
     return NextResponse.json({ error: 'Webhook error: ' + err.message }, { status: 400 });
   }
 }
@@ -67,7 +62,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     await updateUserSubscription(userId, subscription);
   } else {
-    console.error('Missing userId or subscriptionId in session');
+    console.error('Missing data');
   }
 }
 
@@ -76,7 +71,7 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
   if (userId) {
     await updateUserSubscription(userId, subscription);
   } else {
-    console.error('Missing userId in subscription metadata');
+    console.error('Missing data');
   }
 }
 
@@ -85,7 +80,7 @@ async function updateUserSubscription(userId: string, subscription: Stripe.Subsc
   const plan = plans.find(p => p.stripePriceIdMonthly === priceId || p.stripePriceIdYearly === priceId);
 
   if (!plan) {
-    console.error('No matching plan found for price:', priceId);
+    console.error('No matching data:', priceId);
     return;
   }
 
@@ -101,7 +96,7 @@ async function updateUserSubscription(userId: string, subscription: Stripe.Subsc
     });
 
   if (subscriptionError) {
-    console.error('Error updating user_subscriptions:', subscriptionError);
+    console.error('Error updating data:', subscriptionError);
   }
 
   const { error: userError } = await supabase
@@ -115,6 +110,6 @@ async function updateUserSubscription(userId: string, subscription: Stripe.Subsc
     .eq('id', userId);
 
   if (userError) {
-    console.error('Error updating users:', userError);
+    console.error('Error updating data:', userError);
   }
 }

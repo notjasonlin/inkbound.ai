@@ -20,7 +20,7 @@ export default function Dashboard() {
     const fetchUserInfo = async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error) {
-        console.error('Error fetching user:', error.message);
+        console.error('Error fetching data:', error.message);
       } else if (user) {
         setUserEmail(user.email || null);
         setUserName(user.user_metadata?.full_name || 'User'); // Assuming 'full_name' is stored in user_metadata

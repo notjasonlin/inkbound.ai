@@ -16,7 +16,7 @@ const SignInWithGoogleButton = () => {
       const url = await getGoogleSignInUrl(`${window.location.origin}/auth/callback`);
       window.location.href = url;
     } catch (error) {
-      console.error('Sign in error:', error);
+      console.error('Error fetching data', error);
       router.push('/error');
     } finally {
       setIsLoading(false);

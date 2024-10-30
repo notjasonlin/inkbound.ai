@@ -41,7 +41,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const fetchUserInfo = async () => {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error) {
-        console.error('Error fetching user:', error.message);
+        console.error('Error fetching data:', error.message);
       } else if (user) {
         setUserEmail(user.email || '');  // Store user email
       }

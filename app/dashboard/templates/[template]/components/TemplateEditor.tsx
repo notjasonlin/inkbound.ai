@@ -110,7 +110,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
       const supabase = createClient();
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error) {
-        console.error('Error fetching user:', error);
+        console.error('Error fetching data', error);
         setError('User not authenticated');
       } else if (user) {
         setUserId(user.id);
@@ -135,7 +135,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
         .single();
 
       if (error) {
-        console.error('Error fetching template:', error);
+        console.error('Error fetching data', error);
         setError('Failed to load template');
       } else if (data) {
         setTemplate({
@@ -185,7 +185,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
       setTemplate(prev => prev ? {...prev, title: newTitle, content: { title: newItemTitle, content: newItemContent }} : null);
       router.refresh();
     } catch (error) {
-      console.error('Error saving template:', error);
+      console.error('Error saving data', error);
       setError('Failed to save template. Please try again.');
     } finally {
       isUpdatingRef.current = false;
@@ -309,7 +309,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
       } : null);
       return data.content;
     } catch (error) {
-      console.error('Error sending message to AI:', error);
+      console.error('Error sending data', error);
       return 'Sorry, there was an error processing your request.';
     }
   };

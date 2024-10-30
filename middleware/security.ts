@@ -40,20 +40,26 @@ export function securityMiddleware(request: NextRequest) {
   response.headers.set('Content-Security-Policy', 
     [
       "default-src 'self'",
-      // Scripts - include Vercel's feedback script
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com https://vercel.live https://*.vercel.app",
-      // Styles
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      // Fonts
-      "font-src 'self' https://fonts.gstatic.com",
+      // Scripts - add specific vercel.live paths and script-src-elem
+      "script-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
+      "script-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live/_next-live/**",
+      // Styles - add vercel.live
+      "style-src 'self' https://fonts.googleapis.com https://*.vercel.live",
+      "style-src-elem 'self' https://fonts.googleapis.com https://*.vercel.live",
+      // Fonts - add vercel.live
+      "font-src 'self' https://fonts.gstatic.com https://*.vercel.live",
       // Images
       "img-src 'self' data: https: blob:",
       // Connect (includes WebSocket)
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://vercel.live https://*.vercel.app",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live https://vercel.live",
       // Frames
-      "frame-src 'self' https://*.stripe.com https://vercel.live",
+      "frame-src 'self' https://*.stripe.com https://*.vercel.live https://vercel.live",
       // Frame ancestors
-      "frame-ancestors 'none'"
+      "frame-ancestors 'none'",
+      // Media
+      "media-src 'self' https://*.vercel.live",
+      // Object sources
+      "object-src 'none'"
     ].join('; ')
   );
   

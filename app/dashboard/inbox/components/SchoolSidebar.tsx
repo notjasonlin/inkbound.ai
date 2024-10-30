@@ -174,7 +174,7 @@ const SchoolSelector: React.FC<SchoolSelectorProps> = ({ onSelectSchool }) => {
         setEmailStatuses(statusMap);
         cacheStatuses(statusMap);
       } catch (error) {
-        console.error('Error fetching email statuses:', error);
+        console.error('Error fetching data:', error);
       }
     };
 

@@ -27,7 +27,7 @@ export default function FavoriteButton({ school, userId }: FavoriteButtonProps) 
             .single();
 
         if (error) {
-            console.error('Error checking favorite status:', error);
+            console.error('Error checking data:', error);
         } else {
             const isFav = data?.data?.some((s: SchoolData) => s.id === school.id) || false;
             setIsFavorite(isFav);
@@ -73,7 +73,7 @@ export default function FavoriteButton({ school, userId }: FavoriteButtonProps) 
             
             setIsFavorite(!isFavorite);
         } catch (error) {
-            console.error('Error toggling favorite:', error);
+            console.error('Error toggling data:', error);
         }
     };
 

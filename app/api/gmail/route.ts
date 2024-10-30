@@ -60,13 +60,12 @@ export async function GET(req: Request) {
 
     return NextResponse.json(emails);
   } catch (error) {
-    console.error('Error fetching emails:', error);
-    return NextResponse.json({ error: 'Failed to fetch emails' }, { status: 500 });
+    console.error('Error fetching data:', error);
+    return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
-  console.log("ENTER POST");
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -139,10 +138,9 @@ export async function POST(req: Request) {
       },
     });
 
-    console.log('Email sent successfully:', response.data);
     return NextResponse.json({ success: true, messageId: response.data.id });
   } catch (error: any) {
-    console.error('Error sending email:', error);
+    console.error('Error sending data:', error);
     return NextResponse.json({ 
       error: 'Failed to send email', 
       details: error.message || 'Unknown error'

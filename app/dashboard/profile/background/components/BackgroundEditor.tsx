@@ -33,7 +33,7 @@ export default function BackgroundEditor({ profile, userId }: { profile: Backgro
 
       router.refresh();
     } catch (error) {
-      console.error('Error saving background:', error);
+      console.error('Error saving data:', error);
       setError('Failed to save background. Please try again.');
     }
   }, [profile.id, userId, router]);

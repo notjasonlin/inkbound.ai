@@ -7,8 +7,6 @@ const SCHOOL = '[schoolName]';
 export default function readTemplate(template: TemplateData, school?: SchoolData) {
     let content = template.content.content;
 
-    console.log("CONTENT", content);
-
     if (content) {
         const placeholders: string[] = [COACH, SCHOOL];
         let replacements: string[];

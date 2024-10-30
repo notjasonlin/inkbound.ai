@@ -21,7 +21,7 @@ export default function TemplateItem({ template, onDelete, onDuplicate }: Templa
     try {
       await onDelete(template.id);
     } catch (error) {
-      console.error('Error deleting template:', error);
+      console.error('Error deleting data:', error);
     } finally {
       setIsDeleting(false);
     }
@@ -34,7 +34,7 @@ export default function TemplateItem({ template, onDelete, onDuplicate }: Templa
     try {
       await onDuplicate(template);
     } catch (error) {
-      console.error('Error duplicating template:', error);
+      console.error('Error duplicating data:', error);
     } finally {
       setIsDuplicating(false);
     }
