@@ -3,49 +3,41 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Dynamic content - requires revalidation
         source: '/:path*',
         headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              process.env.NODE_ENV === 'production'
+                ? "script-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live"
+                : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
+              "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
+              "font-src 'self' https://fonts.gstatic.com https://*.vercel.live",
+              "img-src 'self' data: https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live https://vercel.live https://accounts.google.com",
+              "frame-src 'self' https://*.stripe.com https://*.vercel.live https://vercel.live https://accounts.google.com",
+              "frame-ancestors 'none'",
+              "media-src 'self' https://*.vercel.live",
+              "form-action 'self'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "manifest-src 'self'",
+              "worker-src 'self'"
+            ].join('; ')
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff'
+          },
           {
             key: 'X-Frame-Options',
             value: 'DENY'
           },
           {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
-              "script-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live/_next-live/**",
-              "style-src 'self' https://fonts.googleapis.com https://*.vercel.live",
-              "style-src-elem 'self' https://fonts.googleapis.com https://*.vercel.live",
-              "font-src 'self' https://fonts.gstatic.com https://*.vercel.live",
-              "img-src 'self' data: https: blob:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live https://vercel.live",
-              "frame-src 'self' https://*.stripe.com https://*.vercel.live https://vercel.live",
-              "frame-ancestors 'none'",
-              "media-src 'self' https://*.vercel.live",
-              "object-src 'none'"
-            ].join('; ')
-          },
-          {
-            key: 'Access-Control-Allow-Origin',
-            value: process.env.NEXT_PUBLIC_FRONTEND_URL || 'https://inkbound.ai'
-          },
-          {
-            key: 'Access-Control-Allow-Methods',
-            value: 'GET, POST, PUT, DELETE, OPTIONS'
-          },
-          {
-            key: 'Access-Control-Allow-Headers',
-            value: 'Content-Type, Authorization'
-          },
-          {
-            key: 'Access-Control-Allow-Credentials',
-            value: 'true'
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
+            key: 'X-XSS-Protection',
+            value: '1; mode=block'
           },
           {
             key: 'Referrer-Policy',
@@ -53,64 +45,12 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()'
-          },
-          {
-            key: 'Cache-Control',
-            value: 'no-cache, must-revalidate, proxy-revalidate'
-          },
-          {
-            key: 'ETag',
-            value: 'W/"dynamic"'
+            value: 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
           }
-        ],
-      },
-      {
-        // Static assets with strong validation
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable, stale-while-revalidate=86400'
-          },
-          {
-            key: 'Vary',
-            value: 'Accept-Encoding'
-          }
-        ],
-      },
-      {
-        // Media files with validation
-        source: '/_next/static/media/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable, stale-while-revalidate=86400'
-          },
-          {
-            key: 'Vary',
-            value: 'Accept-Encoding'
-          }
-        ],
-      },
-      {
-        // CSS and JS with validation
-        source: '/_next/static/(css|chunks)/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable, stale-while-revalidate=86400'
-          },
-          {
-            key: 'Vary',
-            value: 'Accept-Encoding'
-          }
-        ],
+        ]
       }
-    ]
-  },
-  poweredByHeader: false,
-  generateEtags: true
-}
+    ];
+  }
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createHash } from 'crypto';
+import crypto from 'crypto';
 
 export function securityMiddleware(request: NextRequest) {
   const response = NextResponse.next()
@@ -36,48 +37,43 @@ export function securityMiddleware(request: NextRequest) {
   response.headers.delete('X-Powered-By');
   response.headers.delete('Server');
   
-  // Comprehensive CSP that allows all needed resources
+  // Generate nonce using Web Crypto API
+  const array = new Uint8Array(16);
+  globalThis.crypto.getRandomValues(array);
+  const nonce = btoa(Array.from(array).map(byte => String.fromCharCode(byte)).join(''));
+  
   response.headers.set('Content-Security-Policy', 
     [
-      // Default fallback
       "default-src 'self'",
-            
-      // Scripts - add specific vercel.live paths and script-src-elem
-      "script-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
-      "script-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live/_next-live/**",
-
-      // Styles
-      "style-src 'self' https://fonts.googleapis.com https://*.vercel.live",
-      "style-src-elem 'self' https://fonts.googleapis.com https://*.vercel.live",
-
-      // Fonts
+      
+      // Scripts
+      process.env.NODE_ENV === 'production'
+        ? `script-src 'self' 'nonce-${nonce}' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live`
+        : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
+      
+      // Styles - added unsafe-inline for now
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
+      "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
       "font-src 'self' https://fonts.gstatic.com https://*.vercel.live",
-
-      // Images
-      "img-src 'self' data: https: blob:",
-
-      // Connect sources
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live https://vercel.live",
-
-      // Frames
-      "frame-src 'self' https://*.stripe.com https://*.vercel.live https://vercel.live",
-
-      // Frame ancestors
+      "img-src 'self' data: https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live https://vercel.live https://accounts.google.com",
+      "frame-src 'self' https://*.stripe.com https://*.vercel.live https://vercel.live https://accounts.google.com",
       "frame-ancestors 'none'",
-
-      // Media
       "media-src 'self' https://*.vercel.live",
-
-      // Object sources
-      "object-src 'none'"
-      ].join('; ')
+      "form-action 'self'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "manifest-src 'self'",
+      "worker-src 'self'"
+    ].join('; ')
   );
   
-  // Other security headers
-  response.headers.set('X-Frame-Options', 'DENY');
+  // Security headers
   response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
+  response.headers.set('Permissions-Policy', 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()');
   
   // Set appropriate Content-Type headers based on file extension
   if (url.endsWith('.js')) {
