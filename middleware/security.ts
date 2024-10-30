@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { createHash } from 'crypto';
+import crypto from 'crypto';
 
 export function securityMiddleware(request: NextRequest) {
   const response = NextResponse.next()
@@ -36,48 +37,68 @@ export function securityMiddleware(request: NextRequest) {
   response.headers.delete('X-Powered-By');
   response.headers.delete('Server');
   
-  // Comprehensive CSP that allows all needed resources
+  // Use nonces for inline scripts and styles in production
+  const nonce = crypto.randomBytes(16).toString('base64');
+  
   response.headers.set('Content-Security-Policy', 
     [
       // Default fallback
       "default-src 'self'",
-            
-      // Scripts - add unsafe-inline and unsafe-eval for development
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
-      "script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live/_next-live/**",
-
-      // Styles - add unsafe-inline
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
-      "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
-
+      
+      // Scripts - remove unsafe-inline in production
+      process.env.NODE_ENV === 'production'
+        ? `script-src 'self' 'nonce-${nonce}' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live`
+        : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
+      
+      // Styles - use hashes instead of unsafe-inline
+      "style-src 'self' https://fonts.googleapis.com https://*.vercel.live",
+      "style-src-elem 'self' https://fonts.googleapis.com https://*.vercel.live",
+      
       // Fonts
       "font-src 'self' https://fonts.gstatic.com https://*.vercel.live",
-
-      // Images
-      "img-src 'self' data: https: blob:",
-
+      
+      // Images - more specific than wildcard
+      "img-src 'self' data: https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
+      
       // Connect sources
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live https://vercel.live https://accounts.google.com",
-
+      
       // Frames
       "frame-src 'self' https://*.stripe.com https://*.vercel.live https://vercel.live https://accounts.google.com",
-
-      // Frame ancestors
       "frame-ancestors 'none'",
-
+      
       // Media
       "media-src 'self' https://*.vercel.live",
-
+      
+      // Forms
+      "form-action 'self'",
+      
       // Object sources
-      "object-src 'none'"
-      ].join('; ')
+      "object-src 'none'",
+      
+      // Base URI
+      "base-uri 'self'",
+      
+      // Manifest
+      "manifest-src 'self'",
+      
+      // Worker sources
+      "worker-src 'self'",
+      
+      // Prefetch
+      "prefetch-src 'self'",
+      
+      // Navigation
+      "navigate-to 'self'"
+    ].join('; ')
   );
   
-  // Other security headers
-  response.headers.set('X-Frame-Options', 'DENY');
+  // Add other security headers
   response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
+  response.headers.set('Permissions-Policy', 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()');
   
   // Set appropriate Content-Type headers based on file extension
   if (url.endsWith('.js')) {
