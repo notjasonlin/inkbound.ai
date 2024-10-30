@@ -14,13 +14,16 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com https://vercel.live https://*.vercel.app",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "font-src 'self' https://fonts.gstatic.com",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
+              "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
+              "font-src 'self' https://fonts.gstatic.com https://*.vercel.live",
               "img-src 'self' data: https: blob:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://vercel.live https://*.vercel.app",
-              "frame-src 'self' https://*.stripe.com https://vercel.live",
-              "frame-ancestors 'none'"
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live",
+              "frame-src 'self' https://*.stripe.com https://*.vercel.live",
+              "frame-ancestors 'none'",
+              "media-src 'self' https://*.vercel.live",
+              "object-src 'none'"
             ].join('; ')
           },
           {
