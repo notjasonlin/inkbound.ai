@@ -34,16 +34,14 @@ export async function POST(request: Request) {
   
     // Create a query to filter emails from or to any of the coach emails
     const query = coachEmails.map(email => `from:${email} OR to:${email}`).join(' OR ');
-    
-    console.log('Query:', query); // Log the query
+  
   
     try {
       const response = await gmail.users.messages.list({
         userId: 'me',
         q: query,
       });
-  
-      console.log('Gmail API response:', response.data);
+
   
       // Fetch full details for each email
       const fullEmails = await Promise.all(
@@ -65,14 +63,13 @@ export async function POST(request: Request) {
           }
         })
       );
-  
-      console.log('Fetched full email data:', fullEmails);
+
   
       return new Response(JSON.stringify({ messages: fullEmails }), {
         headers: { 'Content-Type': 'application/json' },
       });
     } catch (error) {
-      console.error('Error fetching emails:', error);
-      return new Response('Error fetching emails', { status: 500 });
+      console.error('Error fetching data:', error);
+      return new Response('Error fetching data', { status: 500 });
     }
   }

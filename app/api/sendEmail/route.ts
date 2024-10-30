@@ -19,8 +19,6 @@ export async function POST(request: Request) {
   try {
     const { to, subject, content, schoolId, schoolName } = await request.json();
 
-    console.log('Received data:', { to, subject, schoolName, schoolId });
-
     // Generate a boundary for multipart message
     const boundary = '-----' + Math.random().toString(36).slice(2);
 
@@ -40,8 +38,6 @@ export async function POST(request: Request) {
 
     const encodedMessage = Buffer.from(message.join('\n')).toString('base64')
       .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-    console.log('Sending email...');
     // Send email
     const response = await gmail.users.messages.send({
       userId: 'me',
@@ -49,8 +45,6 @@ export async function POST(request: Request) {
         raw: encodedMessage,
       },
     });
-
-    console.log('Email sent successfully:', response.data);
 
     // Save coach emails
     const coachEmails = to.split(',').map((email: string) => email.trim());
@@ -65,7 +59,7 @@ export async function POST(request: Request) {
       });
 
     if (coachEmailError) {
-      console.error('Error saving coach emails:', coachEmailError);
+      console.error('Error saving data:', coachEmailError);
     }
 
     return NextResponse.json({ success: true, messageId: response.data.id });

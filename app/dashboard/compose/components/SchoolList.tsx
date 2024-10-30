@@ -10,7 +10,6 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, onSelectSchool }) => {
   return (
     <ul className="space-y-2">
       {schools.map(school => {
-        console.log("SCHOOL", school);
         return (
           <li
             key={school.id}

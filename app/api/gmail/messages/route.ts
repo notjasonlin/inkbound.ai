@@ -34,8 +34,7 @@ export async function POST(request: Request) {
 
   // Modify the query to include both emails sent to and from the coach
   const query = `to:${coachEmail} OR from:${coachEmail}`;
-  
-  console.log('Query:', query); // Log the query
+
 
   try {
     const response = await gmail.users.messages.list({
@@ -43,7 +42,6 @@ export async function POST(request: Request) {
       q: query,
     });
 
-    console.log('Gmail API response:', response.data);
 
     // Fetch full details for each email
     const fullEmails = await Promise.all(
@@ -66,13 +64,12 @@ export async function POST(request: Request) {
       })
     );
 
-    console.log('Fetched full email data:', fullEmails);
 
     return new Response(JSON.stringify({ messages: fullEmails }), {
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Error fetching emails:', error);
-    return new Response('Error fetching emails', { status: 500 });
+    console.error('Error fetching data:', error);
+    return new Response('Error fetching data', { status: 500 });
   }
 }

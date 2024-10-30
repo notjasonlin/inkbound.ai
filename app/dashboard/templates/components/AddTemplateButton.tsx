@@ -22,7 +22,7 @@ const AddTemplateButton = () => {
       const encodedTitle = encodeURIComponent(title);
       router.push(`/dashboard/templates/${encodedTitle}`);
     } catch (error) {
-      console.error('Error creating template:', error);
+      console.error('Error creating data:', error);
       // Handle error (e.g., show an error message to the user)
     } finally {
       setIsLoading(false);

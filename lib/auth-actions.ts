@@ -52,7 +52,6 @@ export async function signout() {
   const supabase = createClient();
   const { error } = await supabase.auth.signOut();
   if (error) {
-    console.log(error);
     redirect("/error");
   }
 
@@ -62,8 +61,6 @@ export async function signout() {
 
 export async function getGoogleSignInUrl(redirectTo: string) {
   const supabase = createClient();
-
-  console.log("REDIRECT", redirectTo);
 
   try {
     const { data, error } = await supabase.auth.signInWithOAuth({
@@ -75,18 +72,18 @@ export async function getGoogleSignInUrl(redirectTo: string) {
     });
 
     if (error) {
-      console.error('Supabase OAuth error:', error);
+      console.error('Error fetching data', error);
       throw error;
     }
 
     if (!data.url) {
-      console.error('No URL returned from Supabase');
+      console.error('Error fetching data');
       throw new Error('No URL returned from Supabase');
     }
 
     return data.url;
   } catch (error) {
-    console.error('Error in getGoogleSignInUrl:', error);
+    console.error('Error fetching data', error);
     throw error;
   }
 }

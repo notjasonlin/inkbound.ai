@@ -23,8 +23,6 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
   const { favorites, toggleFavorite } = useFavorites();
 
   useEffect(() => {
-    console.log('Total schools:', schools.length);
-    console.log('Initial filtered schools:', filteredSchools.length);
   }, [schools, filteredSchools]);
 
   const filterSchools = useCallback((filters: SearchFilters) => {
@@ -35,7 +33,6 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
         (filters.division === '' || school.division === filters.division)
       );
     });
-    console.log('Filtered schools:', filtered.length);
     setFilteredSchools(filtered);
     setCurrentPage(1);
   }, [schools]);

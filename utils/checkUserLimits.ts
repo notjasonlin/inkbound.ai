@@ -7,7 +7,7 @@ export async function checkUserLimits(userId: string, action: 'template' | 'scho
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    console.error('Authentication error:', authError);
+    console.error('Error fetching data', authError);
     return false;
   }
 
@@ -18,7 +18,7 @@ export async function checkUserLimits(userId: string, action: 'template' | 'scho
     .single();
 
   if (subscriptionError) {
-    console.error('Error fetching subscription:', subscriptionError);
+    console.error('Error fetching data', subscriptionError);
     return false;
   }
 
@@ -29,7 +29,7 @@ export async function checkUserLimits(userId: string, action: 'template' | 'scho
     .single();
 
   if (usageError && usageError.code !== 'PGRST116') {
-    console.error('Error fetching usage:', usageError);
+    console.error('Error fetching data:', usageError);
     return false;
   }
 
@@ -42,7 +42,7 @@ export async function checkUserLimits(userId: string, action: 'template' | 'scho
     });
 
     if (insertError) {
-      console.error('Error initializing usage:', insertError);
+      console.error('Error fetching data', insertError);
       return false;
     }
 
@@ -77,7 +77,7 @@ export async function incrementUsage(userId: string, usage: { [key: string]: num
     .eq('user_id', user.id);
 
   if (error) {
-    console.error('Error incrementing usage:', error);
+    console.error('Error fetching data', error);
   }
 }
 
@@ -98,7 +98,7 @@ export async function getUserUsage() {
     .single();
 
   if (subscriptionError) {
-    console.error('Error fetching user subscription:', subscriptionError);
+    console.error('Error fetching data', subscriptionError);
     return null;
   }
 
@@ -109,7 +109,7 @@ export async function getUserUsage() {
     .single();
 
   if (usageError) {
-    console.error('Error fetching user usage:', usageError);
+    console.error('Error fetching data', usageError);
     return null;
   }
 
@@ -121,7 +121,7 @@ export async function getUserUsage() {
       .single();
 
     if (insertError) {
-      console.error('Error creating user usage record:', insertError);
+      console.error('Error fetching data', insertError);
       return null;
     }
     return { ...newUsage, ...subscription };

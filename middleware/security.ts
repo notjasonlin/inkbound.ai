@@ -41,11 +41,11 @@ export function securityMiddleware(request: NextRequest) {
     [
       "default-src 'self'",
       // Scripts - add specific vercel.live paths and script-src-elem
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
-      "script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live/_next-live/**",
+      "script-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
+      "script-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live/_next-live/**",
       // Styles - add vercel.live
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
-      "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
+      "style-src 'self' https://fonts.googleapis.com https://*.vercel.live",
+      "style-src-elem 'self' https://fonts.googleapis.com https://*.vercel.live",
       // Fonts - add vercel.live
       "font-src 'self' https://fonts.gstatic.com https://*.vercel.live",
       // Images

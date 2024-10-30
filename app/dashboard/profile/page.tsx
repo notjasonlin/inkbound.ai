@@ -25,7 +25,6 @@ export default async function OutlinePage() {
     console.error(error.message);
   }
 
-  console.log(player_profiles);
 
   return (
     <div className="p-6">

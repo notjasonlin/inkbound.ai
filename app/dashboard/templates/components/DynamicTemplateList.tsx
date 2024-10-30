@@ -47,7 +47,7 @@ export default function DynamicTemplateList({ initialTemplates, userId }: Dynami
       // Immediately update the local state
       setTemplates(prev => prev.filter(template => template.id !== id));
     } catch (error) {
-      console.error('Error deleting template:', error);
+      console.error('Error deleting data:', error);
       // Handle error appropriately (e.g., show an error message to the user)
     }
   }, [supabase]);
@@ -72,7 +72,7 @@ export default function DynamicTemplateList({ initialTemplates, userId }: Dynami
       // Add the new template to the list
       setTemplates(prev => [data as TemplateData, ...prev]);
     } catch (error) {
-      console.error('Error duplicating template:', error);
+      console.error('Error duplicating data:', error);
       // Handle error appropriately
     }
   }, [supabase]);

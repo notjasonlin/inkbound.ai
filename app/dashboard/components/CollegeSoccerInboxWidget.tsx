@@ -54,7 +54,7 @@ export default function CollegeSoccerInbox() {
       const allCoachEmails = data.flatMap(item => item.coach_emails);
       setCoachEmails(allCoachEmails);
     } catch (error) {
-      console.error('Error fetching coach emails:', error);
+      console.error('Error fetching data:', error);
       setError('Failed to load coach emails. Please try again later.');
     }
   };
@@ -90,7 +90,7 @@ export default function CollegeSoccerInbox() {
 
       setMessages(sortedMessages);
     } catch (error) {
-      console.error('Error fetching emails:', error);
+      console.error('Error fetching data:', error);
       setError('Failed to load emails. Please try again later.');
     } finally {
       setLoading(false);

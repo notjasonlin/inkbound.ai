@@ -19,7 +19,6 @@ export default function BackgroundPage() {
           .from('player_profiles')
           .upsert({ stats: updatedData }, { onConflict: 'user_id' });
         if (error) throw error;
-        console.log('Updated:', data);
       } catch (error) {
         console.error('Error updating:', error);
       }

@@ -58,7 +58,7 @@ export default function UpgradePage() {
       const data = await response.json();
       window.location.href = data.url;
     } catch (error) {
-      console.error('Failed to create subscription:', error);
+      console.error('Error fetching data:', error);
       // Show an error message to the user
     } finally {
       setIsLoading(false);

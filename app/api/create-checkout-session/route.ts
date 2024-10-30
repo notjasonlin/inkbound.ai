@@ -13,7 +13,6 @@ const PLANS: { [key: number]: { priceId: string, amount: number } } = {
 
 export async function POST(req: Request) {
     try {
-        console.log('Received request to create checkout session');
         
         if (!process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY) {
             throw new Error('NEXT_PUBLIC_STRIPE_SECRET_KEY is not set');
@@ -23,7 +22,6 @@ export async function POST(req: Request) {
         }
 
         const { credits, userId } = await req.json();
-        console.log('Request data:', { credits, userId });
 
         if (!credits || !userId) {
             return NextResponse.json({ error: 'Missing credits or userId' }, { status: 400 });
@@ -32,8 +30,8 @@ export async function POST(req: Request) {
         const plan = PLANS[credits as keyof typeof PLANS];
 
         if (!plan) {
-            console.error('Invalid credit amount');
-            return NextResponse.json({ error: 'Invalid credit amount' }, { status: 400 });
+            console.error('Error fetching data');
+            return NextResponse.json({ error: 'Error fetching data' }, { status: 400 });
         }
 
         const session = await stripe.checkout.sessions.create({
@@ -59,12 +57,11 @@ export async function POST(req: Request) {
             },
         });
 
-        console.log('Checkout session created:', session);
         return NextResponse.json({ id: session.id });
     } catch (error: unknown) {
-        console.error('Stripe error:', error);
+        console.error('Error fetching data:', error);
         if (error instanceof Stripe.errors.StripeError) {
-            console.error('Stripe error details:', error.message);
+            console.error('Error fetching data:', error.message);
         }
         
         const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

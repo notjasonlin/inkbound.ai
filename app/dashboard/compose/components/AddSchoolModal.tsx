@@ -42,14 +42,13 @@
 
 //       setAllSchools(data || []);
 //     } catch (error) {
-//       console.error('Error fetching schools:', error);
+//       console.error('Error fetching data:', error);
 //     } finally {
 //       setIsLoading(false);
 //     }
 //   };
 
 //   const handleSearch = () => {
-//     console.log(allSchools);
 
 //     const uniqueSchools = new Set<string>();
 //     const copies: CoachInformation[] = [];
@@ -57,7 +56,6 @@
 //     const filtered = allSchools.filter(school => {
 //       const schoolNameLower = school.school.toLowerCase();
 //       if (schoolNameLower.includes(searchQuery.toLowerCase())) {
-//         console.log("ENTER");
 //         copies.push(school);
 //         if (!uniqueSchools.has(schoolNameLower)) {
 //           uniqueSchools.add(schoolNameLower);
@@ -102,13 +100,12 @@
 //       onAddSchool(schoolData);
 //       onClose();
 //     } catch (error) {
-//       console.error('Error adding school to favorites:', error);
+//       console.error('Error adding data', error);
 //       // Optionally, show an error message to the user
 //     }
 //   };
 
 //   const makeSchoolData = (school: CoachInformation) => {
-//     console.log("UNFILTERED", unfiltered);
 
 
 //     const allData = unfiltered.filter(datum => datum.school === school.school);

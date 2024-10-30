@@ -77,7 +77,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Error:', error);
     if (error instanceof Stripe.errors.StripeError) {
-      console.error('Stripe error details:', error.message);
+      console.error('Error fetching data:', error.message);
     }
     
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';

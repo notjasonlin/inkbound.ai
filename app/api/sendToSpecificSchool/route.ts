@@ -55,8 +55,6 @@ export async function POST(req: Request) {
       },
     });
 
-    console.log('Email sent successfully:', response.data);
-
     // Delete the draft from the email_drafts table
     const { error: deleteError } = await supabase
       .from('email_drafts')
@@ -64,7 +62,7 @@ export async function POST(req: Request) {
       .match({ user_id: session.user.id, school_id: schoolId });
 
     if (deleteError) {
-      console.error('Error deleting email draft:', deleteError);
+      console.error('Error deleting data:', deleteError);
     }
 
     // Save coach emails
@@ -79,12 +77,12 @@ export async function POST(req: Request) {
       });
 
     if (coachEmailError) {
-      console.error('Error saving coach emails:', coachEmailError);
+      console.error('Error saving data:', coachEmailError);
     }
 
     return NextResponse.json({ success: true, messageId: response.data.id });
   } catch (error: any) {
-    console.error('Error sending email:', error);
+    console.error('Error sending data:', error);
     return NextResponse.json({ 
       error: 'Failed to send email', 
       details: error.message || 'Unknown error'

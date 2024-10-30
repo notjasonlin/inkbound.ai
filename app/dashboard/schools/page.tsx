@@ -8,8 +8,6 @@ export default async function SchoolsPage() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  console.log(schools);
-
   if (!user) {
     return null; // or some loading/error state
   }

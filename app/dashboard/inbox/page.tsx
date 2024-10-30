@@ -29,7 +29,7 @@ export default function Inbox() {
 
       setGmailClient(gmail);
     } catch (error) {
-      console.error('Error initializing Gmail client:', error);
+      console.error('Error initializing data:', error);
     }
   }, []);
 

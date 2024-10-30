@@ -38,7 +38,7 @@ const WaitlistForm: React.FC = () => {
           .insert([{ fullName: fullName, email }]);
 
         if (error) {
-          console.error('Error adding to waitlist:', error.message);
+          console.error('Error fetching data', error.message);
           setMessage('There was an error. Please try again later.');
         } else {
           setMessage('Thank you for joining the waitlist!');
@@ -47,11 +47,11 @@ const WaitlistForm: React.FC = () => {
         }
       } else if (checkError) {
         // Handle unexpected errors
-        console.error('Unexpected error checking for existing email:', checkError.message);
+        console.error('Error fetching data', checkError.message);
         setMessage('An unexpected error occurred. Please try again later.');
       }
     } catch (err) {
-      console.error('Unexpected error:', err);
+      console.error('Error fetching data', err);
       setMessage('An unexpected error occurred. Please try again later.');
     } finally {
       setLoading(false);

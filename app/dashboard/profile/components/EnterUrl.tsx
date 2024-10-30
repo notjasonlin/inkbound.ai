@@ -16,8 +16,6 @@ const EnterUrl = ({ highlights, userId }: EnterUrlProps) => {
   const [alertMessage, setAlertMessage] = useState<string>("");
   const supabase = createClient();
 
-  console.log("HIGHLIGHTS", highlights);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(e.target.value);
   };

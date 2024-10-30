@@ -62,7 +62,7 @@ export default function AutoComposePage() {
       .single();
 
     if (error) {
-      console.error("Error fetching favorite schools:", error);
+      console.error("Error fetching data:", error);
     } else if (data && data.data) {
       setFavoriteSchools(data.data);
     }
@@ -77,7 +77,7 @@ export default function AutoComposePage() {
       const data = await response.json();
       setTemplates(data);
     } catch (error) {
-      console.error('Error fetching templates:', error);
+      console.error('Error fetching data:', error);
     }
   };
 
@@ -172,7 +172,6 @@ export default function AutoComposePage() {
 
   const sendEmail = async (emailData: EmailPreviewData, schoolId: string, schoolName: string) => {
     try {
-      console.log(`Starting email process for ${schoolName} (ID: ${schoolId})`);
       setQueueStatus(prev => prev.map(item => 
         item.schoolId === schoolId ? { ...item, status: 'sending' } : item
       ));
@@ -194,7 +193,7 @@ export default function AutoComposePage() {
       if (user && 'id' in user) {
         await incrementUsage(user.id, { schools_sent: 1 });
       } else {
-        console.error('User is null or does not have an id property');
+        console.error('Error fetching data');
       }
     } catch (error) {
       console.error(error);

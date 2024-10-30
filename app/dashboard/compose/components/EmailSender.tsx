@@ -46,7 +46,7 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent, setIsOpe
         .single();
 
       if (error) {
-        console.error('Error fetching draft:', error);
+        console.error('Error fetching data:', error);
         setEmailDraft({
           emailsTo: school.coaches.map(coach => coach.email).join(', '),
           subject: '',
@@ -89,7 +89,7 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent, setIsOpe
       });
 
     if (error) {
-      console.error('Error saving draft:', error);
+      console.error('Error saving data:', error);
       setSaveStatus('Error saving draft');
     } else {
       setSaveStatus('Draft saved successfully');
@@ -148,18 +148,17 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent, setIsOpe
       }
 
       const result = await response.json();
-      console.log('Email sent successfully:', result);
 
       const { data: { user } } = await supabase.auth.getUser();
       if (user && 'id' in user) {
         await incrementUsage(user.id, { schools_sent: 1 });
       } else {
-        console.error('User is null or does not have an id property');
+        console.error('Error fetching data');
       }
 
       onEmailSent(school.id);
     } catch (error) {
-      console.error('Error sending email:', error);
+      console.error('Error sending data:', error);
     }
   };
 

@@ -18,7 +18,6 @@ export default function ComposePage() {
   };
 
   const handleRemoveSchool = (schoolId: string) => {
-    console.log("Removing school:", schoolId);
     setSelectedSchools((prev) => prev.filter((s) => s.id !== schoolId));
   };
 

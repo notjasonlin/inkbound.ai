@@ -6,7 +6,6 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const userId = url.searchParams.getAll('userId');
 
-    console.log("USERID", userId);
 
     try {
         const { data, error } = await supabase
@@ -16,8 +15,8 @@ export async function GET(req: Request) {
         .single();
 
     if (error) {
-        console.error("Error fetching user credits:", error);
-        return NextResponse.json({ error: "Failed to fetch credits" }, {
+        console.error("Error fetching data:", error);
+        return NextResponse.json({ error: "Error fetching data" }, {
             status: 500,
         });
     }
@@ -48,8 +47,7 @@ export async function POST(req: Request) {
         .single();
 
     if (error) {
-        console.error("Error updating favorite schools:", error.message);
+        console.error("Error fetching data:", error.message);
     } else {
-        console.log("Updated favorite school:", data);
     }
 }

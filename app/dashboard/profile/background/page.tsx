@@ -29,7 +29,7 @@ export default async function BackgroundPage() {
       .single();
     
     if (error) {
-      console.error('Error creating profile:', error);
+      console.error('Error creating data:', error);
       return <div>Error creating profile. Please try again.</div>;
     }
     
