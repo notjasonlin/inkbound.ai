@@ -2,11 +2,17 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { SchoolData } from '@/types/school/index';
 
-const FavoritesContext = createContext<any>(null);
+interface FavoritesContextType {
+  favorites: SchoolData[];
+  toggleFavorite: (school: SchoolData) => Promise<void>;
+}
+
+const FavoritesContext = createContext<FavoritesContextType | null>(null);
 
 export function FavoritesProvider({ children, userId }: { children: React.ReactNode, userId: string }) {
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<SchoolData[]>([]);
   const supabase = createClientComponentClient();
 
   useEffect(() => {
@@ -15,29 +21,43 @@ export function FavoritesProvider({ children, userId }: { children: React.ReactN
 
   const fetchFavorites = async () => {
     const { data, error } = await supabase
-      .from('favorites')
-      .select('school_id')
-      .eq('user_id', userId);
+      .from('favorite_schools')
+      .select('data')
+      .eq('uuid', userId)
+      .single();
     
-    if (data) {
-      setFavorites(data.map(fav => fav.school_id));
+    if (error) {
+      console.error('Error fetching favorites:', error);
+      return;
+    }
+    
+    if (data?.data) {
+      setFavorites(Array.isArray(data.data) ? data.data : []);
     }
   };
 
-  const toggleFavorite = async (schoolId: string) => {
-    const isFavorite = favorites.includes(schoolId);
-    
-    if (isFavorite) {
-      await supabase
-        .from('favorites')
-        .delete()
-        .match({ user_id: userId, school_id: schoolId });
-      setFavorites(favorites.filter(id => id !== schoolId));
-    } else {
-      await supabase
-        .from('favorites')
-        .insert({ user_id: userId, school_id: schoolId });
-      setFavorites([...favorites, schoolId]);
+  const toggleFavorite = async (school: SchoolData) => {
+    try {
+      const updatedFavorites = [...favorites];
+      const schoolIndex = updatedFavorites.findIndex(s => s.id === school.id);
+      
+      if (schoolIndex > -1) {
+        updatedFavorites.splice(schoolIndex, 1);
+      } else {
+        updatedFavorites.push(school);
+      }
+
+      const { error } = await supabase
+        .from('favorite_schools')
+        .upsert({ 
+          uuid: userId, 
+          data: updatedFavorites 
+        }, { onConflict: 'uuid' });
+
+      if (error) throw error;
+      setFavorites(updatedFavorites);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
     }
   };
 
@@ -48,6 +68,12 @@ export function FavoritesProvider({ children, userId }: { children: React.ReactN
   );
 }
 
-export const useFavorites = () => useContext(FavoritesContext);
+export const useFavorites = () => {
+  const context = useContext(FavoritesContext);
+  if (!context) {
+    throw new Error('useFavorites must be used within a FavoritesProvider');
+  }
+  return context;
+};
 
 export default FavoritesProvider;
