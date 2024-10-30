@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from 'react';
-import { createClient } from "@/utils/supabase/client";
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import { debounce } from 'lodash';
 import { PlayerStats, FormField } from '@/types/background/index';
@@ -17,26 +17,26 @@ export default function BackgroundEditor({ profile, userId }: { profile: Backgro
   const [formData, setFormData] = useState<PlayerStats>(profile.stats || initialFormData);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const supabase = createClientComponentClient();
 
   const saveBackground = useCallback(async (newData: PlayerStats) => {
     setError(null);
-    const supabase = createClient();
     
     try {
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('player_profiles')
         .update({ stats: newData })
         .eq('id', profile.id)
         .eq('user_id', userId);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
       router.refresh();
     } catch (error) {
       console.error('Error saving data:', error);
       setError('Failed to save background. Please try again.');
     }
-  }, [profile.id, userId, router]);
+  }, [profile.id, userId, router, supabase]);
 
   const debouncedSave = useCallback(debounce(saveBackground, 1000), [saveBackground]);
 
