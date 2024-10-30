@@ -46,17 +46,20 @@ export function securityMiddleware(request: NextRequest) {
     [
       "default-src 'self'",
       
-      // Scripts
+      // Scripts - add unsafe-inline for production to handle Vercel's inline scripts
       process.env.NODE_ENV === 'production'
-        ? `script-src 'self' 'nonce-${nonce}' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live`
+        ? "script-src 'self' 'unsafe-inline' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live"
         : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
       
-      // Styles - added unsafe-inline for now
+      // Styles
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
-      "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
+      // Add vercel.live/fonts to style-src-elem
+      "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live https://vercel.live/_next-live/ https://vercel.live/_next-live/feedback/ https://vercel.live/fonts",
+      
       "font-src 'self' https://fonts.gstatic.com https://*.vercel.live",
       "img-src 'self' data: https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live https://vercel.live https://accounts.google.com",
+      // Add Pusher domains to connect-src
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live https://vercel.live https://accounts.google.com https://*.pusher.com wss://*.pusher.com",
       "frame-src 'self' https://*.stripe.com https://*.vercel.live https://vercel.live https://accounts.google.com",
       "frame-ancestors 'none'",
       "media-src 'self' https://*.vercel.live",
