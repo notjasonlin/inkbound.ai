@@ -52,6 +52,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // Determine the active sidebar item based on the pathname
   const activeItemName = useMemo(() => {
+    if (!pathname) return "Dashboard";
+    
     const activeItem = sidebarItems.find((item) =>
       pathname.startsWith(item.path)
     );
