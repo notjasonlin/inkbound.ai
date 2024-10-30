@@ -27,7 +27,7 @@ export async function POST(req: Request) {
       console.error(error.response.status, error.response.data);
       return NextResponse.json(error.response.data, { status: error.response.status });
     } else {
-      console.error(`Error with OpenAI API request: ${error.message}`);
+      console.error(`Error fetching data: ${error.message}`);
       return NextResponse.json({ error: 'An error occurred during your request.' }, { status: 500 });
     }
   }

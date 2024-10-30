@@ -17,7 +17,7 @@ export async function getCoaches(schoolId?: string) {
       .eq("schoolId", schoolId);
 
     if (error) {
-      console.error("Error fetching coaches:", error);
+      console.error("Error fetching data:", error);
       return [];
     }
 
@@ -29,13 +29,10 @@ export async function getCoaches(schoolId?: string) {
       .limit(20000);
 
     if (error) {
-      console.error("Error fetching coaches:", error);
+      console.error("Error fetching data:", error);
       return [];
     }
 
-    console.log(data.find((item) => {
-      item.school === "Aaron School";
-    }));
 
     return data || [];
   }
@@ -51,7 +48,7 @@ export async function getBio(schoolId?: string) {
       .eq("school_id", schoolId);
 
     if (error) {
-      console.error("Error fetching coaches:", error);
+      console.error("Error fetching data:", error);
       return [];
     }
 
@@ -63,7 +60,7 @@ export async function getBio(schoolId?: string) {
       .limit(20000);
 
     if (error) {
-      console.error("Error fetching coaches:", error);
+      console.error("Error fetching data:", error);
       return [];
     }
 
@@ -84,11 +81,10 @@ export async function getUniqueSchools() {
       .range(page * pageSize, (page + 1) * pageSize - 1);
 
     if (error) {
-      console.error("Error fetching schools:", error);
+      console.error("Error fetching data:", error);
       return [];
     }
 
-    // console.log("NEW SCHOOLS", data);
 
     if (data.length === 0) break;
 
@@ -170,7 +166,7 @@ export async function getSchool(schoolName: string) {
     .ilike("school_name", schoolName.trim());
 
   if (error) {
-    console.error("Error fetching schools:", error);
+    console.error("Error fetching data:", error);
     return null;
   }
 
@@ -215,6 +211,5 @@ export async function getSchool(schoolName: string) {
     },
   };
 
-  console.log(school);
   return school;
 }

@@ -21,7 +21,7 @@ export async function fetchOrCreateUserCredits(supabase: SupabaseClient, userId:
 
     return credits || 0;
   } catch (error) {
-    console.error('Error fetching or creating user credits:', error);
+    console.error('Error fetching data', error);
     return 0;
   }
 }
@@ -38,7 +38,7 @@ export async function fetchUserSubscription(supabase: SupabaseClient, userId: st
 
     return data;
   } catch (error) {
-    console.error('Error fetching user subscription:', error);
+    console.error('Error fetching data', error);
     return null;
   }
 }
@@ -72,7 +72,7 @@ export async function fetchUserUsage(supabase: SupabaseClient, userId: string): 
 
     return data;
   } catch (error) {
-    console.error('Error fetching or creating user usage:', error);
+    console.error('Error fetching data', error);
     return null;
   }
 }

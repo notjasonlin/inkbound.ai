@@ -64,7 +64,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         setThreadId(processedMessages[0].threadId);
       }
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -107,7 +107,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
       setMessages((prevMessages) => [sentMessage, ...prevMessages]);
       setNewMessage('');
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error sending data:', error);
     } finally {
       setIsSending(false);
     }

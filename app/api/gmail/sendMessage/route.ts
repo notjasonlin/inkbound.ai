@@ -33,8 +33,6 @@ export async function POST(request: NextRequest) {
 
     const gmail = google.gmail({ version: "v1", auth });
 
-    console.log(1);
-
     let subject = "New Message"; // Default subject if no thread is provided
     let references = "";
     let inReplyTo = "";
@@ -45,8 +43,6 @@ export async function POST(request: NextRequest) {
             userId: "me",
             id: threadId,
         });
-
-        console.log(2);
 
         const messages = threadResponse.data.messages;
         if (messages && messages.length > 0) {
@@ -62,8 +58,6 @@ export async function POST(request: NextRequest) {
             )?.value || "";
         }
     }
-
-    console.log(3);
 
     const emailContent = message
     const boundary = '-----' + Math.random().toString(36).slice(2);
@@ -101,15 +95,13 @@ export async function POST(request: NextRequest) {
             },
         });
 
-        console.log(6);
-
         // Return the sent message details
         return new NextResponse(JSON.stringify({ id: result.data.id }), {
             status: 200,
             headers: { "Content-Type": "application/json" },
         });
     } catch (error) {
-        console.error("Error sending email:", error);
+        console.error("Error sending data:", error);
         return new NextResponse("Failed to send message", { status: 500 });
     }
 }

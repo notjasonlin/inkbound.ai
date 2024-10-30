@@ -12,7 +12,7 @@ export default function AuthCallbackPage() {
     const handleAuthCallback = async () => {
       const { error } = await supabase.auth.getSession()
       if (error) {
-        console.error('Error during auth callback:', error)
+        console.error('Error fetching data', error)
         router.push('/error')
       } else {
         router.push('/')
