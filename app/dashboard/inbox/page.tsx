@@ -19,30 +19,12 @@ export default function Inbox() {
   const [gmailClient, setGmailClient] = useState<gmail_v1.Gmail | null>(null);
   const supabase = createClient();
 
-  const initializeGmailClient = useCallback(async () => {
-    try {
-      const response = await fetch('/api/gmail/init');
-      if (!response.ok) {
-        throw new Error('Failed to initialize Gmail client');
-      }
-      const gmail = await response.json();
-
-      setGmailClient(gmail);
-    } catch (error) {
-      console.error('Error initializing data:', error);
-    }
-  }, []);
-
   const fetchCoachEmails = useCallback(async (schoolId: string) => {
     if (schoolId && schoolId !== "") {
       const coaches = await getCoaches(schoolId)
       setCoachEmails(coaches);
     }
   }, [supabase]);
-
-  useEffect(() => {
-    initializeGmailClient();
-  }, [initializeGmailClient]);
 
   useEffect(() => {
     if (selectedSchool) {
