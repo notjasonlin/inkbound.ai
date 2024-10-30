@@ -42,13 +42,13 @@ export function securityMiddleware(request: NextRequest) {
       // Default fallback
       "default-src 'self'",
             
-      // Scripts - add specific vercel.live paths and script-src-elem
-      "script-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
-      "script-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live/_next-live/**",
+      // Scripts - add unsafe-inline and unsafe-eval for development
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
+      "script-src-elem 'self' 'unsafe-inline' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live/_next-live/**",
 
-      // Styles
-      "style-src 'self' https://fonts.googleapis.com https://*.vercel.live",
-      "style-src-elem 'self' https://fonts.googleapis.com https://*.vercel.live",
+      // Styles - add unsafe-inline
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
+      "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
 
       // Fonts
       "font-src 'self' https://fonts.gstatic.com https://*.vercel.live",
@@ -57,10 +57,10 @@ export function securityMiddleware(request: NextRequest) {
       "img-src 'self' data: https: blob:",
 
       // Connect sources
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live https://vercel.live",
+      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live https://vercel.live https://accounts.google.com",
 
       // Frames
-      "frame-src 'self' https://*.stripe.com https://*.vercel.live https://vercel.live",
+      "frame-src 'self' https://*.stripe.com https://*.vercel.live https://vercel.live https://accounts.google.com",
 
       // Frame ancestors
       "frame-ancestors 'none'",
