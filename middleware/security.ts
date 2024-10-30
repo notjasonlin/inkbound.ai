@@ -37,63 +37,38 @@ export function securityMiddleware(request: NextRequest) {
   response.headers.delete('X-Powered-By');
   response.headers.delete('Server');
   
-  // Use nonces for inline scripts and styles in production
-  const nonce = crypto.randomBytes(16).toString('base64');
+  // Generate nonce using Web Crypto API
+  const array = new Uint8Array(16);
+  globalThis.crypto.getRandomValues(array);
+  const nonce = btoa(Array.from(array).map(byte => String.fromCharCode(byte)).join(''));
   
   response.headers.set('Content-Security-Policy', 
     [
-      // Default fallback
       "default-src 'self'",
       
-      // Scripts - remove unsafe-inline in production
+      // Scripts
       process.env.NODE_ENV === 'production'
         ? `script-src 'self' 'nonce-${nonce}' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live`
         : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
       
-      // Styles - use hashes instead of unsafe-inline
-      "style-src 'self' https://fonts.googleapis.com https://*.vercel.live",
-      "style-src-elem 'self' https://fonts.googleapis.com https://*.vercel.live",
-      
-      // Fonts
+      // Styles - added unsafe-inline for now
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
+      "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
       "font-src 'self' https://fonts.gstatic.com https://*.vercel.live",
-      
-      // Images - more specific than wildcard
       "img-src 'self' data: https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
-      
-      // Connect sources
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live https://vercel.live https://accounts.google.com",
-      
-      // Frames
       "frame-src 'self' https://*.stripe.com https://*.vercel.live https://vercel.live https://accounts.google.com",
       "frame-ancestors 'none'",
-      
-      // Media
       "media-src 'self' https://*.vercel.live",
-      
-      // Forms
       "form-action 'self'",
-      
-      // Object sources
       "object-src 'none'",
-      
-      // Base URI
       "base-uri 'self'",
-      
-      // Manifest
       "manifest-src 'self'",
-      
-      // Worker sources
-      "worker-src 'self'",
-      
-      // Prefetch
-      "prefetch-src 'self'",
-      
-      // Navigation
-      "navigate-to 'self'"
+      "worker-src 'self'"
     ].join('; ')
   );
   
-  // Add other security headers
+  // Security headers
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('X-XSS-Protection', '1; mode=block');
