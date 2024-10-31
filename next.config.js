@@ -21,8 +21,8 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live https://vercel.live/_next-live/feedback/instrument.75fcae37624ec0f476e1.jsv 'nonce-{nonce}' 'strict-dynamic'",
-              "script-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live https://vercel.live/_next-live/feedback/instrument.75fcae37624ec0f476e1.jsv 'nonce-{nonce}' 'strict-dynamic'",
+              "script-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live https://vercel.live/_next-live/feedback/instrument.75fcae37624ec0f476e1.jsv https://vercel.live/_next-live/feedback/feedback.js 'nonce-{nonce}' 'strict-dynamic'",
+              "script-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live https://vercel.live/_next-live/feedback/instrument.75fcae37624ec0f476e1.jsv https://vercel.live/_next-live/feedback/feedback.js 'nonce-{nonce}' 'strict-dynamic'",
               "style-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-{nonce}'",
               "style-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-{nonce}'",
               "img-src 'self' https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
