@@ -34,7 +34,7 @@ export async function middleware(request: NextRequest) {
 
   // Define Content Security Policy
   let cspHeader = `
-    default-src 'self';
+    default-src 'none';
     script-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live https://vercel.live/_next-live/feedback/instrument.75fcae37624ec0f476e1.jsv https://vercel.live/_next-live/feedback/feedback.js 'nonce-${nonce}' 'strict-dynamic';
     script-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live https://vercel.live/_next-live/feedback/instrument.75fcae37624ec0f476e1.jsv https://vercel.live/_next-live/feedback/feedback.js 'nonce-${nonce}' 'strict-dynamic';
     style-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-${nonce}';
