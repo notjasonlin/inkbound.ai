@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
   let cspHeader = `
     default-src 'self';
     script-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-${nonce}' 'strict-dynamic';
-    script-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-${nonce}' 'strict-dynamic';
+    script-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-${nonce}';
     style-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-${nonce}';
     style-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-${nonce}';
     img-src 'self' data: https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live;
