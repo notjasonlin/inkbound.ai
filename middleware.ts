@@ -3,7 +3,15 @@ import { updateSession } from "@/utils/supabase/middleware";
 
 const allowedOrigins = [
   'https://inkbound.ai',
-  process.env.NEXT_PUBLIC_FRONTEND_URL
+  'https://www.inkbound.ai',
+  'https://staging.inkbound.ai',
+  'https://app.inkbound.ai',
+  'https://*.inkbound.ai',          // Covers all subdomains
+  'https://*.vercel.app',           // For Vercel preview deployments
+  'http://localhost:3000',          // Local development
+  'http://localhost:3001',          // Alternative local port
+  process.env.NEXT_PUBLIC_FRONTEND_URL,
+  process.env.NEXT_PUBLIC_API_URL
 ].filter(Boolean) as string[];
 
 export async function middleware(request: NextRequest) {
