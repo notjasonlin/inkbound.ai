@@ -36,7 +36,7 @@ export default function RandomFactsWidget() {
   };
 
   return (
-    <div className="bg-white rounded-lg p-3" style={{ height: "100%" }}>
+    <div className="bg-white rounded-lg p-3 h-full">
       <h2 className="text-lg font-semibold text-gray-800 mb-2">Random Facts & Tips</h2>
       <AnimatePresence>
         {visibleFacts.map((fact) => (
