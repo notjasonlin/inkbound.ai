@@ -1,5 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
+  webpack: (config, { dev, isServer }) => {
+    // Disable React Refresh in development
+    if (dev) {
+      config.plugins = config.plugins.filter(
+        (plugin) => 
+          plugin.constructor.name !== 'ReactFreshWebpackPlugin' &&
+          plugin.constructor.name !== 'HotModuleReplacementPlugin'
+      );
+    }
+    return config;
+  },
   async headers() {
     return [
       {
@@ -9,22 +21,19 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              process.env.NODE_ENV === 'production'
-                ? "script-src 'self' 'unsafe-inline' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live"
-                : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live",
-              "style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.vercel.live https://vercel.live/_next-live/ https://vercel.live/_next-live/feedback/ https://vercel.live/fonts",
-              "font-src 'self' https://fonts.gstatic.com https://*.vercel.live",
+              "script-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-{nonce}' 'strict-dynamic'",
+              "script-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-{nonce}' 'strict-dynamic'",
+              "style-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-{nonce}'",
+              "style-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-{nonce}'",
               "img-src 'self' data: https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live https://vercel.live https://accounts.google.com https://*.pusher.com wss://*.pusher.com",
-              "frame-src 'self' https://*.stripe.com https://*.vercel.live https://vercel.live https://accounts.google.com",
-              "frame-ancestors 'none'",
-              "media-src 'self' https://*.vercel.live",
-              "form-action 'self'",
+              "font-src 'self' https://fonts.gstatic.com https://*.vercel.live",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live https://vercel.live https://accounts.google.com https://*.pusher.com wss://*.pusher.com http://localhost:3000",
               "object-src 'none'",
               "base-uri 'self'",
-              "manifest-src 'self'",
-              "worker-src 'self'"
+              "form-action 'self'",
+              "frame-ancestors 'none'",
+              "media-src 'self' https://*.vercel.live",
+              "upgrade-insecure-requests"
             ].join('; ')
           },
           {
@@ -50,7 +59,7 @@ const nextConfig = {
         ]
       }
     ];
-  }
+  },
 };
 
 module.exports = nextConfig;

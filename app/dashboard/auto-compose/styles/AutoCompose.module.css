@@ -1,0 +1,35 @@
+.container {
+  @apply flex flex-col md:flex-row h-screen bg-gradient-to-br from-blue-50 to-blue-100;
+}
+
+.mainContent {
+  @apply flex-1 p-6;
+}
+
+.contentWrapper {
+  @apply max-w-5xl mx-auto bg-gradient-to-r from-blue-50 to-babyblue-200 p-8 shadow-xl rounded-2xl;
+}
+
+.title {
+  @apply text-3xl font-bold mb-6 text-blue-800;
+}
+
+.linkWrapper {
+  @apply mb-6 text-sm;
+}
+
+.link {
+  @apply text-blue-600 hover:text-blue-800 hover:underline;
+}
+
+.templateButton {
+  @apply px-4 py-2 bg-blue-400 text-black rounded-full hover:bg-blue-700 transition-colors shadow-md;
+}
+
+.sendButton {
+  @apply w-full py-3 bg-blue-400 text-black rounded-full hover:bg-blue-700 transition-colors text-lg font-semibold shadow-md mb-4;
+}
+
+.previewSection {
+  @apply mt-6;
+} 

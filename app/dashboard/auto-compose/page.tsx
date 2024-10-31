@@ -8,10 +8,11 @@ import QueueStatus from './components/QueueStatus';
 import TemplateModal from './components/TemplateModal';
 import Sidebar from './components/Sidebar';
 import { TemplateData } from '@/types/template/index';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { checkUserLimits, incrementUsage } from '@/utils/checkUserLimits';
 import { User } from '@supabase/supabase-js';
 import readTemplate from "@/functions/readTemplate";
+import styles from './styles/AutoCompose.module.css';
 
 interface EmailPreviewData {
   to: string;
@@ -206,21 +207,14 @@ export default function AutoComposePage() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-gradient-to-br from-blue-50 to-blue-100">
-      {/* Sidebar */}
+    <div className={styles.container}>
       <Sidebar onSelectSchools={handleSchoolSelection} />
 
-      {/* Main Content Area */}
-      <motion.div
-        className="flex-1 p-6"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6 }}
-      >
+      <div className="flex-1 p-6">
         <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-50 to-babyblue-200 p-8 shadow-xl rounded-2xl">
-          <h1 className="text-3xl font-bold mb-6 text-blue-800">Auto Compose</h1>
-          <div className="mb-6 text-sm">
-            <a href="/dashboard/compose" className="text-blue-600 hover:text-blue-800 hover:underline">
+          <h1 className={styles.title}>Auto Compose</h1>
+          <div className={styles.linkWrapper}>
+            <a href="/dashboard/compose" className={styles.link}>
               Want to send customized emails to individual schools instead? Go to Manual Compose →
             </a>
           </div>
@@ -228,7 +222,7 @@ export default function AutoComposePage() {
           <div className="mb-6">
             <button
               onClick={() => setShowTemplateModal(true)}
-              className="px-4 py-2 bg-blue-400 text-black rounded-full hover:bg-blue-700 transition-colors shadow-md"
+              className={styles.templateButton}
             >
               Select Template
             </button>
@@ -236,7 +230,7 @@ export default function AutoComposePage() {
 
           <button
             onClick={handleSubmit}
-            className="w-full py-3 bg-blue-400 text-black rounded-full hover:bg-blue-700 transition-colors text-lg font-semibold shadow-md mb-4"
+            className={styles.sendButton}
             disabled={selectedSchools.length === 0 || !selectedTemplate || isSending}
           >
             {isSending ? 'Sending...' : 'Send Emails'}
@@ -250,7 +244,7 @@ export default function AutoComposePage() {
           />
 
           {selectedTemplate && selectedSchools.length > 0 && (
-            <div className="mt-6">
+            <div className={styles.previewSection}>
               <EmailPreview
                 schools={selectedSchools}
                 previewEmails={previewEmails}
@@ -258,11 +252,11 @@ export default function AutoComposePage() {
             </div>
           )}
 
-          <div className="mt-6">
+          <div className={styles.previewSection}>
             <QueueStatus status={queueStatus} />
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
