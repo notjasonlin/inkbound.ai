@@ -1,0 +1,43 @@
+.container {
+  @apply mb-6 relative max-w-screen-xl mx-auto p-2 sm:p-6 lg:p-8;
+}
+
+.title {
+  @apply text-lg sm:text-xl lg:text-2xl font-semibold mb-4 text-center;
+}
+
+.carouselContainer {
+  @apply relative w-full h-64 sm:h-72 md:h-80 lg:h-96 overflow-hidden;
+}
+
+.emailCard {
+  @apply absolute top-0 left-0 w-full p-4 bg-white rounded-lg shadow-md h-full;
+}
+
+.schoolTitle {
+  @apply text-lg font-semibold mb-2;
+}
+
+.emailContent {
+  @apply border border-gray-300 rounded p-3 bg-gray-50 text-sm sm:text-base whitespace-pre-line h-full overflow-y-auto;
+}
+
+.contentText {
+  @apply mt-2;
+}
+
+.navigationContainer {
+  @apply flex justify-between items-center mt-4 max-w-xl mx-auto;
+}
+
+.navigationButton {
+  @apply p-3 sm:p-4 lg:p-5 rounded-full bg-blue-500 text-white;
+}
+
+.navigationButtonDisabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.navigationButtonEnabled {
+  @apply hover:bg-blue-600;
+} 

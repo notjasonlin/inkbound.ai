@@ -1,5 +1,17 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
+  webpack: (config, { dev, isServer }) => {
+    // Disable React Refresh in development
+    if (dev) {
+      config.plugins = config.plugins.filter(
+        (plugin) => 
+          plugin.constructor.name !== 'ReactFreshWebpackPlugin' &&
+          plugin.constructor.name !== 'HotModuleReplacementPlugin'
+      );
+    }
+    return config;
+  },
   async headers() {
     return [
       {
@@ -47,7 +59,7 @@ const nextConfig = {
         ]
       }
     ];
-  }
+  },
 };
 
 module.exports = nextConfig;
