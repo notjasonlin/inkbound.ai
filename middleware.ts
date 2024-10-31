@@ -34,14 +34,14 @@ export async function middleware(request: NextRequest) {
 
   // Define Content Security Policy
   let cspHeader = `
-    default-src 'self';
-    script-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-${nonce}' 'strict-dynamic';
-    script-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-${nonce}' 'strict-dynamic';
-    style-src 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-${nonce}';
-    style-src-elem 'self' https://apis.google.com https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live 'nonce-${nonce}';
-    img-src 'self' data: https://*.stripe.com https://*.vercel.live https://*.vercel.app https://vercel.live;
+    default-src 'none';
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic';
+    script-src-elem 'self' 'nonce-${nonce}' 'strict-dynamic';
+    style-src 'self' 'nonce-${nonce}';
+    style-src-elem 'self' 'nonce-${nonce}';
+    img-src 'self' blob: data:;
     font-src 'self' https://fonts.gstatic.com https://*.vercel.live;
-    connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://*.stripe.com https://*.vercel.live https://*.vercel.app wss://*.vercel.live https://vercel.live https://accounts.google.com https://*.pusher.com wss://*.pusher.com http://localhost:3000;
+    connect-src 'self' https://tvjclbhclyozgziixpcp.supabase.co wss://tvjclbhclyozgziixpcp.supabase.co https://api.openai.com https://accounts.google.com https://vitals.vercel-insights.com;
     object-src 'none';
     base-uri 'self';
     form-action 'self';
