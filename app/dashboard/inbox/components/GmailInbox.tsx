@@ -7,7 +7,7 @@ import { CoachData } from '@/types/school';
 
 interface Message {
   id: string;
-  content: string;
+  content: string;s
   from: string;
   date: string;
   isCoachMessage: boolean;
