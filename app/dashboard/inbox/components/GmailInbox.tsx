@@ -61,6 +61,10 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         //   console.error('Error fetching tracking data:', trackingError);
         // }
 
+        if (!trackingData) {
+          console.log("NO TRACKING DATA");
+        }
+
         // Grab messages
         const response = await fetch('/api/gmail/messages', {
           method: 'POST',
@@ -77,9 +81,11 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           from: message.from,
           date: message.date,
           isCoachMessage: message.from.includes(coachEmail),
-          threadId: message.id,
+          threadId: message.id, // Should be separate id???
         }));
         // End grab messages
+
+        console.log("Processed", processedMessages);
 
         let newMessages = processedMessages;
         if (trackingData) {

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { gmail_v1 } from 'googleapis';
 
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   
   // Get the current session
   const { data: { session } } = await supabase.auth.getSession();

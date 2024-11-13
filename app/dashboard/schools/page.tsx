@@ -5,7 +5,7 @@ import SchoolList from './components/SchoolList';
 
 export default async function SchoolsPage() {
   const schools = await getUniqueSchools();
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

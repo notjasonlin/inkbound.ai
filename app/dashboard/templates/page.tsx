@@ -4,7 +4,7 @@ import DynamicTemplateList from './components/DynamicTemplateList';
 import AddTemplateButton from "./components/AddTemplateButton";
 
 export default async function TemplatesPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

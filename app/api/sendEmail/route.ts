@@ -3,7 +3,7 @@ import { createClient } from '@/utils/supabase/server';
 import { google } from 'googleapis';
 
 export async function POST(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.provider_token) {
