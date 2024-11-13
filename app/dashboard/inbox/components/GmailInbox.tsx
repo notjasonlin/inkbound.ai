@@ -102,19 +102,19 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
 
 
         // Send each new message to the AWS API endpoint
-        // for (const message of newMessages) {
-        //   await fetch('https://jtf79lf49l.execute-api.us-east-2.amazonaws.com/fetch-email-data', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify({
-        //       emailId: message.id,
-        //       content: message.content,
-        //       from: message.from,
-        //       date: message.date,
-        //       threadId: message.threadId
-        //     }),
-        //   });
-        // }
+        for (const message of newMessages) {
+          await fetch('https://jtf79lf49l.execute-api.us-east-2.amazonaws.com/fetch-email-data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              emailId: message.id,
+              content: message.content,
+              from: message.from,
+              date: message.date,
+              threadId: message.threadId
+            }),
+          });
+        }
 
         if (newMessages.length > 0) {
           // Update the last fetched message ID with the most recent message
