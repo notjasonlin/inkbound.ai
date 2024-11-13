@@ -52,7 +52,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
       } else {
         const { data: trackingData, error: trackingError } = await supabase
           .from('user_message_tracking')
-          .select('last_fetched_message_id')
+          .select('last_fetched_message_id, id')
           .eq('user_id', user.id)
           .eq('coach_email', coachEmail)
           .single();
@@ -82,61 +82,65 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           date: message.date,
           isCoachMessage: message.from.includes(coachEmail),
           threadId: message.id, // Should be separate id???
-        }));
+        })).reverse();
         // End grab messages
 
-        console.log("Processed", processedMessages);
 
         let newMessages = processedMessages;
         if (trackingData) {
           const lastFetchedMessageId = trackingData ? trackingData.last_fetched_message_id : null;
 
           console.log("Last fetched", lastFetchedMessageId);
-          // TRACKING END
 
-          // Filter new messages by checking if their ID is after the last fetched message ID
-          newMessages = lastFetchedMessageId
-            ? processedMessages.filter(message => message.id > lastFetchedMessageId)
-            : processedMessages;
-
+          const idx = processedMessages.findIndex((message) => message.id === lastFetchedMessageId);
+          if (idx >= 0) {
+            newMessages = processedMessages.slice(idx + 1);
+          }
         }
-        console.log("New messages", newMessage);
+        console.log("New messages", newMessages);
 
 
 
         // Send each new message to the AWS API endpoint
-        for (const message of newMessages) {
-          await fetch('https://jtf79lf49l.execute-api.us-east-2.amazonaws.com/fetch-email-data', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              emailId: message.id,
-              content: message.content,
-              from: message.from,
-              date: message.date,
-              threadId: message.threadId
-            }),
-          });
-        }
+        // for (const message of newMessages) {
+        //   await fetch('https://jtf79lf49l.execute-api.us-east-2.amazonaws.com/fetch-email-data', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify({
+        //       emailId: message.id,
+        //       content: message.content,
+        //       from: message.from,
+        //       date: message.date,
+        //       threadId: message.threadId
+        //     }),
+        //   });
+        // }
 
         if (newMessages.length > 0) {
           // Update the last fetched message ID with the most recent message
-          const latestMessageId = newMessages[0].id;
+          const latestMessageId = newMessages[newMessages.length - 1].id;
           console.log("LATEST", latestMessageId);
 
-          const { error: upsertError } = await supabase
-            .from('user_message_tracking')
-            .upsert({ user_id: user.id, coach_email: coachEmail, last_fetched_message_id: latestMessageId });
+          const toTrack: any = {
+            user_id: user.id,
+            coach_email: coachEmail,
+            last_fetched_message_id: latestMessageId
+          }
+          if (trackingData && trackingData.id) toTrack.id = trackingData.id;
+
+            const { error: upsertError } = await supabase
+              .from('user_message_tracking')
+              .upsert(toTrack);
 
           if (upsertError) {
             console.error('Error updating tracking data:', upsertError);
           }
         }
 
-        setMessages(processedMessages.reverse());
+        setMessages(processedMessages);
 
         if (processedMessages.length > 0) {
-          setThreadId(processedMessages[0].threadId);
+          setThreadId(processedMessages[0].threadId); // THREAD ID MAY NOT BE ACCURATE
           // Fetch messages from the API
         }
       }
