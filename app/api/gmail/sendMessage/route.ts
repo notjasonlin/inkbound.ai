@@ -1,6 +1,9 @@
 import { google } from "googleapis";
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { corsHeaders, handleOptions } from '@/utils/api-headers';
+
+export const OPTIONS = handleOptions;
 
 export async function POST(request: NextRequest) {
     const supabase = createClient();
@@ -9,22 +12,29 @@ export async function POST(request: NextRequest) {
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
-        return new NextResponse("Unauthorized", { status: 401 });
+        return NextResponse.json(
+            { error: 'Unauthorized' },
+            { status: 401, headers: corsHeaders }
+        );
     }
 
     const accessToken = session.provider_token;
 
     if (!accessToken) {
-        return new NextResponse("No access token available", { status: 401 });
+        return NextResponse.json(
+            { error: 'No access token available' },
+            { status: 401, headers: corsHeaders }
+        );
     }
 
     // Parse the request body to get the coach's email, message, and threadId
     const { coachEmail, message, threadId } = await request.json();
 
     if (!coachEmail || !message) {
-        return new NextResponse("Coach email and message are required", {
-            status: 400,
-        });
+        return NextResponse.json(
+            { error: 'Coach email and message are required' },
+            { status: 400, headers: corsHeaders }
+        );
     }
 
     // Create a new OAuth2Client using the access token
@@ -96,12 +106,15 @@ export async function POST(request: NextRequest) {
         });
 
         // Return the sent message details
-        return new NextResponse(JSON.stringify({ id: result.data.id }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-        });
+        return NextResponse.json(
+            { id: result.data.id },
+            { status: 200, headers: corsHeaders }
+        );
     } catch (error) {
         console.error("Error sending data:", error);
-        return new NextResponse("Failed to send message", { status: 500 });
+        return NextResponse.json(
+            { error: 'Failed to send message' },
+            { status: 500, headers: corsHeaders }
+        );
     }
 }
