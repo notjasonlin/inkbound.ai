@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { plans } from '@/app/dashboard/upgrade/constants';
+import { webhookHeaders } from '@/utils/api-headers';
 
 const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY!, {
   apiVersion: '2024-06-20',
@@ -47,7 +48,10 @@ export async function POST(req: NextRequest) {
       // Add more cases as needed
     }
 
-    return NextResponse.json({ received: true }, { status: 200 });
+    return NextResponse.json(
+      { received: true }, 
+      { status: 200, headers: webhookHeaders }
+    );
   } catch (err: any) {
     console.error('Error processing data:', err);
     return NextResponse.json({ error: 'Webhook error: ' + err.message }, { status: 400 });
