@@ -1,92 +1,95 @@
 import React, { useEffect, useRef } from 'react';
 
 interface ModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    setPlaceHolder: (placeHolder: string) => void;
-    trigger: () => void;
-    position: { top: number; left: number };  // Add this for dynamic positioning
+  isOpen: boolean;
+  onClose: () => void;
+  setPlaceHolder: (placeHolder: string) => void;
+  trigger: () => void;
+  position: { top: number; left: number };
 }
 
-const placeHolders = ["[coachLastName]", "[schoolName]"];
+const placeholders = ["[coachLastName]", "[schoolName]"];
 
-const PlaceHolderModal = ({ isOpen, onClose, setPlaceHolder, trigger, position }: ModalProps) => {
-    const modalRef = useRef<HTMLDivElement>(null);
+const PlaceHolderModal: React.FC<ModalProps> = ({ isOpen, onClose, setPlaceHolder, trigger, position }) => {
+  const modalRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        const handleOutsideClick = (event: MouseEvent) => {
-            if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-                onClose();
-            }
-        };
-
-        if (isOpen) {
-            document.addEventListener('mousedown', handleOutsideClick);
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleOutsideClick);
-        };
-    }, [isOpen, onClose]);
-
-    if (!isOpen) return null;
-
-    const selectPlaceHolder = (placeHolder: string) => {
-        setPlaceHolder(placeHolder);
-        trigger();
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
         onClose();
+      }
     };
 
-    return (
-        <div
-            ref={modalRef}
-            style={{
-                position: 'absolute',
-                top: `${position.top}px`,
-                left: `${position.left}px`,
-                ...styles.modal, // Ensure you use the modal styles here
-            }}
+    if (isOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  const selectPlaceHolder = (placeholder: string) => {
+    setPlaceHolder(placeholder);
+    trigger();
+    onClose();
+  };
+
+  return (
+    <div
+      ref={modalRef}
+      style={{
+        position: 'absolute',
+        top: `${position.top}px`,
+        left: `${position.left}px`,
+        transform: 'translate(-50%, -50%)', // Center the modal within the editor
+        ...styles.modal,
+      }}
+    >
+      <h2 style={styles.title}>Choose a Placeholder:</h2>
+      {placeholders.map((placeholder) => (
+        <button
+          key={placeholder}
+          onClick={() => selectPlaceHolder(placeholder)}
+          style={styles.button}
+          className="hover:bg-blue-700 active:scale-95 transition-transform duration-150"
         >
-            <h2 style={styles.title}>Choose an option:</h2>
-            {placeHolders.map((placeHolder) => (
-                <button
-                    key={placeHolder}
-                    onClick={() => selectPlaceHolder(placeHolder)}
-                    style={styles.button}
-                >
-                    {placeHolder}
-                </button>
-            ))}
-        </div>
-    );
+          {placeholder}
+        </button>
+      ))}
+    </div>
+  );
 };
 
 const styles = {
-    modal: {
-        backgroundColor: 'white',
-        padding: '10px',
-        borderRadius: '4px',
-        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-        width: '300px',
-        zIndex: 1000, /* Ensure it is above other content */
-        textAlign: 'center' as 'center',
-    },
-    title: {
-        marginBottom: '20px',
-        fontSize: '18px',
-        fontWeight: 'bold' as 'bold',
-    },
-    button: {
-        backgroundColor: '#007bff',
-        color: 'white',
-        padding: '10px 15px',
-        margin: '5px 0',
-        border: 'none',
-        borderRadius: '4px',
-        cursor: 'pointer',
-        width: '100%',
-    },
+  modal: {
+    backgroundColor: 'white',
+    padding: '15px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    width: '240px',
+    zIndex: 1000,
+    textAlign: 'center' as const,
+  },
+  title: {
+    marginBottom: '15px',
+    fontSize: '16px',
+    fontWeight: '600',
+    color: '#333',
+  },
+  button: {
+    backgroundColor: '#007bff',
+    color: 'white',
+    padding: '8px 12px',
+    margin: '5px 0',
+    border: 'none',
+    borderRadius: '4px',
+    cursor: 'pointer',
+    width: '100%',
+    fontSize: '14px',
+  },
 };
 
 export default PlaceHolderModal;
-
