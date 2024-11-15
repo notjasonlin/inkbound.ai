@@ -30,5 +30,5 @@ export interface SchoolData {
     division: string;
     state: string;
     conference: string;
-    biography: BioData;
+    biography: BioData | null;
 }
