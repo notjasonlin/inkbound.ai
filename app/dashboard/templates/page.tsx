@@ -19,7 +19,6 @@ export default async function TemplatesPage() {
 
   if (error) {
     console.error('Error fetching data:', error);
-    // Handle error appropriately
   }
 
   return (
