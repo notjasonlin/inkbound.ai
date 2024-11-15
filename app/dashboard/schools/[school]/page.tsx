@@ -7,16 +7,34 @@ import SchoolContent from './components/SchoolContent';
 export default async function SchoolPage({ params }: { params: { school: string } }) {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const schoolName = decodeURIComponent(params.school).replace(/\b\w/g, l => l.toUpperCase());
-  const schoolData: SchoolData | null = await getSchool(schoolName);
-
-  if (!schoolData || !user) {
-    return null; // or some loading/error state
+  
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <p className="text-gray-600 text-center">Please log in to view school information.</p>
+      </div>
+    );
   }
+
+  const schoolName = decodeURIComponent(params.school).replace(/\b\w/g, l => l.toUpperCase());
+  const schoolData = await getSchool(schoolName);
+
+  if (!schoolData) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <p className="text-gray-600 text-center">School information not found.</p>
+      </div>
+    );
+  }
+
+  const sanitizedSchoolData = {
+    ...schoolData,
+    biography: null  // Set biography to null by default
+  };
 
   return (
     <FavoritesProvider userId={user.id}>
-      <SchoolContent schoolData={schoolData} userID={user.id} />
+      <SchoolContent schoolData={sanitizedSchoolData} userID={user.id} />
     </FavoritesProvider>
   );
 }

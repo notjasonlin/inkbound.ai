@@ -13,12 +13,81 @@ interface BackgroundProfile {
 }
 
 export default function BackgroundEditor({ profile, userId }: { profile: BackgroundProfile; userId: string }) {
-  const [formData, setFormData] = useState<PlayerStats>(profile.stats || initialFormData);
+  const router = useRouter();
+  const supabase = createClient();
+  
+  const transformSupabaseData = (data: any): PlayerStats => {
+    // Convert student body population to size range
+    let bodySizes: string[] = [];
+    const studentBodyPop = data?.student_body_pop || 0;
+    const town = data?.Town || "Medium";
+
+    if (town === "Small" || studentBodyPop <= 5000) {
+      bodySizes.push("Small: Less than 5,000 Students");
+    }
+    if (town === "Medium" || (studentBodyPop > 5000 && studentBodyPop <= 12500)) {
+      bodySizes.push("Medium: 5,000 to 12,500 students");
+    }
+    if (town === "Large" || (studentBodyPop > 12500 && studentBodyPop <= 25000)) {
+      bodySizes.push("Large: 12,500 to 25,000 students");
+    }
+    if (town === "Very Large" || studentBodyPop > 25000) {
+      bodySizes.push("Very Large: Over 25,000 students");
+    }
+
+    return {
+      satScore: data?.SAT || 0,
+      actScore: data?.ACT || 0,
+      unweightedGpa: data?.GPA || 0,
+      intendedMajor: data?.["Intended Major"] || '',
+      preferredStudentBodySize: bodySizes,
+      homeState: data?.State || '',
+      preferHomeStateSchool: data?.["In-state?"] || '',
+      financialAidQualification: data?.["Aid Qual."] || ''
+    };
+  };
+  
+  const [formData, setFormData] = useState<PlayerStats>({
+    ...initialFormData,
+    ...(profile.stats ? transformSupabaseData(profile.stats) : {})
+  });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const router = useRouter();
-  const supabase = createClient();
+
+  const transformDataForSupabase = (formData: PlayerStats) => {
+    let studentBodyPop = 0;
+    let town = "Medium";
+    
+    if (formData.preferredStudentBodySize.length > 0) {
+      const size = formData.preferredStudentBodySize[0];
+      if (size.includes("Small")) {
+        studentBodyPop = 5000;
+        town = "Small";
+      } else if (size.includes("Medium")) {
+        studentBodyPop = 12500;
+        town = "Medium";
+      } else if (size.includes("Large")) {
+        studentBodyPop = 25000;
+        town = "Large";
+      } else if (size.includes("Very Large")) {
+        studentBodyPop = 30000;
+        town = "Very Large";
+      }
+    }
+
+    return {
+      "SAT": formData.satScore,
+      "ACT": formData.actScore,
+      "GPA": formData.unweightedGpa,
+      "Intended Major": formData.intendedMajor,
+      "student_body_pop": studentBodyPop,
+      "In-state?": formData.preferHomeStateSchool,
+      "State": formData.homeState,
+      "Town": town,
+      "Aid Qual.": formData.financialAidQualification
+    };
+  };
 
   const handleSave = async () => {
     setError(null);
@@ -29,39 +98,74 @@ export default function BackgroundEditor({ profile, userId }: { profile: Backgro
       ...formData,
       satScore: Math.min(formData.satScore, 1600),
       actScore: Math.min(formData.actScore, 36),
+      unweightedGpa: formData.unweightedGpa || 0,
+      intendedMajor: formData.intendedMajor || '',
+      preferredStudentBodySize: formData.preferredStudentBodySize || [],
+      homeState: formData.homeState || '',
+      preferHomeStateSchool: formData.preferHomeStateSchool || '',
+      financialAidQualification: formData.financialAidQualification || ''
     };
 
-    try {
-      const { error } = await supabase
-        .from('player_profiles')
-        .update({ stats: cappedFormData })
-        .eq('id', profile.id)
-        .eq('user_id', userId);
+    const transformedData = transformDataForSupabase(cappedFormData);
 
-      if (error) throw error;
+    try {
+      const { error, data } = await supabase
+        .from('player_profiles')
+        .update({ stats: transformedData })
+        .eq('id', profile.id)
+        .eq('user_id', userId)
+        .select();
+
+      if (error) {
+        throw error;
+      }
 
       setSuccess("Changes saved successfully.");
       router.refresh();
     } catch (error) {
-      console.error('Error saving background:', error);
+      console.error('Error details:', {
+        error,
+        profileId: profile.id,
+        userId,
+        formDataKeys: Object.keys(cappedFormData)
+      });
       setError('Failed to save background. Please try again.');
     } finally {
       setIsLoading(false);
+      console.log('Save operation completed');
     }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-
+    console.log('Form field change:', { name, value, type });
+    
     setFormData(prev => {
-      if (type === 'checkbox' && e.target instanceof HTMLInputElement) {
-        const checked = e.target.checked;
-        const updatedSizes = checked
-          ? [...(prev.preferredStudentBodySize || []), value]
-          : (prev.preferredStudentBodySize || []).filter(size => size !== value);
-        return { ...prev, preferredStudentBodySize: updatedSizes };
+      if (name === 'preferredStudentBodySize') {
+        console.log('Handling preferredStudentBodySize change');
+        const currentValues = Array.isArray(prev.preferredStudentBodySize) 
+          ? prev.preferredStudentBodySize 
+          : [];
+        
+        if (type === 'checkbox') {
+          const newValues = (e.target as HTMLInputElement).checked
+            ? [...currentValues, value]
+            : currentValues.filter(size => size !== value);
+          console.log('New preferredStudentBodySize values:', newValues);
+          return {
+            ...prev,
+            preferredStudentBodySize: newValues
+          };
+        }
       }
-      return { ...prev, [name]: type === 'number' ? Number(value) : value };
+      
+      if (type === 'number') {
+        console.log('Handling numeric field:', name);
+        return { ...prev, [name]: Number(value) || 0 };
+      }
+      
+      console.log('Handling standard field change:', name);
+      return { ...prev, [name]: value };
     });
   };
 
