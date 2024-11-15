@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 import { AiOutlineInfoCircle } from 'react-icons/ai';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import FavoriteButton from '../[school]/components/FavoriteButton';
 
 export default function RecommendedSchools() {
   const supabase = createClient();
@@ -13,6 +14,7 @@ export default function RecommendedSchools() {
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
     const fetchRecommendedSchools = async () => {
@@ -30,6 +32,8 @@ export default function RecommendedSchools() {
           setIsLoading(false);
           return;
         }
+
+        setUser(user);
 
         const { data, error } = await supabase
           .from('initial_school_recs')
@@ -132,15 +136,31 @@ export default function RecommendedSchools() {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {/* Info Button */}
-                <button
-                  onClick={() => handleViewDetails(school.School)}
-                  className="absolute top-4 right-4 text-blue-400 hover:text-blue-600"
-                  title="View Details"
-                >
-                  <AiOutlineInfoCircle size={24} />
-                </button>
-
+                <div className="absolute top-4 right-4 flex gap-2">
+                  <FavoriteButton 
+                    school={{
+                      id: school.Email,
+                      state: school.State,
+                      school: school.School,
+                      coaches: [{ 
+                        name: school.Name, 
+                        position: school.Position,
+                        email: school.Email 
+                      }],
+                      division: school.Division,
+                      conference: school.Conference,
+                      biography: school.Biography || ''
+                    }} 
+                    userId={user?.id} 
+                  />
+                  <button
+                    onClick={() => handleViewDetails(school.School)}
+                    className="text-blue-400 hover:text-blue-600"
+                    title="View Details"
+                  >
+                    <AiOutlineInfoCircle size={24} />
+                  </button>
+                </div>
                 {/* School Details */}
                 <div className="flex justify-between items-start">
                   <h2 className="text-lg font-semibold text-blue-800">
@@ -159,14 +179,6 @@ export default function RecommendedSchools() {
                 <p className="text-sm text-gray-600">
                   Location: {school.City}, {school.State}
                 </p>
-
-                {/* Add to Favorites Button */}
-                <button
-                  onClick={() => handleAddToFavorites(school)}
-                  className="mt-6 w-full bg-blue-500 text-white font-bold py-2 rounded-lg transition-transform hover:bg-blue-600 hover:scale-105"
-                >
-                  Add to Favorites
-                </button>
               </motion.div>
             ))}
           </motion.div>

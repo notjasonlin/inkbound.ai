@@ -13,27 +13,83 @@ interface BackgroundProfile {
 }
 
 export default function BackgroundEditor({ profile, userId }: { profile: BackgroundProfile; userId: string }) {
-  const [formData, setFormData] = useState<PlayerStats>(() => {
-    const validFields: PlayerStats = {
-      satScore: profile.stats?.satScore || 0,
-      actScore: profile.stats?.actScore || 0,
-      unweightedGpa: profile.stats?.unweightedGpa || 0,
-      intendedMajor: profile.stats?.intendedMajor || '',
-      preferredStudentBodySize: profile.stats?.preferredStudentBodySize || [],
-      homeState: profile.stats?.homeState || '',
-      preferHomeStateSchool: profile.stats?.preferHomeStateSchool || '',
-      financialAidQualification: profile.stats?.financialAidQualification || ''
+  const router = useRouter();
+  const supabase = createClient();
+  
+  const transformSupabaseData = (data: any): PlayerStats => {
+    // Convert student body population to size range
+    let bodySizes: string[] = [];
+    const studentBodyPop = data?.student_body_pop || 0;
+    const town = data?.Town || "Medium";
+
+    if (town === "Small" || studentBodyPop <= 5000) {
+      bodySizes.push("Small: Less than 5,000 Students");
+    }
+    if (town === "Medium" || (studentBodyPop > 5000 && studentBodyPop <= 12500)) {
+      bodySizes.push("Medium: 5,000 to 12,500 students");
+    }
+    if (town === "Large" || (studentBodyPop > 12500 && studentBodyPop <= 25000)) {
+      bodySizes.push("Large: 12,500 to 25,000 students");
+    }
+    if (town === "Very Large" || studentBodyPop > 25000) {
+      bodySizes.push("Very Large: Over 25,000 students");
+    }
+
+    return {
+      satScore: data?.SAT || 0,
+      actScore: data?.ACT || 0,
+      unweightedGpa: data?.GPA || 0,
+      intendedMajor: data?.["Intended Major"] || '',
+      preferredStudentBodySize: bodySizes,
+      homeState: data?.State || '',
+      preferHomeStateSchool: data?.["In-state?"] || '',
+      financialAidQualification: data?.["Aid Qual."] || ''
     };
-    return validFields;
+  };
+  
+  const [formData, setFormData] = useState<PlayerStats>({
+    ...initialFormData,
+    ...(profile.stats ? transformSupabaseData(profile.stats) : {})
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const router = useRouter();
-  const supabase = createClient();
+
+  const transformDataForSupabase = (formData: PlayerStats) => {
+    let studentBodyPop = 0;
+    let town = "Medium";
+    
+    if (formData.preferredStudentBodySize.length > 0) {
+      const size = formData.preferredStudentBodySize[0];
+      if (size.includes("Small")) {
+        studentBodyPop = 5000;
+        town = "Small";
+      } else if (size.includes("Medium")) {
+        studentBodyPop = 12500;
+        town = "Medium";
+      } else if (size.includes("Large")) {
+        studentBodyPop = 25000;
+        town = "Large";
+      } else if (size.includes("Very Large")) {
+        studentBodyPop = 30000;
+        town = "Very Large";
+      }
+    }
+
+    return {
+      "SAT": formData.satScore,
+      "ACT": formData.actScore,
+      "GPA": formData.unweightedGpa,
+      "Intended Major": formData.intendedMajor,
+      "student_body_pop": studentBodyPop,
+      "In-state?": formData.preferHomeStateSchool,
+      "State": formData.homeState,
+      "Town": town,
+      "Aid Qual.": formData.financialAidQualification
+    };
+  };
 
   const handleSave = async () => {
-    console.log('Save initiated with form data:', formData);
     setError(null);
     setSuccess(null);
     setIsLoading(true);
@@ -50,23 +106,20 @@ export default function BackgroundEditor({ profile, userId }: { profile: Backgro
       financialAidQualification: formData.financialAidQualification || ''
     };
 
-    console.log('Capped form data prepared:', cappedFormData);
+    const transformedData = transformDataForSupabase(cappedFormData);
 
     try {
-      console.log('Attempting to update profile with ID:', profile.id);
       const { error, data } = await supabase
         .from('player_profiles')
-        .update({ stats: cappedFormData })
+        .update({ stats: transformedData })
         .eq('id', profile.id)
         .eq('user_id', userId)
         .select();
 
       if (error) {
-        console.error('Supabase error during save:', error);
         throw error;
       }
 
-      console.log('Save successful, updated data:', data);
       setSuccess("Changes saved successfully.");
       router.refresh();
     } catch (error) {
