@@ -221,18 +221,6 @@ export default function BackgroundEditor({ profile, userId }: { profile: Backgro
           )
         ))}
       </form>
-
-      <button
-        onClick={handleSave}
-        className="w-full bg-blue-700 text-white font-bold py-3 rounded-md mt-4 transition-transform hover:scale-105 hover:shadow-md flex justify-center items-center"
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <div className="w-5 h-5 border-4 border-t-transparent border-white rounded-full animate-spin"></div>
-        ) : (
-          "Save Changes"
-        )}
-      </button>
     </div>
   );
 }
