@@ -64,6 +64,10 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  // Add cache control headers
+  response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate, private");
+  response.headers.set("Pragma", "no-cache");
+
   // Set all security headers
   response.headers.set("Content-Security-Policy", contentSecurityPolicyHeaderValue);
   response.headers.set("X-Content-Type-Options", "nosniff");
