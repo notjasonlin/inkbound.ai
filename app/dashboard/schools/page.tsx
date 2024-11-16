@@ -6,7 +6,7 @@ import Navbar from './components/Navbar';
 
 export default async function SchoolsPage() {
   const schools = await getUniqueSchools();
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

@@ -1,5 +1,6 @@
 import { headers } from 'next/headers'
 
-export function getNonce() {
-  return headers().get('x-nonce') || ''
-} 
+export async function getNonce() {
+  const hdrs = await headers();
+  return hdrs.get('x-nonce') || "";
+}
