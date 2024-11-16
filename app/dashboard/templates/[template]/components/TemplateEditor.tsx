@@ -39,6 +39,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
   const [userId, setUserId] = useState<string | null>(null);
   const [allMandatory, setAllMandatory] = useState<boolean>(false);
   const [alert, setAlert] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
 
   const addPlaceHolder = useCallback((event: KeyboardEvent) => {
@@ -70,12 +71,6 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
       setPlaceHolder("");
     }
   }, [updateTrigger]);
-
-  const updateContent = (newContent: string) => {
-    setItemContent(newContent);
-    setHistory(prev => [...prev.slice(0, historyIndex + 1), newContent]);
-    setHistoryIndex(prev => prev + 1);
-  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -194,13 +189,14 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     }
   }, [itemContent, historyIndex]);
 
+
   const undo = useCallback(() => {
 
     if (historyIndex > 0) {
       setHistoryIndex(prev => prev - 1);
       setItemContent(history[historyIndex - 1]);
     }
-  };
+  }, []);
 
   const redo = () => {
     if (historyIndex < history.length - 1) {
