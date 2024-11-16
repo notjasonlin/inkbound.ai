@@ -67,47 +67,55 @@ export default function RecommendedSchools() {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not found');
 
-      // Check if the school is already in the user's favorites
-      const { data: existingSchool, error: checkError } = await supabase
+      // Fetch current favorites to check if the school is already added
+      const { data: existingFavorites, error: fetchError } = await supabase
         .from('favorite_schools')
-        .select('id')
+        .select('data')
         .eq('uuid', user.id)
-        .eq('data->>id', school.id) // Assuming `id` is a unique field in each school object
         .single();
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error("Error checking favorite school:", checkError);
-        throw checkError;
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error("Error fetching favorite schools:", fetchError);
+        throw fetchError;
       }
 
-      // If the school is already in favorites, skip adding
-      if (existingSchool) {
+      const currentFavorites = existingFavorites?.data || [];
+      const isAlreadyFavorite = currentFavorites.some((s: any) => s.id === school.id);
+
+      if (isAlreadyFavorite) {
         setError("This school is already in your favorites.");
         return;
       }
 
-      // Add the school to the favorite_schools table
-      const { error: addError } = await supabase
+      // Add the school to favorites
+      const updatedFavorites = [...currentFavorites, school];
+      const { error: upsertError } = await supabase
         .from('favorite_schools')
-        .insert([{ uuid: user.id, data: school }]);
+        .upsert(
+          { uuid: user.id, data: updatedFavorites },
+          { onConflict: 'uuid' }
+        );
 
-      if (addError) throw addError;
+      if (upsertError) throw upsertError;
 
-      // Optimistically update the state
-      const updatedRecommendations = recommendations.filter((s) => s.Email !== school.Email);
+      // Remove the school from the recommendations list
+      const updatedRecommendations = recommendations.filter((s) => s.id !== school.id);
       setRecommendations(updatedRecommendations);
 
-      // Update the recommendations in the initial_school_recs table
+      // Update the recommendations in `initial_school_recs`
       const { error: updateError } = await supabase
         .from('initial_school_recs')
         .update({ recommendations: updatedRecommendations })
         .eq('user_id', user.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Error updating recommendations:", updateError);
+        throw updateError;
+      }
 
-      setError(null); // Clear any previous errors on success
+      setError(null); 
     } catch (error) {
-      console.error("Failed to add to favorites", error);
+      console.error("Failed to add to favorites:", error);
       setError("Failed to add school to favorites. Please try again.");
     }
   };
