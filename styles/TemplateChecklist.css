@@ -1,0 +1,64 @@
+.checklist {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.checklist h2 {
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.checklist ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.checklist li {
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e0e0e0;
+    transition: color 0.3s, background-color 0.3s;
+}
+
+.checklist li:last-child {
+    border-bottom: none;
+}
+
+.checklist li:hover {
+    background-color: #f0f0f0;
+}
+
+.checklist .found {
+    text-decoration: line-through;
+    color: #888;
+}
+
+.checklist .not-found {
+    color: #555;
+}
+
+.checklist .not-found:hover {
+    color: #333;
+}
+
+.checklist li::before {
+    content: "•";
+    color: #2196F3; /* Accent color for unchecked items */
+    font-weight: bold;
+    display: inline-block;
+    width: 1rem;
+    text-align: center;
+    margin-right: 0.5rem;
+}
+
+.checklist .found::before {
+    content: "✓";
+    color: #4caf50; /* Accent color for checked items */
+}
