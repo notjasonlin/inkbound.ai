@@ -21,7 +21,7 @@ export default async function SchoolPage({ params }: SchoolPageProps) {
     );
   }
 
-  const schoolName = decodeURIComponent(params.school).replace(/\b\w/g, l => l.toUpperCase());
+  const schoolName = decodeURIComponent(school).replace(/\b\w/g, l => l.toUpperCase());
   const schoolData = await getSchool(schoolName);
 
   if (!schoolData) {
