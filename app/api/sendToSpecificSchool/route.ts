@@ -1,13 +1,19 @@
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { createClient } from '@/utils/supabase/server';
+import { corsHeaders, handleOptions } from '@/utils/api-headers';
+
+export const OPTIONS = handleOptions;
 
 export async function POST(req: Request) {
   const supabase = createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.provider_token) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'Not authenticated' },
+      { status: 401, headers: corsHeaders }
+    );
   }
 
   const oauth2Client = new google.auth.OAuth2();
@@ -23,7 +29,10 @@ export async function POST(req: Request) {
     const userEmail = profile.data.emailAddress;
 
     if (!userEmail) {
-      return NextResponse.json({ error: 'Unable to fetch user email' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Unable to fetch user email' },
+        { status: 500, headers: corsHeaders }
+      );
     }
 
     // Generate a boundary for multipart message
@@ -80,12 +89,15 @@ export async function POST(req: Request) {
       console.error('Error saving data:', coachEmailError);
     }
 
-    return NextResponse.json({ success: true, messageId: response.data.id });
+    return NextResponse.json(
+      { success: true, messageId: response.data.id },
+      { headers: corsHeaders }
+    );
   } catch (error: any) {
     console.error('Error sending data:', error);
     return NextResponse.json({ 
       error: 'Failed to send email', 
       details: error.message || 'Unknown error'
-    }, { status: 500 });
+    }, { status: 500, headers: corsHeaders });
   }
 }
