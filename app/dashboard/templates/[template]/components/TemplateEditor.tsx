@@ -20,6 +20,11 @@ interface Template {
   };
 }
 
+const placeholders = [
+  { label: 'School Name', value: '[schoolName]' },
+  { label: 'Coach', value: '[coachLastName]' }
+];
+
 export default function TemplateEditor({ templateTitle }: { templateTitle: string; }) {
   const [template, setTemplate] = useState<Template | null>(null);
   const [title, setTitle] = useState(templateTitle);
@@ -30,6 +35,10 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
   const [placeHolder, setPlaceHolder] = useState<string>("");
   const [updateTrigger, setUpdateTrigger] = useState<boolean>(false);
   const [modalPosition, setModalPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [selectedText, setSelectedText] = useState('');
+  const [showAIHelper, setShowAIHelper] = useState(false);
+  const [aiHelperPosition, setAIHelperPosition] = useState({ top: 0, left: 0 });
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const [history, setHistory] = useState<string[]>(['']);
   const [historyIndex, setHistoryIndex] = useState(0);
   const router = useRouter();
@@ -198,17 +207,90 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     }
   }, []);
 
-  const redo = () => {
+  const redo = useCallback(() => {
     if (historyIndex < history.length - 1) {
       setHistoryIndex(prev => prev + 1);
       setItemContent(history[historyIndex + 1]);
     }
-  };
+  }, [history, historyIndex]);
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     updateContent(e.target.value);
   };
 
+  const handleTextSelection = () => {
+    if (editorRef.current) {
+      const start = editorRef.current.selectionStart;
+      const end = editorRef.current.selectionEnd;
+      setSelectedText(itemContent.substring(start, end));
+
+      if (start !== end) {
+        const rect = editorRef.current.getBoundingClientRect();
+        setAIHelperPosition({
+          top: rect.bottom + window.scrollY,
+          left: rect.left + window.scrollX,
+        });
+        setShowAIHelper(true);
+      } else {
+        setShowAIHelper(false);
+      }
+    }
+  };
+
+  const applySuggestion = (suggestion: string) => {
+    if (editorRef.current) {
+      const start = editorRef.current.selectionStart;
+      const end = editorRef.current.selectionEnd;
+      const newContent = itemContent.substring(0, start) + suggestion + itemContent.substring(end);
+      updateContent(newContent);
+
+      // Set cursor position after the inserted suggestion
+      setTimeout(() => {
+        if (editorRef.current) {
+          editorRef.current.selectionStart = editorRef.current.selectionEnd = start + suggestion.length;
+          editorRef.current.focus();
+        }
+      }, 0);
+    }
+    setSuggestions([]);
+  };
+
+  const handleSendMessageToAI = async (message: string) => {
+    if (!userId) return 'User not authenticated';
+
+    const canUseAI = await checkUserLimits(userId, 'aiCall');
+    if (!canUseAI) {
+      return 'You have reached your AI usage limit. Please upgrade your plan to continue using AI features.';
+    }
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: message,
+          placeholders,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
+
+      const data = await response.json();
+      await incrementUsage(userId, { ai_calls_used: 1 });
+      setUserUsage(prev => prev ? {
+        ...prev,
+        ai_calls_used: (prev.ai_calls_used || 0) + 1
+      } : null);
+      return data.content;
+    } catch (error) {
+      console.error('Error sending data', error);
+      return 'Sorry, there was an error processing your request.';
+    }
+  };
 
   return (
     <div className="template-editor-container">
@@ -224,10 +306,10 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               onClose={() => setSelectPlaceHolder(false)}
               setPlaceHolder={setPlaceHolder}
               trigger={() => setUpdateTrigger(!updateTrigger)}
-              position={modalPosition}  // Pass modal position
+              position={modalPosition} // Pass modal position
             />
           )}
-
+  
           {alert && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
               <Alert
@@ -239,7 +321,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               />
             </div>
           )}
-
+  
           <div className="template-editor-header">
             <button
               onClick={() => {
@@ -251,26 +333,45 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               }}
               className="back-button"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 mr-1"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                  clipRule="evenodd"
+                />
               </svg>
               Back
             </button>
             <h1 className="template-title">{title}</h1>
-            <button
-              onClick={() => setShowAIChat(!showAIChat)}
-              className="ai-chat-toggle"
-            >
-              {showAIChat ? 'Hide AI Chat' : 'Show AI Chat'}
+            <button onClick={() => setShowAIChat(!showAIChat)} className="ai-chat-toggle">
+              {showAIChat ? "Hide AI Chat" : "Show AI Chat"}
             </button>
           </div>
-
+  
           <div className="template-editor-body">
             <div className="checklist-container">
-              <TemplateChecklist title={"Mandatory"} placeholders={["[coachLastName]", "[schoolName]"]} content={itemContent} setAllMandatory={setAllMandatory} />
-              <TemplateChecklist title={"Optional"} placeholders={["[studentFullName]", "[studentFirstName]", "[studentLastName]"]} content={itemContent} />
+              <TemplateChecklist
+                title={"Mandatory"}
+                placeholders={["[coachLastName]", "[schoolName]"]}
+                content={itemContent}
+                setAllMandatory={setAllMandatory}
+              />
+              <TemplateChecklist
+                title={"Optional"}
+                placeholders={[
+                  "[studentFullName]",
+                  "[studentFirstName]",
+                  "[studentLastName]",
+                ]}
+                content={itemContent}
+              />
             </div>
-
+  
             <div className="input-container">
               <input
                 type="text"
@@ -279,7 +380,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                 className="template-title-input"
                 placeholder="Template Title"
               />
-
+  
               <div className="input-box">
                 <input
                   type="text"
@@ -289,8 +390,12 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                   className="item-title-input"
                 />
                 <div className="action-buttons">
-                  <button onClick={undo} className="action-button">Undo</button>
-                  <button onClick={redo} className="action-button">Redo</button>
+                  <button onClick={undo} className="action-button">
+                    Undo
+                  </button>
+                  <button onClick={redo} className="action-button">
+                    Redo
+                  </button>
                 </div>
                 <textarea
                   ref={editorRef}
@@ -300,19 +405,26 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                   className="text-area"
                 />
               </div>
-
+  
               {error && <div className="error-message">{error}</div>}
             </div>
-
+  
             {showAIChat && (
               <div className="ai-chat-container">
                 <AIChatInterface
-                  userCredits={userUsage ? userUsage.ai_call_limit - userUsage.ai_calls_used : 0}
+                  userCredits={
+                    userUsage ? userUsage.ai_call_limit - userUsage.ai_calls_used : 0
+                  }
                   onSendMessage={handleSendMessageToAI}
                 />
               </div>
             )}
           </div>
         </div>
+      )}
+    </div>
   );
+  
 }
+
+
