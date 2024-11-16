@@ -23,18 +23,30 @@ export async function getCoaches(schoolId?: string) {
 
     return data || [];
   } else {
-    const { data, error } = await supabase
-      .from("coachinformation")
-      .select("*")
-      .limit(20000);
+    let allData: any[] = [];
+    let page = 0;
+    const pageSize = 1000;  // Supabase default limit
 
-    if (error) {
-      console.error("Error fetching data:", error);
-      return [];
+    while (true) {
+      const { data, error } = await supabase
+        .from("coachinformation")
+        .select("*")
+        .range(page * pageSize, (page + 1) * pageSize - 1);
+
+      if (error) {
+        console.error("Error fetching data:", error);
+        return [];
+      }
+
+      if (data.length === 0) break;
+
+      allData = allData.concat(data);
+      page++;
+
+      if (data.length < pageSize) break;
     }
 
-
-    return data || [];
+    return allData;
   }
 }
 

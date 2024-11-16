@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 import { google } from 'googleapis';
+import { corsHeaders, handleOptions } from '@/utils/api-headers';
+
+export const OPTIONS = handleOptions;
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -8,7 +11,10 @@ export async function POST(request: Request) {
 
   if (!session?.provider_token) {
     console.error('Not authenticated');
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'Not authenticated' }, 
+      { status: 401, headers: corsHeaders }
+    );
   }
 
   const oauth2Client = new google.auth.OAuth2();
@@ -62,7 +68,10 @@ export async function POST(request: Request) {
       console.error('Error saving data:', coachEmailError);
     }
 
-    return NextResponse.json({ success: true, messageId: response.data.id });
+    return NextResponse.json(
+      { success: true, messageId: response.data.id },
+      { headers: corsHeaders }
+    );
   } catch (error: any) {
     console.error('Error sending email:', error);
     return NextResponse.json({ 

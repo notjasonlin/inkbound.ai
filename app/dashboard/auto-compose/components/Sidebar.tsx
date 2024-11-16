@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { SchoolData } from '@/types/school/index';
 import { createClient } from "@/utils/supabase/client";
 import { FiChevronRight, FiChevronDown, FiMenu } from "react-icons/fi";
-import { FaChevronDown } from 'react-icons/fa';
 
 interface SidebarProps {
   onSelectSchools: (schools: SchoolData[]) => void;
@@ -193,7 +192,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
             </button>
           ))}
         </div>
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        
+        {/* Scrollable school list */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 max-h-[60vh] scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-blue-100">
           {Object.entries(groupedSchools).map(([name, schools]) => (
             <SchoolFolder key={name} name={name} schools={schools} />
           ))}
