@@ -34,11 +34,16 @@ function RootLayoutInner({
   );
 }
 
-export default function RootLayout({
+async function getNonce() {
+  const hdrs = await headers();
+  return hdrs.get('x-nonce') || "";
+}
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const nonce = headers().get('x-nonce') || '';
+  const nonce = await getNonce();
   return <RootLayoutInner nonce={nonce}>{children}</RootLayoutInner>;
 }

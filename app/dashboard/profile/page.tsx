@@ -9,7 +9,7 @@ interface Player {
 }
 
 export default async function OutlinePage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {

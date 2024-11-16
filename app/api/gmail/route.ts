@@ -8,7 +8,7 @@ import { corsHeaders, handleOptions } from '@/utils/api-headers';
 export const OPTIONS = handleOptions;
 
 export async function GET(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.provider_token) {
@@ -69,7 +69,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.provider_token) {

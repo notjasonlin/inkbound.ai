@@ -7,7 +7,7 @@ import { corsHeaders, handleOptions } from '@/utils/api-headers';
 export const OPTIONS = handleOptions;
 
 export async function POST(request: Request) {
-    const supabase = createClient();
+    const supabase = await createClient();
     
     // Get the current session
     const { data: { session } } = await supabase.auth.getSession();

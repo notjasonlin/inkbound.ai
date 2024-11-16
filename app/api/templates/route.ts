@@ -5,7 +5,7 @@ import { corsHeaders, handleOptions } from '@/utils/api-headers';
 export const OPTIONS = handleOptions;
 
 export async function GET(request: Request) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: { user }, error: userError } = await supabase.auth.getUser();
 
