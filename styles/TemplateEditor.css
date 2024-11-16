@@ -1,0 +1,107 @@
+.template-editor-container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .template-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  
+  .back-button {
+    display: flex;
+    align-items: center;
+    color: #1D4ED8;
+    font-weight: 600;
+  }
+  
+  .template-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #1F2937;
+  }
+  
+  .ai-chat-toggle {
+    background-color: #3B82F6;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+  }
+  
+  .template-editor-body {
+    display: flex;
+    gap: 24px;
+  }
+  
+  .checklist-container {
+    flex-basis: 20%;
+    max-width: 20%;
+  }
+  
+  .input-container {
+    flex-basis: 60%;
+    max-width: 60%;
+    background-color: white;
+    border-radius: 8px;
+    padding: 24px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .template-title-input {
+    width: 100%;
+    font-size: 1.5rem;
+    padding: 12px;
+    border: 1px solid #D1D5DB;
+    border-radius: 4px;
+    margin-bottom: 16px;
+  }
+  
+  .input-box {
+    margin-top: 16px;
+  }
+  
+  .item-title-input {
+    width: 100%;
+    font-size: 1.25rem;
+    padding: 12px;
+    border: 1px solid #D1D5DB;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+  
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  
+  .action-button {
+    padding: 8px;
+    background-color: #E5E7EB;
+    border-radius: 4px;
+  }
+  
+  .text-area {
+    width: 100%;
+    min-height: 16rem;
+    padding: 12px;
+    border: 1px solid #D1D5DB;
+    border-radius: 4px;
+    resize: none;
+  }
+  
+  .error-message {
+    color: #EF4444;
+    margin-top: 8px;
+  }
+  
+  .ai-chat-container {
+    flex-basis: 20%;
+    max-width: 20%;
+  }
+  
