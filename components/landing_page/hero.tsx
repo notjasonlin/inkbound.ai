@@ -67,22 +67,25 @@ const Hero: React.FC = () => {
           )}
         </motion.div>
 
-        {/* Right Side - Image */}
         <motion.div
           className="w-full md:w-1/2 mt-12 md:mt-0 md:pl-8 flex justify-center md:justify-end"
-          initial={{ opacity: 0, x: 100 }} // Slide in from right
+          initial={{ opacity: 0, x: 100 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <Image
+          {/* Video Section */}
+          <video
             className="rounded-lg shadow-2xl object-cover"
-            src="/inkbound-home-pic.png"
-            alt="Inkbound Home"
-            width={1200}  // Original size for large displays
-            height={900}  // Original size for large displays
-            priority={true}
+            src="/inkbound-quick-vid.mov"
+            autoPlay
+            loop
+            muted
+            playsInline
+            width={1400}
+            height={1100}
           />
         </motion.div>
+
       </div>
     </section>
   );

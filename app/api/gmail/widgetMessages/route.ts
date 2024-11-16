@@ -2,6 +2,9 @@ import { google } from 'googleapis';
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from 'next/server';
 import { gmail_v1 } from 'googleapis';
+import { corsHeaders, handleOptions } from '@/utils/api-headers';
+
+export const OPTIONS = handleOptions;
 
 export async function POST(request: Request) {
     const supabase = await createClient();
@@ -10,20 +13,29 @@ export async function POST(request: Request) {
     const { data: { session } } = await supabase.auth.getSession();
   
     if (!session) {
-      return new Response('Unauthorized', { status: 401 });
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401, headers: corsHeaders }
+      );
     }
   
     const accessToken = session.provider_token;
   
     if (!accessToken) {
-      return new Response('No access token available', { status: 401 });
+      return NextResponse.json(
+        { error: 'No access token available' },
+        { status: 401, headers: corsHeaders }
+      );
     }
   
     // Parse the request body to get the coach emails
     const { coachEmails } = await request.json();
   
     if (!coachEmails || !Array.isArray(coachEmails) || coachEmails.length === 0) {
-      return new Response('Coach emails are required', { status: 400 });
+      return NextResponse.json(
+        { error: 'Coach emails are required' },
+        { status: 400, headers: corsHeaders }
+      );
     }
   
     // Create a new OAuth2Client using the access token
@@ -65,11 +77,15 @@ export async function POST(request: Request) {
       );
 
   
-      return new Response(JSON.stringify({ messages: fullEmails }), {
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return NextResponse.json(
+        { messages: fullEmails },
+        { headers: corsHeaders }
+      );
     } catch (error) {
-      console.error('Error fetching data:', error);
-      return new Response('Error fetching data', { status: 500 });
+      console.error('Error fetching messages:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch messages' },
+        { status: 500, headers: corsHeaders }
+      );
     }
   }

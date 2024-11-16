@@ -20,28 +20,18 @@ interface Template {
   };
 }
 
-const placeholders = [
-  { label: 'School Name', value: '[schoolName]' },
-  { label: 'Coach', value: '[coachLastName]' }
-];
-
 export default function TemplateEditor({ templateTitle }: { templateTitle: string; }) {
-  const [template, setTemplate] = useState<Template | null>(null)
+  const [template, setTemplate] = useState<Template | null>(null);
   const [title, setTitle] = useState(templateTitle);
   const [itemTitle, setItemTitle] = useState("");
   const [itemContent, setItemContent] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [selectedText, setSelectedText] = useState('');
-  const [showAIHelper, setShowAIHelper] = useState(false);
-  const [aiHelperPosition, setAIHelperPosition] = useState({ top: 0, left: 0 });
-  const [history, setHistory] = useState<string[]>(['']);
-  const [historyIndex, setHistoryIndex] = useState(0);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectPlaceHolder, setSelectPlaceHolder] = useState<boolean>(false)
+  const [selectPlaceHolder, setSelectPlaceHolder] = useState<boolean>(false);
   const [placeHolder, setPlaceHolder] = useState<string>("");
   const [updateTrigger, setUpdateTrigger] = useState<boolean>(false);
   const [modalPosition, setModalPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [history, setHistory] = useState<string[]>(['']);
+  const [historyIndex, setHistoryIndex] = useState(0);
   const router = useRouter();
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const isUpdatingRef = useRef(false);
@@ -50,42 +40,23 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
   const [allMandatory, setAllMandatory] = useState<boolean>(false);
   const [alert, setAlert] = useState<boolean>(false);
 
+
   const addPlaceHolder = useCallback((event: KeyboardEvent) => {
     if (event.key === ":") {
       setSelectPlaceHolder(true);
-
       if (editorRef.current) {
-        const { top, left } = editorRef.current.getBoundingClientRect();
-        const { selectionStart } = editorRef.current;
-
-        const textBeforeCursor = editorRef.current.value.substring(0, selectionStart);
-        const textAreaStyle = window.getComputedStyle(editorRef.current);
-        const lineHeight = parseInt(textAreaStyle.lineHeight, 10);
-        const paddingLeft = parseInt(textAreaStyle.paddingLeft, 10);
-        const paddingTop = parseInt(textAreaStyle.paddingTop, 10);
-
-        // Get the line and column where the cursor is
-        const cursorLine = textBeforeCursor.split('\n').length - 1;
-        const cursorColumn = textBeforeCursor.split('\n').pop()?.length || 0;
-
-        // Correct calculation of top position
-        const topPosition = top + window.scrollY + paddingTop + (cursorLine * lineHeight) + lineHeight + 30;
-
-        // Correct calculation of left position (ensure no progressive shift)
-        const charWidth = textAreaStyle.fontSize ? parseInt(textAreaStyle.fontSize, 10) * 0.6 : 7; // Adjust this multiplier based on font size
-        const leftPosition = left + window.scrollX + paddingLeft + (cursorColumn * charWidth);
-
-        setModalPosition({ top: topPosition, left: leftPosition });
+        const { top, left, width, height } = editorRef.current.getBoundingClientRect();
+        const modalTop = top + window.scrollY + height / 2;
+        const modalLeft = left + window.scrollX + width / 2;
+        setModalPosition({ top: modalTop, left: modalLeft });
       }
     } else if ([" ", "Enter", "Tab", "Backspace"].includes(event.key)) {
       setSelectPlaceHolder(false);
     }
   }, []);
 
-
   useEffect(() => {
     document.addEventListener("keydown", addPlaceHolder);
-
     return () => {
       document.removeEventListener("keydown", addPlaceHolder);
     };
@@ -95,20 +66,16 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     if (placeHolder && editorRef.current) {
       const { selectionStart, selectionEnd } = editorRef.current;
       const newText = itemContent.substring(0, selectionStart - 1) + placeHolder + itemContent.substring(selectionEnd);
-
       updateContent(newText);
-
-      // Move cursor to the end of the newly inserted placeholder
-      setTimeout(() => {
-        editorRef.current!.selectionStart = editorRef.current!.selectionEnd = selectionStart + placeHolder.length;
-        editorRef.current!.focus();
-      }, 0);
-
       setPlaceHolder("");
     }
   }, [updateTrigger]);
 
-
+  const updateContent = (newContent: string) => {
+    setItemContent(newContent);
+    setHistory(prev => [...prev.slice(0, historyIndex + 1), newContent]);
+    setHistoryIndex(prev => prev + 1);
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -228,95 +195,22 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
   }, [itemContent, historyIndex]);
 
   const undo = useCallback(() => {
+
     if (historyIndex > 0) {
       setHistoryIndex(prev => prev - 1);
       setItemContent(history[historyIndex - 1]);
     }
-  }, [history, historyIndex]);
+  };
 
-  const redo = useCallback(() => {
+  const redo = () => {
     if (historyIndex < history.length - 1) {
       setHistoryIndex(prev => prev + 1);
       setItemContent(history[historyIndex + 1]);
     }
-  }, [history, historyIndex]);
+  };
 
-  const handleInput = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     updateContent(e.target.value);
-  }, [updateContent]);
-
-  const handleTextSelection = () => {
-    if (editorRef.current) {
-      const start = editorRef.current.selectionStart;
-      const end = editorRef.current.selectionEnd;
-      setSelectedText(itemContent.substring(start, end));
-
-      if (start !== end) {
-        const rect = editorRef.current.getBoundingClientRect();
-        setAIHelperPosition({
-          top: rect.bottom + window.scrollY,
-          left: rect.left + window.scrollX,
-        });
-        setShowAIHelper(true);
-      } else {
-        setShowAIHelper(false);
-      }
-    }
-  };
-
-  const applySuggestion = (suggestion: string) => {
-    if (editorRef.current) {
-      const start = editorRef.current.selectionStart;
-      const end = editorRef.current.selectionEnd;
-      const newContent = itemContent.substring(0, start) + suggestion + itemContent.substring(end);
-      updateContent(newContent);
-
-      // Set cursor position after the inserted suggestion
-      setTimeout(() => {
-        if (editorRef.current) {
-          editorRef.current.selectionStart = editorRef.current.selectionEnd = start + suggestion.length;
-          editorRef.current.focus();
-        }
-      }, 0);
-    }
-    setSuggestions([]);
-  };
-
-  const handleSendMessageToAI = async (message: string) => {
-    if (!userId) return 'User not authenticated';
-
-    const canUseAI = await checkUserLimits(userId, 'aiCall');
-    if (!canUseAI) {
-      return 'You have reached your AI usage limit. Please upgrade your plan to continue using AI features.';
-    }
-
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: message,
-          placeholders,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to get AI response');
-      }
-
-      const data = await response.json();
-      await incrementUsage(userId, { ai_calls_used: 1 });
-      setUserUsage(prev => prev ? {
-        ...prev,
-        ai_calls_used: (prev.ai_calls_used || 0) + 1
-      } : null);
-      return data.content;
-    } catch (error) {
-      console.error('Error sending data', error);
-      return 'Sorry, there was an error processing your request.';
-    }
   };
 
 
@@ -327,7 +221,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
           <div className="text-2xl font-semibold">Loading template...</div>
         </div>
       ) : (
-        <>
+        <div className="max-w-4xl mx-auto p-6 bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen">
           {selectPlaceHolder && (
             <PlaceHolderModal
               isOpen={true}
@@ -423,10 +317,6 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               </div>
             )}
           </div>
-        </>
-      )}
-    </div>
+        </div>
   );
-
-
 }
