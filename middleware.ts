@@ -2,30 +2,34 @@ import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/utils/supabase/middleware";
 
 const allowedOrigins = [
-  'https://inkbound.ai',
-  'https://www.inkbound.ai',
-  'https://staging.inkbound.ai',
-  'https://app.inkbound.ai',
-  'https://*.inkbound.ai',          // Covers all subdomains
-  'https://*.vercel.app',           // For Vercel preview deployments
-  'http://localhost:3000',          // Local development
-  'http://localhost:3001',          // Alternative local port
+  "https://inkbound.ai",
+  "https://www.inkbound.ai",
+  "https://staging.inkbound.ai",
+  "https://app.inkbound.ai",
+  "https://*.inkbound.ai", // Covers all subdomains
+  "https://*.vercel.app", // For Vercel preview deployments
+  "http://localhost:3000", // Local development
+  "http://localhost:3001", // Alternative local port
   process.env.NEXT_PUBLIC_FRONTEND_URL,
-  process.env.NEXT_PUBLIC_API_URL
+  process.env.NEXT_PUBLIC_API_URL,
 ].filter(Boolean) as string[];
 
 export async function middleware(request: NextRequest) {
   // Handle CORS preflight requests
-  if (request.method === 'OPTIONS') {
-    const origin = request.headers.get('origin');
+  if (request.method === "OPTIONS") {
+    const origin = request.headers.get("origin");
     return new NextResponse(null, {
       headers: {
-        'Access-Control-Allow-Origin': allowedOrigins.includes(origin || '') ? origin! : allowedOrigins[0],
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS, PATCH',
-        'Access-Control-Allow-Headers': 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization',
-        'Access-Control-Allow-Credentials': 'true',
-        'Access-Control-Max-Age': '86400'
-      }
+        "Access-Control-Allow-Origin": allowedOrigins.includes(origin || "")
+          ? origin!
+          : allowedOrigins[0],
+        "Access-Control-Allow-Methods":
+          "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+        "Access-Control-Allow-Headers":
+          "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization",
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Max-Age": "86400",
+      },
     });
   }
 
@@ -52,11 +56,15 @@ export async function middleware(request: NextRequest) {
   `;
 
   // Remove any extra spaces or newline characters
-  const contentSecurityPolicyHeaderValue = cspHeader.replace(/\s+/g, " ").trim();
+  const contentSecurityPolicyHeaderValue = cspHeader.replace(/\s+/g, " ")
+    .trim();
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
-  requestHeaders.set("Content-Security-Policy", contentSecurityPolicyHeaderValue);
+  requestHeaders.set(
+    "Content-Security-Policy",
+    contentSecurityPolicyHeaderValue,
+  );
 
   const response = NextResponse.next({
     request: {
@@ -65,21 +73,24 @@ export async function middleware(request: NextRequest) {
   });
 
   // Set all security headers
-  response.headers.set("Content-Security-Policy", contentSecurityPolicyHeaderValue);
+  response.headers.set(
+    "Content-Security-Policy",
+    contentSecurityPolicyHeaderValue,
+  );
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-XSS-Protection", "1; mode=block");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set(
     "Permissions-Policy",
-    "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+    "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
   );
 
   // Handle CORS for actual requests
-  const origin = request.headers.get('origin');
+  const origin = request.headers.get("origin");
   if (origin && allowedOrigins.includes(origin)) {
-    response.headers.set('Access-Control-Allow-Origin', origin);
-    response.headers.set('Access-Control-Allow-Credentials', 'true');
+    response.headers.set("Access-Control-Allow-Origin", origin);
+    response.headers.set("Access-Control-Allow-Credentials", "true");
   }
 
   return response;
