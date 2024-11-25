@@ -1,8 +1,24 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
+import { Metadata } from 'next';
 
-export default async function BlogPost({ params }: { params: { title: string } }) {
+interface BlogPost {
+  title: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  blog_admins: {
+    name: string;
+  };
+}
+
+interface PageProps {
+  params: { title: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export default async function BlogPost({ params, searchParams }: PageProps) {
   const decodedTitle = decodeURIComponent(params.title).replace(/-/g, ' ');
   const supabase = createServerComponentClient({ cookies });
   
@@ -51,4 +67,11 @@ export default async function BlogPost({ params }: { params: { title: string } }
       </article>
     </div>
   );
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const decodedTitle = decodeURIComponent(params.title).replace(/-/g, ' ');
+  return {
+    title: decodedTitle,
+  };
 } 
