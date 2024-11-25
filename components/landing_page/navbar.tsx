@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { FaBars, FaTimes } from 'react-icons/fa'; // Icons for the hamburger menu
 import { Shrikhand } from 'next/font/google'; // Import the Shrikhand font
 import LoginButton from '../LoginLogoutButton'; // LoginButton component
+import ResourcesDropdown from './resources-dropdown';
 
 const shrikhand = Shrikhand({ subsets: ['latin'], weight: '400' });
 
@@ -84,6 +85,7 @@ export default function Navbar() {
             >
               FAQ
             </button>
+            <ResourcesDropdown />
             <button
               className="text-black hover:text-babyblue-600"
               onClick={() => scrollToSection('about-us')}
@@ -117,7 +119,7 @@ export default function Navbar() {
                 className="text-black hover:text-babyblue-600"
                 onClick={() => {
                   scrollToSection('features');
-                  setMenuOpen(false); // Close menu after navigation
+                  setMenuOpen(false);
                 }}
               >
                 Features
@@ -126,7 +128,7 @@ export default function Navbar() {
                 className="text-black hover:text-babyblue-600"
                 onClick={() => {
                   scrollToSection('pricing');
-                  setMenuOpen(false); // Close menu after navigation
+                  setMenuOpen(false);
                 }}
               >
                 Pricing
@@ -135,16 +137,17 @@ export default function Navbar() {
                 className="text-black hover:text-babyblue-600"
                 onClick={() => {
                   scrollToSection('faq');
-                  setMenuOpen(false); // Close menu after navigation
+                  setMenuOpen(false);
                 }}
               >
                 FAQ
               </button>
+              <ResourcesDropdown />
               <button
-                className="text-black hover:text-babyblue-600 mb-4" // Add spacing at the bottom
+                className="text-black hover:text-babyblue-600 mb-4"
                 onClick={() => {
                   scrollToSection('about-us');
-                  setMenuOpen(false); // Close menu after navigation
+                  setMenuOpen(false);
                 }}
               >
                 About Us
