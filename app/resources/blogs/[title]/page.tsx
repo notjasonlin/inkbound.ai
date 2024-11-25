@@ -13,11 +13,12 @@ interface BlogPost {
   };
 }
 
-type Props = {
-  params: { title: string }
-}
-
-export default async function BlogPost({ params }: Props) {
+export default async function BlogPost({
+  params,
+}: {
+  params: { title: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const decodedTitle = decodeURIComponent(params.title).replace(/-/g, ' ');
   const supabase = createServerComponentClient({ cookies });
   
@@ -68,8 +69,12 @@ export default async function BlogPost({ params }: Props) {
   );
 }
 
-// Match the metadata props type
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: { title: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+}): Promise<Metadata> {
   const decodedTitle = decodeURIComponent(params.title).replace(/-/g, ' ');
   return {
     title: decodedTitle,
