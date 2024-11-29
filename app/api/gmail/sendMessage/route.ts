@@ -72,24 +72,47 @@ export async function POST(request: NextRequest) {
     const emailContent = message
     const boundary = '-----' + Math.random().toString(36).slice(2);
 
+    const paragraphs = emailContent.split("\n").map((
+        p: string,
+      ) => (p.trim() ? `<p>${p}</p>` : "<br>")).join("");
+      console.log(paragraphs);
+  
+      const htmlContent = `<!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          p { margin: 0; line-height: 1.5; }
+        </style>
+      </head>
+      <body>
+        ${paragraphs}
+      </body>
+      </html>`;
+  
+      console.log("HTML", htmlContent);
 
     const rawMessage = [
-        `To: ${coachEmail}`, // Recipient's email
-        `Subject: ${subject}`, // Subject with school name
-        "MIME-Version: 1.0", // MIME version
-        `In-Reply-To: ${inReplyTo}`, // In-Reply-To header to link to the thread
-        `References: ${references}`, // References header for linking the thread
-        `Content-Type: multipart/mixed; boundary="${boundary}"`, // Boundary for multipart email
-        "", // Blank line separating headers from body
-        `--${boundary}`, // Start of the first part (text content)
-        "Content-Type: text/html; charset=utf-8", // Content-Type header for HTML email
-        "", // Blank line before the actual content
-        emailContent, // HTML content of the email
-        `--${boundary}--`, // End of the multipart message
+        `To: ${coachEmail}`,
+        `Subject: ${subject}`,
+        "MIME-Version: 1.0",
+        `In-Reply-To: ${inReplyTo}`,
+        `References: ${references}`,
+        `Content-Type: multipart/mixed; boundary="${boundary}"`,
+        "",
+        `--${boundary}`,
+        "Content-Type: text/html; charset=utf-8",
+        "",
+        emailContent,
+        `--${boundary}--`,
+        "Content-Type: text/html; charset=utf-8",
+        "",
+        htmlContent, // HTML content
+        `--${boundary}--`,
     ];
 
     // Encode the message in Base64 for Gmail API
-    const encodedMessage = Buffer.from(rawMessage.join("\n"))
+    const encodedMessage = Buffer.from(rawMessage.join("\r\n"))
         .toString("base64")
         .replace(/\+/g, "-")
         .replace(/\//g, "_")
