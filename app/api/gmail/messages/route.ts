@@ -53,6 +53,8 @@ export async function POST(request: Request) {
       q: query,
     });
 
+    console.log(response.data.messages);
+
     const decodeBase64Url = (
       data: any[] | undefined,
       to: string,
