@@ -57,10 +57,6 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           .eq('coach_email', coachEmail)
           .single();
 
-        // if (trackingError) {
-        //   console.error('Error fetching tracking data:', trackingError);
-        // }
-
         // Grab messages
         const response = await fetch('/api/gmail/messages', {
           method: 'POST',
@@ -90,27 +86,27 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         }
 
 
-        console.log("MESSAGES", newMessages);
+        // console.log("MESSAGES", newMessages);
         // Send each new message to the AWS API endpoint
         for (const message of newMessages) {
-          await fetch('https://jtf79lf49l.execute-api.us-east-2.amazonaws.com/fetch-email-data', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              emailId: message.id,
-              content: message.content,
-              from: message.from,
-              date: message.date,
-              threadId: message.threadId
-            }),
-          });
+          if (message.isCoachMessage) {
+            await fetch('https://jtf79lf49l.execute-api.us-east-2.amazonaws.com/fetch-email-data', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                emailId: message.id,
+                content: message.content,
+                from: message.from,
+                date: message.date,
+                threadId: message.threadId
+              }),
+            });
+          }
         }
 
         if (newMessages.length > 0) {
           // Update the last fetched message ID with the most recent message
           const latestMessageId = newMessages[newMessages.length - 1].id;
-          console.log("LATEST", latestMessageId);
-
           const toTrack: any = {
             user_id: user.id,
             coach_email: coachEmail,
@@ -123,7 +119,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
             .upsert(toTrack);
 
           if (upsertError) {
-            console.error('Error updating tracking data:', upsertError);
+            console.error('Error fetching data:', upsertError);
           }
         }
 
@@ -163,7 +159,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        throw new Error('Error fetching data:');
       }
 
       const sentMessage = {
@@ -178,7 +174,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
       setMessages((prevMessages) => [sentMessage, ...prevMessages]);
       setNewMessage('');
     } catch (error) {
-      console.error('Error sending data:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setIsSending(false);
     }
