@@ -1,0 +1,31 @@
+.modal-container {
+    position: absolute;
+    z-index: 1000;
+    background-color: white;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  
+  .modal-container:hover {
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  .modal-button {
+    font-size: 0.875rem; /* Equivalent to text-sm in Tailwind */
+    color: #2563eb; /* Blue-600 */
+    font-weight: 500; /* Equivalent to font-medium */
+    border-radius: 9999px; /* Fully rounded */
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .modal-button:hover {
+    background-color: #2563eb; /* Blue-600 */
+    color: white;
+  }
+
+  
+  

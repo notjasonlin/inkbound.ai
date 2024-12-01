@@ -1,0 +1,138 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: linear-gradient(to bottom, #e0f7ff, #f0f8ff);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .header {
+    padding: 1rem;
+    border-bottom: 1px solid #ddd;
+    border-radius: 0.5rem 0.5rem 0 0;
+  }
+  
+  .select-box {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  
+  .select-box:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+  }
+  
+  .messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    gap: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+  
+  .coach-message,
+  .user-message {
+    max-width: 75%;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .coach-message {
+    max-width: 50%; 
+    background: #f0f0f0;
+    text-align: left;
+    margin-right: auto; 
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+  
+  .coach-message:focus {
+    z-index: 10;
+  }
+  
+  .user-message {
+    background: #007bff;
+    color: white;
+    margin-left: auto;
+  }
+  
+  .user-message p {
+    margin: 0.25rem 0 0;
+  }
+  
+  .message-date {
+    font-size: 0.75rem;
+    color: #666;
+  }
+  
+  .input-area {
+    padding: 1rem;
+    border-top: 1px solid #ddd;
+    border-radius: 0 0 0.5rem 0.5rem;
+    background: linear-gradient(to bottom, #e0f7ff, #f0f8ff);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .input-box {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  
+  .input-box:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+  }
+  
+  .send-button {
+    padding: 0.5rem 1rem;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+  
+  .send-button:hover {
+    background: #0056b3;
+  }
+  
+  .messages:focus-within::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
+    z-index: 1;
+    opacity: 0; 
+    transition: opacity 0.3s ease, backdrop-filter 0.3s ease; 
+  }
+
+  .messages:focus-within::before {
+    opacity: 1; 
+  }
+  
+  .coach-message:focus {
+    position: relative;
+    z-index: 2;
+  }
+  

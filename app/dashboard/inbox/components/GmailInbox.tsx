@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { createClient } from "@/utils/supabase/client";
 import { FiSend, FiChevronDown } from 'react-icons/fi';
 import { CoachData } from '@/types/school';
+import ReplyAIModal from './ReplyAIModal';
+import styles from '@/styles/GmailInbox.module.css';
+
 
 interface Message {
   id: string;
@@ -25,6 +28,9 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
   const [loading, setLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
+  const [lastUserMessage, setLastUserMessage] = useState<Message | null>(null);
+  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
+  const [modalPosition, setModalPosition] = useState<{ top: number; left: number } | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -209,73 +215,93 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
   }
 
 
+  const handleCoachMessageClick = (event: React.MouseEvent, messageId: string) => {
+    const targetElement = event.currentTarget.getBoundingClientRect();
+    setModalPosition({ top: targetElement.bottom, left: targetElement.left });
+    setModalIsOpen(true);
+  };
+
+  const userMessage = (message: Message) => (
+    <div key={message.id} className="flex justify-end">
+      <div className="max-w-xs p-3 rounded-lg shadow-md bg-blue-500 text-white">
+        <div className="text-sm">{message.content}</div>
+        <p className="text-xs mt-2 text-black">{new Date(message.date).toLocaleString()}</p>
+      </div>
+    </div>
+  );
+
+  const coachMessage = (message: Message) => (
+    <button
+      key={message.id}
+      className={styles["coach-message"]}
+      onClick={(e) => handleCoachMessageClick(e, message.id)}
+      tabIndex={0}
+    >
+      <div>
+        <div className="text-sm">{message.content}</div>
+        <p className="text-xs mt-2 text-black">{new Date(message.date).toLocaleString()}</p>
+      </div>
+    </button>
+  );
+
+
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b text-black from-blue-50 to-blue-100 rounded-lg shadow-lg">
-      <div className="p-4 border-b rounded-t-lg">
+    <div className={styles.container}>
+      <div className={styles.header}>
         <h2 className="text-lg font-bold text-gray-800 mb-2">Filter by Coach</h2>
-        <div className="relative">
-          <select
-            value={selectedCoachEmail}
-            onChange={(e) => handleCoachChange(e.target.value)}
-            className="w-full py-2 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {coachEmails.map(coach => (
-              <option key={coach.email} value={coach.email}>
-                {coach.name + " — " + coach.position}
-              </option>
-            ))}
-          </select>
-        </div>
+        <select
+          value={selectedCoachEmail}
+          onChange={(e) => handleCoachChange(e.target.value)}
+          className={styles["select-box"]}
+        >
+          {coachEmails.map((coach) => (
+            <option key={coach.email} value={coach.email}>
+              {coach.name + " — " + coach.position}
+            </option>
+          ))}
+        </select>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className={styles.messages}>
         {loading ? (
           <div className="text-center text-black">Loading messages...</div>
         ) : messages.length > 0 ? (
-          messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.isCoachMessage ? 'justify-start' : 'justify-end'}`}
-            >
-              <div
-                className={`max-w-xs p-3 rounded-lg shadow-md ${message.isCoachMessage ? 'bg-gray-300 text-black' : 'bg-blue-500 text-white'
-                  }`}
-              >
-                <div
-                  className="text-sm"
-                  dangerouslySetInnerHTML={{
-                    __html: generateHTMLContent(formatMessageContent(message.content)),
-                  }}
-                />
-                <p className="text-xs mt-2 text-black">
-                  {new Date(message.date).toLocaleString()}
-                </p>
-              </div>
-            </div>
-          ))
+          messages.map((message) =>
+            message.isCoachMessage ? coachMessage(message) : userMessage(message)
+          )
         ) : (
           <div className="text-center text-black">No messages found.</div>
         )}
-
-
       </div>
 
-      <div className="p-4 border-t bg-gradient-to-b from-blue-50 to-blue-100 rounded-b-lg flex items-center space-x-2">
+      <div className={styles["input-area"]}>
         <input
           type="text"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           placeholder="Type a new message..."
-          className="flex-1 py-2 px-4 border rounded-lg focus:outline-none text-black focus:ring focus:border-blue-500"
+          className={styles["input-box"]}
         />
         <button
           onClick={handleSendMessage}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+          className={styles["send-button"]}
           disabled={isSending || !newMessage.trim()}
         >
-          {isSending ? 'Sending...' : <FiSend />}
+          {isSending ? "Sending..." : <FiSend />}
         </button>
       </div>
+
+      {modalIsOpen && modalPosition && (
+        <ReplyAIModal
+          isOpen={modalIsOpen}
+          onClose={() => setModalIsOpen(false)}
+          onClick={() => console.log("AI Reply Clicked")}
+          style={{
+            top: modalPosition.top,
+            left: modalPosition.left,
+          }}
+        />
+      )}
     </div>
   );
 }
