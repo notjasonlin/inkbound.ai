@@ -1,18 +1,21 @@
 import React, { useEffect, useRef } from "react";
 import "@/styles/ReplyAIModal.css";
+import { Message } from "@/types/message";
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onClick: () => void;
   style: { top: number; left: number }; // Add position prop
+  coachMessage: Message | null;
+  lastMessage: Message | null;
 }
 
 export default function ReplyAIModal({
   isOpen,
   onClose,
-  onClick,
   style,
+  coachMessage,
+  lastMessage
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -34,6 +37,17 @@ export default function ReplyAIModal({
 
   if (!isOpen) return null;
 
+  const replyAI = () => {
+    console.log("Reply AI");
+    console.log("Coach message", coachMessage);
+    if (lastMessage && !lastMessage.isCoachMessage) {
+        console.log("Last message", lastMessage);
+    } else {
+        console.log("Last message is a coach message")
+    }
+    onClose();
+  }
+
   return (
     <div
       ref={modalRef}
@@ -43,7 +57,7 @@ export default function ReplyAIModal({
         left: `${style.left}px`,
         position: "absolute", // Ensure absolute positioning
       }}
-      onClick={onClick}
+      onClick={replyAI}
     >
       <button type="button" className="modal-button">
         Reply with AI

@@ -6,16 +6,7 @@ import { FiSend, FiChevronDown } from 'react-icons/fi';
 import { CoachData } from '@/types/school';
 import ReplyAIModal from './ReplyAIModal';
 import styles from '@/styles/GmailInbox.module.css';
-
-
-interface Message {
-  id: string;
-  content: string;
-  from: string;
-  date: string;
-  isCoachMessage: boolean;
-  threadId: string;
-}
+import { Message } from '@/types/message';
 
 interface GmailInboxProps {
   coachEmails: CoachData[];
@@ -28,9 +19,12 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
   const [loading, setLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
-  const [lastUserMessage, setLastUserMessage] = useState<Message | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
+  const [lastMessage, setLastMessage] = useState<Message | null>(null);
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const [modalPosition, setModalPosition] = useState<{ top: number; left: number } | null>(null);
+  const [coachEmailsMap, setCoachEmailsMap] = useState<{ [id: string]: Message }>({});
+
   const supabase = createClient();
 
   useEffect(() => {
@@ -49,8 +43,6 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
     setLoading(true);
     setMessages([]); // Clear existing messages when switching coaches
 
-
-
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -63,7 +55,6 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           .eq('coach_email', coachEmail)
           .single();
 
-        // Grab messages
         const response = await fetch('/api/gmail/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -71,16 +62,16 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         });
         const data = await response.json();
 
-        const processedMessages: Message[] = data.messages.map((message: any) => ({
+        const processedMessages: Message[] = data.messages.reverse().map((message: any, index: number) => ({
           id: message.id,
           content: message.content,
           from: message.from,
           date: message.date,
           isCoachMessage: message.from.includes(coachEmail),
           threadId: message.id, // Should be separate id???
-        })).reverse();
-        // End grab messages
-
+          messageNum: index,
+          classification: null,
+        }));
 
         let newMessages = processedMessages;
         if (trackingData) {
@@ -91,7 +82,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           }
         }
 
-
+        // console.log("MESSAGES", processedMessages);
         // console.log("MESSAGES", newMessages);
         // Send each new message to the AWS API endpoint
         for (const message of newMessages) {
@@ -128,6 +119,16 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
             console.error('Error fetching data:', upsertError);
           }
         }
+
+        const map: { [id: string]: Message } = {};
+
+        processedMessages.map((message) => {
+          if (message.isCoachMessage) {
+            map[message.id] = message;
+          }
+        });
+        setCoachEmailsMap(map);
+        console.log("Map", map);
 
         setMessages(processedMessages);
 
@@ -175,6 +176,8 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         date: new Date().toISOString(),
         isCoachMessage: false,
         threadId,
+        messageNum: messages.length,
+        classification: null,
       };
 
       setMessages((prevMessages) => [sentMessage, ...prevMessages]);
@@ -224,7 +227,12 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
   const userMessage = (message: Message) => (
     <div key={message.id} className="flex justify-end">
       <div className="max-w-xs p-3 rounded-lg shadow-md bg-blue-500 text-white">
-        <div className="text-sm">{message.content}</div>
+        <div
+          className="text-sm"
+          dangerouslySetInnerHTML={{
+            __html: generateHTMLContent(formatMessageContent(message.content)),
+          }}
+        />
         <p className="text-xs mt-2 text-black">{new Date(message.date).toLocaleString()}</p>
       </div>
     </div>
@@ -234,16 +242,24 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
     <button
       key={message.id}
       className={styles["coach-message"]}
-      onClick={(e) => handleCoachMessageClick(e, message.id)}
+      onClick={(e) => {
+        setSelectedMessage(message);
+        setLastMessage(message.messageNum > 0 ? messages[message.messageNum - 1] : null);
+        handleCoachMessageClick(e, message.id)
+      }}
       tabIndex={0}
     >
+      <div
+        className="text-sm"
+        dangerouslySetInnerHTML={{
+          __html: generateHTMLContent(formatMessageContent(message.content)),
+        }}
+      />
       <div>
-        <div className="text-sm">{message.content}</div>
         <p className="text-xs mt-2 text-black">{new Date(message.date).toLocaleString()}</p>
       </div>
     </button>
   );
-
 
   return (
     <div className={styles.container}>
@@ -295,11 +311,12 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         <ReplyAIModal
           isOpen={modalIsOpen}
           onClose={() => setModalIsOpen(false)}
-          onClick={() => console.log("AI Reply Clicked")}
           style={{
             top: modalPosition.top,
             left: modalPosition.left,
           }}
+          coachMessage={selectedMessage}
+          lastMessage={lastMessage}
         />
       )}
     </div>
