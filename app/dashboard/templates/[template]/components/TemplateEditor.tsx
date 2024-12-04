@@ -20,10 +20,11 @@ interface Template {
   };
 }
 
-const placeholders = [
-  { label: 'School Name', value: '[schoolName]' },
-  { label: 'Coach', value: '[coachLastName]' }
-];
+// const placeholders = [
+//   { label: 'School Name', value: '[schoolName]' },
+//   { label: 'Coach', value: '[coachLastName]' },
+//   { label: 'Personalized Message', value: '[personalizedMessage]' }
+// ];
 
 export default function TemplateEditor({ templateTitle }: { templateTitle: string; }) {
   const [template, setTemplate] = useState<Template | null>(null);
@@ -255,42 +256,42 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     setSuggestions([]);
   };
 
-  const handleSendMessageToAI = async (message: string) => {
-    if (!userId) return 'User not authenticated';
+  // const handleSendMessageToAI = async (message: string) => {
+  //   if (!userId) return 'User not authenticated';
 
-    const canUseAI = await checkUserLimits(userId, 'aiCall');
-    if (!canUseAI) {
-      return 'You have reached your AI usage limit. Please upgrade your plan to continue using AI features.';
-    }
+  //   const canUseAI = await checkUserLimits(userId, 'aiCall');
+  //   if (!canUseAI) {
+  //     return 'You have reached your AI usage limit. Please upgrade your plan to continue using AI features.';
+  //   }
 
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: message,
-          placeholders,
-        }),
-      });
+  //   try {
+  //     const response = await fetch('/api/chat', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         prompt: message,
+  //         placeholders,
+  //       }),
+  //     });
 
-      if (!response.ok) {
-        throw new Error('Failed to get AI response');
-      }
+  //     if (!response.ok) {
+  //       throw new Error('Failed to get AI response');
+  //     }
 
-      const data = await response.json();
-      await incrementUsage(userId, { ai_calls_used: 1 });
-      setUserUsage(prev => prev ? {
-        ...prev,
-        ai_calls_used: (prev.ai_calls_used || 0) + 1
-      } : null);
-      return data.content;
-    } catch (error) {
-      console.error('Error sending data', error);
-      return 'Sorry, there was an error processing your request.';
-    }
-  };
+  //     const data = await response.json();
+  //     await incrementUsage(userId, { ai_calls_used: 1 });
+  //     setUserUsage(prev => prev ? {
+  //       ...prev,
+  //       ai_calls_used: (prev.ai_calls_used || 0) + 1
+  //     } : null);
+  //     return data.content;
+  //   } catch (error) {
+  //     console.error('Error sending data', error);
+  //     return 'Sorry, there was an error processing your request.';
+  //   }
+  // };
 
   return (
     <div className="template-editor-container">
@@ -309,7 +310,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               position={modalPosition} // Pass modal position
             />
           )}
-  
+
           {alert && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
               <Alert
@@ -321,7 +322,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               />
             </div>
           )}
-  
+
           <div className="template-editor-header">
             <button
               onClick={() => {
@@ -348,20 +349,24 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               Back
             </button>
             <h1 className="template-title">{title}</h1>
-            <button onClick={() => setShowAIChat(!showAIChat)} className="ai-chat-toggle">
+            {/* <button onClick={() => setShowAIChat(!showAIChat)} className="ai-chat-toggle">
               {showAIChat ? "Hide AI Chat" : "Show AI Chat"}
-            </button>
+            </button> */}
           </div>
-  
+
           <div className="template-editor-body">
             <div className="checklist-container">
               <TemplateChecklist
                 title={"Mandatory"}
-                placeholders={["[coachLastName]", "[schoolName]"]}
+                placeholders={[
+                  "[coachLastName]", 
+                  "[schoolName]",
+                  "[personalizedMessage]"
+                ]}
                 content={itemContent}
                 setAllMandatory={setAllMandatory}
               />
-              <TemplateChecklist
+              {/* <TemplateChecklist
                 title={"Optional"}
                 placeholders={[
                   "[studentFullName]",
@@ -369,9 +374,9 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                   "[studentLastName]",
                 ]}
                 content={itemContent}
-              />
+              /> */}
             </div>
-  
+
             <div className="input-container">
               <input
                 type="text"
@@ -380,7 +385,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                 className="template-title-input"
                 placeholder="Template Title"
               />
-  
+
               <div className="input-box">
                 <input
                   type="text"
@@ -405,11 +410,11 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                   className="text-area"
                 />
               </div>
-  
+
               {error && <div className="error-message">{error}</div>}
             </div>
-  
-            {showAIChat && (
+
+            {/* {showAIChat && (
               <div className="ai-chat-container">
                 <AIChatInterface
                   userCredits={
@@ -418,13 +423,13 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                   onSendMessage={handleSendMessageToAI}
                 />
               </div>
-            )}
+            )} */}
           </div>
         </div>
       )}
     </div>
   );
-  
+
 }
 
 
