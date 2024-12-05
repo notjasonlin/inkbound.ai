@@ -31,10 +31,11 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
   const [title, setTitle] = useState(templateTitle);
   const [itemTitle, setItemTitle] = useState("");
   const [itemContent, setItemContent] = useState("");
+  const [updateItemTrigger, setUpdateItemTrigger] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectPlaceHolder, setSelectPlaceHolder] = useState<boolean>(false);
   const [placeHolder, setPlaceHolder] = useState<string>("");
-  const [updateTrigger, setUpdateTrigger] = useState<boolean>(false);
+  const [updatePHTrigger, setupdatePHTrigger] = useState<boolean>(false);
   const [modalPosition, setModalPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [selectedText, setSelectedText] = useState('');
   const [showAIHelper, setShowAIHelper] = useState(false);
@@ -78,9 +79,10 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
       const { selectionStart, selectionEnd } = editorRef.current;
       const newText = itemContent.substring(0, selectionStart - 1) + placeHolder + itemContent.substring(selectionEnd);
       updateContent(newText);
+      setUpdateItemTrigger(!updateItemTrigger);
       setPlaceHolder("");
     }
-  }, [updateTrigger]);
+  }, [updatePHTrigger]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -144,6 +146,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     isUpdatingRef.current = true;
     setError(null);
     const supabase = createClient();
+
     try {
       const { error } = await supabase
         .from('templates')
@@ -172,8 +175,9 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
   const debouncedSave = useCallback(debounce(saveTemplate, 1000), [saveTemplate]);
 
   useEffect(() => {
+    // console.log("DEBOUNCE");
     debouncedSave(title, itemTitle, itemContent);
-  }, [title, itemTitle, itemContent, debouncedSave]);
+  }, [updateItemTrigger]);
 
   useEffect(() => {
     const fetchUsage = async () => {
@@ -201,7 +205,6 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
 
 
   const undo = useCallback(() => {
-
     if (historyIndex > 0) {
       setHistoryIndex(prev => prev - 1);
       setItemContent(history[historyIndex - 1]);
@@ -215,9 +218,6 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     }
   }, [history, historyIndex]);
 
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    updateContent(e.target.value);
-  };
 
   const handleTextSelection = () => {
     if (editorRef.current) {
@@ -294,7 +294,8 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
   // };
 
   return (
-    <div className="template-editor-container">
+    // <div className="template-editor-container">
+    <>
       {loading || !userId ? (
         <div className="flex justify-center items-center h-96">
           <div className="text-2xl font-semibold">Loading template...</div>
@@ -306,7 +307,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               isOpen={true}
               onClose={() => setSelectPlaceHolder(false)}
               setPlaceHolder={setPlaceHolder}
-              trigger={() => setUpdateTrigger(!updateTrigger)}
+              trigger={() => setupdatePHTrigger(!updatePHTrigger)}
               position={modalPosition} // Pass modal position
             />
           )}
@@ -359,7 +360,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               <TemplateChecklist
                 title={"Mandatory"}
                 placeholders={[
-                  "[coachLastName]", 
+                  "[coachLastName]",
                   "[schoolName]",
                   "[personalizedMessage]"
                 ]}
@@ -381,7 +382,10 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value)
+                  setUpdateItemTrigger(!updateItemTrigger);
+                }}
                 className="template-title-input"
                 placeholder="Template Title"
               />
@@ -390,7 +394,10 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                 <input
                   type="text"
                   value={itemTitle}
-                  onChange={(e) => setItemTitle(e.target.value)}
+                  onChange={(e) => {
+                    setItemTitle(e.target.value)
+                    setUpdateItemTrigger(!updateItemTrigger);
+                  }}
                   placeholder="Item Title"
                   className="item-title-input"
                 />
@@ -405,7 +412,10 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                 <textarea
                   ref={editorRef}
                   value={itemContent}
-                  onChange={handleInput}
+                  onChange={(e) => {
+                    updateContent(e.target.value);
+                    setUpdateItemTrigger(!updateItemTrigger);
+                  }}
                   onSelect={handleTextSelection}
                   className="text-area"
                 />
@@ -427,9 +437,8 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
           </div>
         </div>
       )}
-    </div>
+    </>
+    // </div>
   );
 
 }
-
-
