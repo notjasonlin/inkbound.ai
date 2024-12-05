@@ -57,27 +57,17 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           .eq('coach_email', coachEmail)
           .single();
 
-        // if (trackingError) {
-        //   console.error('Error fetching tracking data:', trackingError);
-        // }
-
-        if (!trackingData) {
-          console.log("NO TRACKING DATA");
-        }
-
         // Grab messages
         const response = await fetch('/api/gmail/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ coachEmail }),
+          body: JSON.stringify({ coachEmail, }),
         });
         const data = await response.json();
 
-        console.log("DATA", data);
-
         const processedMessages: Message[] = data.messages.map((message: any) => ({
           id: message.id,
-          content: message.snippet,
+          content: message.content,
           from: message.from,
           date: message.date,
           isCoachMessage: message.from.includes(coachEmail),
@@ -89,38 +79,34 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         let newMessages = processedMessages;
         if (trackingData) {
           const lastFetchedMessageId = trackingData ? trackingData.last_fetched_message_id : null;
-
-          console.log("Last fetched", lastFetchedMessageId);
-
           const idx = processedMessages.findIndex((message) => message.id === lastFetchedMessageId);
           if (idx >= 0) {
             newMessages = processedMessages.slice(idx + 1);
           }
         }
-        console.log("New messages", newMessages);
 
 
-
+        // console.log("MESSAGES", newMessages);
         // Send each new message to the AWS API endpoint
         for (const message of newMessages) {
-          await fetch('https://jtf79lf49l.execute-api.us-east-2.amazonaws.com/fetch-email-data', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              emailId: message.id,
-              content: message.content,
-              from: message.from,
-              date: message.date,
-              threadId: message.threadId
-            }),
-          });
+          if (message.isCoachMessage) {
+            await fetch('https://jtf79lf49l.execute-api.us-east-2.amazonaws.com/fetch-email-data', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                emailId: message.id,
+                content: message.content,
+                from: message.from,
+                date: message.date,
+                threadId: message.threadId
+              }),
+            });
+          }
         }
 
         if (newMessages.length > 0) {
           // Update the last fetched message ID with the most recent message
           const latestMessageId = newMessages[newMessages.length - 1].id;
-          console.log("LATEST", latestMessageId);
-
           const toTrack: any = {
             user_id: user.id,
             coach_email: coachEmail,
@@ -128,12 +114,12 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           }
           if (trackingData && trackingData.id) toTrack.id = trackingData.id;
 
-            const { error: upsertError } = await supabase
-              .from('user_message_tracking')
-              .upsert(toTrack);
+          const { error: upsertError } = await supabase
+            .from('user_message_tracking')
+            .upsert(toTrack);
 
           if (upsertError) {
-            console.error('Error updating tracking data:', upsertError);
+            console.error('Error fetching data:', upsertError);
           }
         }
 
@@ -173,7 +159,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send message');
+        throw new Error('Error fetching data:');
       }
 
       const sentMessage = {
@@ -188,11 +174,40 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
       setMessages((prevMessages) => [sentMessage, ...prevMessages]);
       setNewMessage('');
     } catch (error) {
-      console.error('Error sending data:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setIsSending(false);
     }
   };
+
+  const formatMessageContent = (content: string) => {
+    // Normalize line endings
+    const normalizedContent = content.replace(/\r\n/g, '\n'); // Replace all \r\n with \n
+
+    // Split into paragraphs by two consecutive newlines
+    const paragraphs = normalizedContent.split('\n');
+
+    // Wrap paragraphs with <p> and preserve single newlines as <br>
+    return paragraphs.map((p: string) => (p.trim() ? `<p>${p}</p>` : "<br>")).join("");
+  }
+
+
+  const generateHTMLContent = (paragraphs: string) => {
+    return `<!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="UTF-8">
+    <style>
+      p { margin: 0 0 70px; line-height: 1.8; }
+      body { font-family: Arial, sans-serif; }
+    </style>
+  </head>
+  <body>
+    ${paragraphs}
+  </body>
+  </html>`;
+  }
+
 
   return (
     <div className="flex flex-col h-full bg-gradient-to-b text-black from-blue-50 to-blue-100 rounded-lg shadow-lg">
@@ -226,7 +241,12 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
                 className={`max-w-xs p-3 rounded-lg shadow-md ${message.isCoachMessage ? 'bg-gray-300 text-black' : 'bg-blue-500 text-white'
                   }`}
               >
-                <p className="text-sm">{message.content}</p>
+                <div
+                  className="text-sm"
+                  dangerouslySetInnerHTML={{
+                    __html: generateHTMLContent(formatMessageContent(message.content)),
+                  }}
+                />
                 <p className="text-xs mt-2 text-black">
                   {new Date(message.date).toLocaleString()}
                 </p>
@@ -236,6 +256,8 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         ) : (
           <div className="text-center text-black">No messages found.</div>
         )}
+
+
       </div>
 
       <div className="p-4 border-t bg-gradient-to-b from-blue-50 to-blue-100 rounded-b-lg flex items-center space-x-2">
