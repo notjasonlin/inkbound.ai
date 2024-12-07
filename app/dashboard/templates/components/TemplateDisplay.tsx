@@ -12,9 +12,9 @@ const TemplateDisplay = ({ template }: TemplateDisplayProps) => {
         : "";
 
     return (
-        <div className="template-display">
+        <div className="template-display ">
             <div className="template-header">{template.title}</div>
-            <div className="template-body">
+            <div className="template-body ">
                 <p className="template-content" dangerouslySetInnerHTML={{ __html: formattedContent }} />
             </div>
         </div>
