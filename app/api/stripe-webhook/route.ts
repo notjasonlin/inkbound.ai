@@ -93,25 +93,41 @@ async function updateUserSubscription(userId: string, subscription: Stripe.Subsc
 
   const subscriptionData = {
     user_id: userId,
-    stripe_subscription_id: subscription.id as string,
+    stripe_subscription_id: subscription.id,
     stripe_customer_id: subscription.customer as string,
-    plan_id: plan.id as string,
-    plan_name: plan.name as string,
-    status: subscription.status as string,
+    plan_id: plan.id,
+    plan_name: plan.name,
+    status: subscription.status,
     current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
     current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
     cancel_at_period_end: subscription.cancel_at_period_end || false,
-    ai_call_limit: plan.aiCallLimit as number,
-    schools_sent_limit: plan.schoolLimit as number,
-    template_limit: plan.templateLimit as number,
+    ai_call_limit: plan.aiCallLimit,
+    schools_sent_limit: plan.schoolLimit,
+    template_limit: plan.templateLimit,
     updated_at: new Date().toISOString()
   };
 
   console.log('Attempting to upsert subscription data:', subscriptionData);
 
+  // First check if a subscription exists
+  const { data: existingSub } = await supabase
+    .from('user_subscriptions')
+    .select('id')
+    .eq('user_id', userId)
+    .single();
+
   const { data: subData, error: subscriptionError } = await supabase
     .from('user_subscriptions')
-    .upsert(subscriptionData)
+    .upsert(
+      {
+        ...(existingSub?.id ? { id: existingSub.id } : {}), // Include existing ID if found
+        ...subscriptionData
+      },
+      {
+        onConflict: 'user_id', // Specify the conflict target
+        ignoreDuplicates: false // We want to update, not ignore
+      }
+    )
     .select();
 
   if (subscriptionError) {
