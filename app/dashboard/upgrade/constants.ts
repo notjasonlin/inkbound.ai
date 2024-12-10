@@ -41,8 +41,8 @@ export const plans: Plan[] = [
       'Priority support',
       'Advanced email templates'
     ],
-    stripePriceIdMonthly: 'price_1QB07kGqe0TKVbR1sCDgNKT5',
-    stripePriceIdYearly: 'price_1QB08CGqe0TKVbR1y337C3ex',
+    stripePriceIdMonthly: 'price_1QUYnnGqe0TKVbR15qrNzYee',
+    stripePriceIdYearly: 'price_1QUYnnGqe0TKVbR1Cv0KGooZ',
     schoolLimit: 20,
     templateLimit: 20,
     aiCallLimit: 100
@@ -59,8 +59,8 @@ export const plans: Plan[] = [
       'Custom email templates',
       'Personalized advice'
     ],
-    stripePriceIdMonthly: 'price_1Q9YrqGqe0TKVbR1zdGLM31V',
-    stripePriceIdYearly: 'price_1QB065Gqe0TKVbR1Ychlgg4y',
+    stripePriceIdMonthly: 'price_1QUYnmGqe0TKVbR12rTXjiwj',
+    stripePriceIdYearly: 'price_1QUYnmGqe0TKVbR1k4Us2gnC',
     schoolLimit: 9999,
     templateLimit: 9999,
     aiCallLimit: 9999
