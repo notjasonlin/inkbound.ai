@@ -59,14 +59,17 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-  const userId = session.client_reference_id;
+  const userId = session.metadata?.userId;
   const subscriptionId = session.subscription as string;
 
   if (userId && subscriptionId) {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    await stripe.subscriptions.update(subscriptionId, {
+      metadata: session.metadata || {}
+    });
     await updateUserSubscription(userId, subscription);
   } else {
-    console.error('Missing data');
+    console.error('Missing data:', { userId, subscriptionId });
   }
 }
 
