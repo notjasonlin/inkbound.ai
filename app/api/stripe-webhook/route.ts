@@ -10,17 +10,8 @@ const stripe = new Stripe(process.env.NEXT_PUBLIC_STRIPE_SECRET_KEY!, {
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  {
-    global: {
-      headers: {
-        Authorization: `Bearer ${process.env.SUPABASE_JWT_SECRET!}`
-      }
-    }
-  }
+  process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!
 );
-
-console.log('Supabase client initialized with JWT');
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
