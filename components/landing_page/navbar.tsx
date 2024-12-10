@@ -6,6 +6,7 @@ import { FaBars, FaTimes } from 'react-icons/fa'; // Icons for the hamburger men
 import { Shrikhand } from 'next/font/google'; // Import the Shrikhand font
 import LoginButton from '../LoginLogoutButton'; // LoginButton component
 import ResourcesDropdown from './resources-dropdown';
+import Image from 'next/image';
 
 const shrikhand = Shrikhand({ subsets: ['latin'], weight: '400' });
 
@@ -52,13 +53,14 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between h-20"> {/* Adjusted height */}
           <div className="flex-shrink-0 flex items-center">
-            {/* Apply gradient to the text */}
-            <h1
-              className={`text-4xl px-2 font-bold bg-gradient-to-r from-babyblue-500 to-blue-500 bg-clip-text text-transparent ${shrikhand.className}`}
-              style={{ lineHeight: '1.2', paddingBottom: '0.25rem' }} // Adjusted line height and padding
-            >
-              Inkbound
-            </h1>
+            <Image
+              src="/inkbound.png"
+              alt="Inkbound.ai Logo"
+              width={200}
+              height={50}
+              priority
+              className="object-contain py-2"
+            />
           </div>
 
           {/* Desktop Menu */}
