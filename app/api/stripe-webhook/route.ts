@@ -90,17 +90,17 @@ async function updateUserSubscription(userId: string, subscription: Stripe.Subsc
 
   const subscriptionData = {
     user_id: userId,
-    stripe_subscription_id: subscription.id,
+    stripe_subscription_id: subscription.id as string,
     stripe_customer_id: subscription.customer as string,
-    plan_id: plan.id,
-    plan_name: plan.name,
-    status: subscription.status,
+    plan_id: plan.id as string,
+    plan_name: plan.name as string,
+    status: subscription.status as string,
     current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
     current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
     cancel_at_period_end: subscription.cancel_at_period_end || false,
-    ai_call_limit: plan.aiCallLimit,
-    schools_sent_limit: plan.schoolLimit,
-    template_limit: plan.templateLimit,
+    ai_call_limit: plan.aiCallLimit as number,
+    schools_sent_limit: plan.schoolLimit as number,
+    template_limit: plan.templateLimit as number,
     updated_at: new Date().toISOString()
   };
 
