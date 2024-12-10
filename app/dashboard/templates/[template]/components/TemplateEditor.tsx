@@ -175,7 +175,6 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
   const debouncedSave = useCallback(debounce(saveTemplate, 1000), [saveTemplate]);
 
   useEffect(() => {
-    // console.log("DEBOUNCE");
     debouncedSave(title, itemTitle, itemContent);
   }, [updateItemTrigger]);
 
