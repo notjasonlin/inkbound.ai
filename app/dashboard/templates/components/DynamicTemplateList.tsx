@@ -23,7 +23,7 @@ export default function DynamicTemplateList({ initialTemplates, userId }: Dynami
         } else if (payload.eventType === 'DELETE' && payload.old.user_id === userId) {
           setTemplates(prev => prev.filter(template => template.id !== payload.old.id));
         } else if (payload.eventType === 'UPDATE' && payload.new.user_id === userId) {
-          setTemplates(prev => prev.map(template => 
+          setTemplates(prev => prev.map(template =>
             template.id === payload.new.id ? payload.new as TemplateData : template
           ));
         }
@@ -43,12 +43,9 @@ export default function DynamicTemplateList({ initialTemplates, userId }: Dynami
         .eq('id', id);
 
       if (error) throw error;
-
-      // Immediately update the local state
       setTemplates(prev => prev.filter(template => template.id !== id));
     } catch (error) {
       console.error('Error deleting data:', error);
-      // Handle error appropriately (e.g., show an error message to the user)
     }
   }, [supabase]);
 
@@ -56,7 +53,7 @@ export default function DynamicTemplateList({ initialTemplates, userId }: Dynami
     try {
       const duplicatedTemplate = {
         ...templateToDuplicate,
-        id: undefined, // Remove the id so Supabase will generate a new one
+        id: undefined,
         title: `${templateToDuplicate.title} (Copy)`,
         updated_at: new Date().toISOString(),
       };
@@ -68,25 +65,24 @@ export default function DynamicTemplateList({ initialTemplates, userId }: Dynami
         .single();
 
       if (error) throw error;
-
-      // Add the new template to the list
       setTemplates(prev => [data as TemplateData, ...prev]);
     } catch (error) {
       console.error('Error duplicating data:', error);
-      // Handle error appropriately
     }
   }, [supabase]);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {templates.map(template => (
-        <TemplateItem 
-          key={template.id} 
-          template={template} 
-          onDelete={handleDelete}
-          onDuplicate={handleDuplicate}
-        />
-      ))}
+    <div className="min-h-screen py-8 px-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {templates.map(template => (
+          <TemplateItem
+            key={template.id}
+            template={template}
+            onDelete={handleDelete}
+            onDuplicate={handleDuplicate}
+          />
+        ))}
+      </div>
     </div>
   );
 }

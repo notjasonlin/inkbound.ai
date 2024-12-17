@@ -1,15 +1,54 @@
+import { useState, useEffect } from "react";
 import { SchoolData } from "@/types/school";
 
 interface SchoolPreviewProps {
   school: SchoolData;
 }
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_IMAGE_BASE_URL = `${SUPABASE_URL}/storage/v1/object/public/school-logo-images/merged_school_images/`;
+
+function formatSchoolNameForImage(name: string): string {
+  return name.split(' ').join('-');
+}
+
 const SchoolPreview = ({ school }: SchoolPreviewProps) => {
+  const formattedName = formatSchoolNameForImage(school.school);
+
+  // Start by trying .png first
+  const [imgSrc, setImgSrc] = useState(`${SUPABASE_IMAGE_BASE_URL}${formattedName}.png`);
+  const [triedJpg, setTriedJpg] = useState(false);
+
+  const handleImageError = () => {
+    if (!triedJpg) {
+      // If png fails, try jpg
+      setImgSrc(`${SUPABASE_IMAGE_BASE_URL}${formattedName}.jpg`);
+      setTriedJpg(true);
+    } else {
+      // If jpg also fails, fallback to a placeholder
+      setImgSrc('/fallback-logo.png');
+    }
+  };
+
+  useEffect(() => {
+    // Update image if the school changes
+    setImgSrc(`${SUPABASE_IMAGE_BASE_URL}${formattedName}.png`);
+    setTriedJpg(false);
+  }, [school, formattedName]);
+
   return (
     <div className="border rounded-lg shadow-md p-6 bg-white">
-      {/* School Name */}
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">{school.school}</h2>
-      
+      {/* Title row with image and name */}
+      <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center space-x-2">
+        <img
+          src={imgSrc}
+          alt={school.school}
+          onError={handleImageError}
+          className="w-8 h-8 object-contain"
+        />
+        <span>{school.school}</span>
+      </h2>
+
       {/* School Info */}
       <div className="grid grid-cols-2 gap-4 text-gray-700 mb-6">
         <p><span className="font-semibold">State:</span> {school.state}</p>
@@ -25,17 +64,10 @@ const SchoolPreview = ({ school }: SchoolPreviewProps) => {
             {school.biography.undergraduates && <p><span className="font-semibold">Undergraduates:</span> {school.biography.undergraduates}</p>}
             {school.biography.early_action && <p><span className="font-semibold">Early Action:</span> {school.biography.early_action}</p>}
             {school.biography.early_decision && <p><span className="font-semibold">Early Decision:</span> {school.biography.early_decision}</p>}
-            {/* {school.biography.reg_admission_deadline && <p><span className="font-semibold">Regular Admission Deadline:</span> {school.biography.reg_admission_deadline}</p>} */}
-            {/* {school.biography.sat_math && <p><span className="font-semibold">SAT Math:</span> {school.biography.sat_math}</p>} */}
-            {/* {school.biography.sat_ebrw && <p><span className="font-semibold">SAT EBRW:</span> {school.biography.sat_ebrw}</p>} */}
             {school.biography.sat && <p><span className="font-semibold">SAT Total:</span> {school.biography.sat}</p>}
             {school.biography.act && <p><span className="font-semibold">ACT:</span> {school.biography.act}</p>}
             {school.biography.cost && <p><span className="font-semibold">Cost:</span> ${school.biography.cost}</p>}
-            {/* {school.biography.need_met && <p><span className="font-semibold">Need Met:</span> {parseInt(school.biography.need_met) * 100}%</p>} */}
-            {/* {school.biography.academic_calendar && <p><span className="font-semibold">Academic Calendar:</span> {school.biography.academic_calendar}</p>} */}
             {school.biography.gen_ed_req && <p><span className="font-semibold">General Education Requirements:</span> {school.biography.gen_ed_req}</p>}
-            {/* {school.biography.nearest_metro && <p><span className="font-semibold">Nearest Metro:</span> {school.biography.nearest_metro}</p>} */}
-            {/* {school.biography.freshman_housing && <p><span className="font-semibold">Freshman Housing:</span> {school.biography.freshman_housing}</p>} */}
             {school.biography.gpa && <p><span className="font-semibold">GPA:</span> {school.biography.gpa}</p>}
           </div>
         </div>
