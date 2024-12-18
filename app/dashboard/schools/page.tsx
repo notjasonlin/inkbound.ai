@@ -14,7 +14,8 @@ export default async function SchoolsPage() {
   }
 
   return (
-    <FavoritesProvider userId={user.id}>
+    // <FavoritesProvider userId={user.id}>
+    <>
       {/* Navbar */}
       <Navbar />
 
@@ -23,7 +24,8 @@ export default async function SchoolsPage() {
         <h1 className="text-2xl font-bold mb-4">Find Schools</h1>
         <SchoolList schools={schools} userID={user.id} />
       </div>
-    </FavoritesProvider>
+    </>
+    // </FavoritesProvider>
   );
 }
 

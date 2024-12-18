@@ -25,12 +25,12 @@ export function FavoritesProvider({ children, userId }: { children: React.ReactN
       .select('data')
       .eq('uuid', userId)
       .single();
-    
+
     if (error) {
       console.error('Error fetching favorites:', error);
       return;
     }
-    
+
     if (data?.data) {
       setFavorites(Array.isArray(data.data) ? data.data : []);
     }
@@ -40,7 +40,7 @@ export function FavoritesProvider({ children, userId }: { children: React.ReactN
     try {
       const updatedFavorites = [...favorites];
       const schoolIndex = updatedFavorites.findIndex(s => s.id === school.id);
-      
+
       if (schoolIndex > -1) {
         updatedFavorites.splice(schoolIndex, 1);
       } else {
@@ -49,9 +49,9 @@ export function FavoritesProvider({ children, userId }: { children: React.ReactN
 
       const { error } = await supabase
         .from('favorite_schools')
-        .upsert({ 
-          uuid: userId, 
-          data: updatedFavorites 
+        .upsert({
+          uuid: userId,
+          data: updatedFavorites
         }, { onConflict: 'uuid' });
 
       if (error) throw error;

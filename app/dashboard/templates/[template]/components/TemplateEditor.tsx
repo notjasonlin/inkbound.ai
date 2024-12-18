@@ -154,7 +154,8 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
           title: newTitle,
           content: {
             title: newItemTitle,
-            content: newItemContent
+            content: newItemContent,
+            personalizedMessage: newItemContent.includes("[personalizedMessage]"),
           }
         })
         .eq('id', template.id)

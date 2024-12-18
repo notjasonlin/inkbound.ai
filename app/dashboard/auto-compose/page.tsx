@@ -34,9 +34,10 @@ export default function AutoComposePage() {
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateData | null>(null);
   const [queueStatus, setQueueStatus] = useState<QueueStatusItem[]>([]);
   const [previewEmails, setPreviewEmails] = useState<{ [key: string]: EmailPreviewData }>({});
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [isSending, setIsSending] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState<boolean>(false);
+  const [isSending, setIsSending] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [toPersonalize, setToPersonalize] = useState<boolean>(false) // State for prompting user to write personalized message for super fav school
   const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
 
@@ -51,6 +52,12 @@ export default function AutoComposePage() {
       generatePreviews();
     }
   }, [selectedTemplate, selectedSchools]);
+
+  useEffect(() => {
+    if (selectedTemplate) {
+      selectedTemplate.content.personalizedMessage ? setToPersonalize(true) : setToPersonalize(false);
+    }
+  }, [selectedTemplate])
 
   const fetchFavoriteSchools = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -173,7 +180,7 @@ export default function AutoComposePage() {
 
   const sendEmail = async (emailData: EmailPreviewData, schoolId: string, schoolName: string) => {
     try {
-      setQueueStatus(prev => prev.map(item => 
+      setQueueStatus(prev => prev.map(item =>
         item.schoolId === schoolId ? { ...item, status: 'sending' } : item
       ));
 
@@ -185,8 +192,8 @@ export default function AutoComposePage() {
 
       if (!response.ok) throw new Error('Failed to send email');
 
-      setQueueStatus(prev => prev.map(item => 
-        item.schoolId === schoolId 
+      setQueueStatus(prev => prev.map(item =>
+        item.schoolId === schoolId
           ? { ...item, status: 'sent', timestamp: new Date().toISOString() }
           : item
       ));
@@ -198,8 +205,8 @@ export default function AutoComposePage() {
       }
     } catch (error) {
       console.error(error);
-      setQueueStatus(prev => prev.map(item => 
-        item.schoolId === schoolId 
+      setQueueStatus(prev => prev.map(item =>
+        item.schoolId === schoolId
           ? { ...item, status: 'failed', timestamp: new Date().toISOString() }
           : item
       ));
@@ -226,7 +233,16 @@ export default function AutoComposePage() {
             >
               Select Template
             </button>
+
+            {toPersonalize && <button
+              onClick={() => console.log("PERSONALIZE THIS")}
+              className={styles.templateButton}
+            >
+              Personalize Message
+            </button>
+            }
           </div>
+
 
           <button
             onClick={handleSubmit}

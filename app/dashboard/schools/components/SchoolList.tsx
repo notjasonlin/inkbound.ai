@@ -6,7 +6,7 @@ import SearchBar, { SearchFilters } from './SearchBar';
 import { SchoolData } from '@/types/school';
 import SchoolPreview from './SchoolPreview';
 import FavoriteButton from '../[school]/components/FavoriteButton';
-import { useFavorites } from '../../schools/[school]/components/FavoritesProvider';
+// import { useFavorites } from '../../schools/[school]/components/FavoritesProvider';
 
 interface SchoolListProps {
   schools: SchoolData[];
@@ -20,7 +20,7 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
   const [hoveredSchool, setHoveredSchool] = useState<SchoolData | null>(null);
   const [lastHoveredSchool, setLastHoveredSchool] = useState<SchoolData | null>(null);  // Track the last hovered school
   const schoolsPerPage = 10;
-  const { favorites, toggleFavorite } = useFavorites();
+  // const { favorites, toggleFavorite } = useFavorites();
 
   useEffect(() => {
   }, [schools, filteredSchools]);

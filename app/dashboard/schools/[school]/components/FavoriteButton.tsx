@@ -13,6 +13,7 @@ interface FavoriteButtonProps {
 
 export default function FavoriteButton({ school, userId }: FavoriteButtonProps) {
     const [isFavorite, setIsFavorite] = useState(false);
+    // const [existingData, setExistingData] = useState(); // create state instead of multiple calls to grab same data
     const supabase = createClient();
 
     useEffect(() => {
@@ -29,6 +30,7 @@ export default function FavoriteButton({ school, userId }: FavoriteButtonProps) 
         if (error) {
             console.error('Error checking data:', error);
         } else {
+            // setExistingData(data);
             const isFav = data?.data?.some((s: SchoolData) => s.id === school.id) || false;
             setIsFavorite(isFav);
         }
@@ -62,15 +64,22 @@ export default function FavoriteButton({ school, userId }: FavoriteButtonProps) 
                 });
             }
 
+            if (!isFavorite) {
+                const { data, error } = await supabase
+                    .from('personalized_messages')
+                    .insert({ 'user_id': userId, 'school_id': school.id, 'school_name': school.school })
+                    .select()
+            }
+
             const { error: upsertError } = await supabase
                 .from('favorite_schools')
-                .upsert({ 
-                    uuid: userId, 
+                .upsert({
+                    uuid: userId,
                     data: updatedData
                 }, { onConflict: 'uuid' });
 
             if (upsertError) throw upsertError;
-            
+
             setIsFavorite(!isFavorite);
         } catch (error) {
             console.error('Error toggling data:', error);
