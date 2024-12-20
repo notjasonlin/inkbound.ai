@@ -13,6 +13,7 @@ import { checkUserLimits, incrementUsage } from '@/utils/checkUserLimits';
 import { User } from '@supabase/supabase-js';
 import readTemplate from "@/functions/readTemplate";
 import styles from './styles/AutoCompose.module.css';
+import { FavoriteSchoolsData } from '@/types/favorite_schools';
 
 interface EmailPreviewData {
   to: string;
@@ -28,7 +29,7 @@ interface QueueStatusItem {
 }
 
 export default function AutoComposePage() {
-  const [favoriteSchools, setFavoriteSchools] = useState<SchoolData[]>([]);
+  const [favoriteSchools, setFavoriteSchools] = useState<FavoriteSchoolsData | null>();
   const [selectedSchools, setSelectedSchools] = useState<SchoolData[]>([]);
   const [templates, setTemplates] = useState<TemplateData[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateData | null>(null);
@@ -42,7 +43,6 @@ export default function AutoComposePage() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    fetchFavoriteSchools();
     fetchTemplates();
     fetchUser();
   }, []);
@@ -59,22 +59,11 @@ export default function AutoComposePage() {
     }
   }, [selectedTemplate])
 
-  const fetchFavoriteSchools = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+  useEffect(() => {
+    if (favoriteSchools) {
 
-    const { data, error } = await supabase
-      .from("favorite_schools")
-      .select("data")
-      .eq("uuid", user.id)
-      .single();
-
-    if (error) {
-      console.error("Error fetching data:", error);
-    } else if (data && data.data) {
-      setFavoriteSchools(data.data);
     }
-  };
+  }, [favoriteSchools])
 
   const fetchTemplates = async () => {
     try {
@@ -215,7 +204,7 @@ export default function AutoComposePage() {
 
   return (
     <div className={styles.container}>
-      <Sidebar onSelectSchools={handleSchoolSelection} />
+      <Sidebar onSelectSchools={handleSchoolSelection} setFavoriteSchools={setFavoriteSchools}/>
 
       <div className="flex-1 p-6">
         <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-50 to-babyblue-200 p-8 shadow-xl rounded-2xl">

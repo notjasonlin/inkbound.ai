@@ -1,6 +1,5 @@
 import { getUniqueSchools } from '@/utils/supabase/client';
 import { createClient } from "@/utils/supabase/server";
-import FavoritesProvider from '../schools/[school]/components/FavoritesProvider';
 import SchoolList from './components/SchoolList';
 import Navbar from './components/Navbar';
 
@@ -14,7 +13,6 @@ export default async function SchoolsPage() {
   }
 
   return (
-    // <FavoritesProvider userId={user.id}>
     <>
       {/* Navbar */}
       <Navbar />
@@ -25,7 +23,6 @@ export default async function SchoolsPage() {
         <SchoolList schools={schools} userID={user.id} />
       </div>
     </>
-    // </FavoritesProvider>
   );
 }
 
