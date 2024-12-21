@@ -7,7 +7,7 @@ import { createClient } from '@/utils/supabase/client';
 import { Button } from '@/components/ui/button';
 import { FavoriteSchoolsData } from '@/types/favorite_schools';
 import { IoStar, IoStarOutline } from "react-icons/io5";
-
+import { v4 as uuidv4 } from 'uuid';
 
 interface FavoriteButtonProps {
     school: SchoolData;
@@ -17,14 +17,16 @@ interface FavoriteButtonProps {
 export default function FavoriteButton({ school, userId }: FavoriteButtonProps) {
     const [isFavorite, setIsFavorite] = useState<boolean>(false);
     const [isSuperFavorite, setIsSuperFavorite] = useState<boolean>(false);
+    const [personalizedMessageId, setPersonalizedMessageId] = useState<string | null>(null);
     const [existingData, setExistingData] = useState<FavoriteSchoolsData>(); // create state instead of multiple calls to grab same data
     const supabase = createClient();
 
     useEffect(() => {
         checkFavoriteStatus();
+        checkPersoanlizedMessage();
     }, [school.id, userId]);
 
-    async function checkFavoriteStatus() {
+    const checkFavoriteStatus = async () => {
         const { data, error } = await supabase
             .from('favorite_schools')
             .select('data, super_favorites')
@@ -46,8 +48,83 @@ export default function FavoriteButton({ school, userId }: FavoriteButtonProps) 
         }
     }
 
-    const toggleFavorite = async (superFavs?: string[]) => {
-        try {
+    const checkPersoanlizedMessage = async () => {
+        const { data, error } = await supabase
+            .from('personalized_messages')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('school_id', school.id)
+
+        if (error) {
+            console.error('Error checking data:', error);
+        } else {
+            console.log("ID", data)
+            const id = (data && data[0] && data[0].id) ? data[0].id : null;
+            setPersonalizedMessageId(id);
+        }
+    }
+
+    const toggleFavorite = async (superFavs?: string[], isSupFav?: boolean) => {
+        if (existingData) {
+            try {
+                const updatedData = changeFavData();
+                const isFav = !isFavorite;
+                isSupFav = isSupFav ? isSupFav : isSuperFavorite;
+
+                // Change personalizedMessages
+                if (personalizedMessageId) { // If existing personalized message, update status
+                    console.log("ENTER", personalizedMessageId);
+                    const { data, error } = await supabase
+                        .from('personalized_messages')
+                        .update({ 'is_super_fav': isSupFav, 'is_curr_fav': isFav })
+                        .eq("id", personalizedMessageId);
+                } else { // If not existing personalized message, add to supabase
+                    console.log("CREATE");
+                    const uuid = uuidv4();
+                    const { data, error } = await supabase
+                        .from('personalized_messages')
+                        .insert({ 'id': uuid, 'user_id': userId, 'school_id': school.id, 'school_name': school.school, 'is_super_fav': isSupFav, 'is_curr_fav': isFav })
+                        .select()
+                    setPersonalizedMessageId(uuid);
+                }
+
+
+                // Change data
+                if (!superFavs && !isFav && isSuperFavorite) { // If user unfavorited, but is still superFavorite, change superFav data to remove school and remove unSuperFavorite
+                    superFavs = changeSuperFavData();
+                    setIsSuperFavorite(!isSuperFavorite);
+                }
+
+                if (superFavs) { // If superFav data included (i.e. superFav data changed), upsert that with updatedData 
+                    const { error: upsertError } = await supabase
+                        .from('favorite_schools')
+                        .upsert({
+                            uuid: userId,
+                            data: updatedData,
+                            super_favorites: superFavs
+                        }, { onConflict: 'uuid' });
+
+                    if (upsertError) throw upsertError;
+                } else {
+                    const { error: upsertError } = await supabase
+                        .from('favorite_schools')
+                        .upsert({
+                            uuid: userId,
+                            data: updatedData
+                        }, { onConflict: 'uuid' });
+
+                    if (upsertError) throw upsertError;
+
+                }
+                setIsFavorite(isFav);
+            } catch (error) {
+                console.error('Error toggling data:', error);
+            }
+        }
+    };
+
+    const changeFavData = () => {
+        if (existingData) {
             let updatedData: any[] = existingData?.schools || [];
             const schoolIndex = updatedData.findIndex((s: SchoolData) => s.id === school.id);
 
@@ -63,69 +140,45 @@ export default function FavoriteButton({ school, userId }: FavoriteButtonProps) 
                     conference: school.conference
                 });
             }
-
-            const { data, error } = await supabase
-                .from('personalized_messages')
-                .upsert({ 'user_id': userId, 'school_id': school.id, 'school_name': school.school, 'is_super_fav': isSuperFavorite, 'is_curr_fav': isFavorite })
-                .select()
-
-
-            if (!superFavs && isFavorite && isSuperFavorite) {
-                superFavs = changeSuperFavData();
-                setIsSuperFavorite(!isSuperFavorite);
-            }
-            
-            if (superFavs) {
-                const { error: upsertError } = await supabase
-                    .from('favorite_schools')
-                    .upsert({
-                        uuid: userId,
-                        data: updatedData,
-                        super_favorites: superFavs
-                    }, { onConflict: 'uuid' });
-
-                if (upsertError) throw upsertError;
-
-            } else {
-                const { error: upsertError } = await supabase
-                    .from('favorite_schools')
-                    .upsert({
-                        uuid: userId,
-                        data: updatedData
-                    }, { onConflict: 'uuid' });
-
-                if (upsertError) throw upsertError;
-
-            }
-
-            setIsFavorite(!isFavorite);
-        } catch (error) {
-            console.error('Error toggling data:', error);
+            const changed: FavoriteSchoolsData = { schools: updatedData, super_favorites: existingData?.super_favorites }
+            setExistingData(changed);
+            return updatedData;
         }
-    };
+    }
 
     const toggleSuperFavorite = async () => {
         const superFavs = changeSuperFavData();
-        if (!isSuperFavorite && !isFavorite) {
-            toggleFavorite(superFavs);
+        const isSupFav = !isSuperFavorite
+        if (isSupFav && !isFavorite) {
+            toggleFavorite(superFavs, isSupFav);
         } else {
             const { data, error } = await supabase
                 .from('personalized_messages')
-                .upsert({ 'user_id': userId, 'school_id': school.id, 'school_name': school.school, 'is_super_fav': isSuperFavorite, 'is_curr_fav': isFavorite })
-                .select()
+                .update({ 'is_super_fav': isSupFav, 'is_curr_fav': isFavorite })
+                .eq("id", personalizedMessageId);
+
+            const { error: updateError } = await supabase
+                .from('favorite_schools')
+                .update({ super_favorites: superFavs })
+                .eq("uuid", userId);
         }
-        setIsSuperFavorite(!isSuperFavorite);
+        setIsSuperFavorite(isSupFav);
     }
 
     const changeSuperFavData = () => {
-        let superFavs = existingData?.super_favorites ? existingData.super_favorites : [];
+        if (existingData) {
+            let superFavs = existingData.super_favorites ? existingData.super_favorites : [];
 
-        if (isSuperFavorite) {
-            superFavs = superFavs.filter((item: string) => item !== school.id);
-        } else {
-            superFavs.push(school.id);
+            if (isSuperFavorite) {
+                superFavs = superFavs.filter((item: string) => item !== school.id);
+            } else {
+                superFavs.push(school.id);
+            }
+            const changed: FavoriteSchoolsData = { schools: existingData.schools, super_favorites: superFavs }
+            setExistingData(changed);
+            return superFavs;
         }
-        return superFavs;
+
     }
 
     return (

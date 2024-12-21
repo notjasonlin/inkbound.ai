@@ -61,7 +61,7 @@ export default function AutoComposePage() {
 
   useEffect(() => {
     if (favoriteSchools) {
-
+      
     }
   }, [favoriteSchools])
 
