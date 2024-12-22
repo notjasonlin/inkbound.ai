@@ -141,6 +141,8 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     ai_call_limit: number;
   } | null>(null);
 
+
+  // **Debounced Save**
   const saveTemplate = useCallback(async (newTitle: string, newItemTitle: string, newItemContent: string) => {
     if (isUpdatingRef.current || !userId || !template?.id) return;
     isUpdatingRef.current = true;

@@ -11,12 +11,12 @@ interface EmailPreviewData {
   content: string;
 }
 
-interface EmailPreviewProps {
+interface EmailPreview {
   schools: SchoolData[];
   previewEmails: { [key: string]: EmailPreviewData };
 }
 
-const EmailPreview: React.FC<EmailPreviewProps> = ({ schools, previewEmails }) => {
+const EmailPreview: React.FC<EmailPreview> = ({ schools, previewEmails }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
 

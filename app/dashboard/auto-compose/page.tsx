@@ -14,6 +14,8 @@ import { User } from '@supabase/supabase-js';
 import readTemplate from "@/functions/readTemplate";
 import styles from './styles/AutoCompose.module.css';
 import { FavoriteSchoolsData } from '@/types/favorite_schools';
+import { PersonalizedMessage } from '@/types/personalized_messages';
+import PersonalizedMessageModal from './components/PersonalizedMessageModal';
 
 interface EmailPreviewData {
   to: string;
@@ -30,6 +32,8 @@ interface QueueStatusItem {
 
 export default function AutoComposePage() {
   const [favoriteSchools, setFavoriteSchools] = useState<FavoriteSchoolsData | null>();
+  const [personalizedMessages, setPersonalizedMessages] = useState<{ [key: string]: PersonalizedMessage }>({});
+  const [needPMessages, setNeedPMessages] = useState<PersonalizedMessage[]>([]);
   const [selectedSchools, setSelectedSchools] = useState<SchoolData[]>([]);
   const [templates, setTemplates] = useState<TemplateData[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateData | null>(null);
@@ -39,6 +43,7 @@ export default function AutoComposePage() {
   const [isSending, setIsSending] = useState<boolean>(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [toPersonalize, setToPersonalize] = useState<boolean>(false) // State for prompting user to write personalized message for super fav school
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
 
@@ -60,10 +65,44 @@ export default function AutoComposePage() {
   }, [selectedTemplate])
 
   useEffect(() => {
-    if (favoriteSchools) {
-      
+    const grabPersonalizedMessages = async () => {
+      if (favoriteSchools && user) {
+        const { data, error } = await supabase
+          .from('personalized_messages')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('is_curr_fav', true);
+
+        if (error) {
+          console.error('Error checking data:', error);
+        }
+        const pMessages: { [key: string]: PersonalizedMessage } = {};
+        const needMessages: PersonalizedMessage[] = [];
+        if (data) {
+          data.map((message) => {
+            const pMessage: PersonalizedMessage = {
+              id: message.id,
+              user_id: message.user_id,
+              school_id: message.school_id,
+              school_name: message.school_name,
+              message: message.message,
+              is_super_fav: message.is_super_fav,
+              is_curr_fav: message.is_curr_fav,
+            }
+            pMessages[pMessage.id] = pMessage;
+            if (pMessage.message === null && pMessage.is_super_fav) {
+              needMessages.push(pMessage);
+            }
+          })
+        }
+        setPersonalizedMessages(pMessages);
+        setNeedPMessages(needMessages);
+      }
     }
-  }, [favoriteSchools])
+    grabPersonalizedMessages();
+
+
+  }, [favoriteSchools]);
 
   const fetchTemplates = async () => {
     try {
@@ -204,8 +243,16 @@ export default function AutoComposePage() {
 
   return (
     <div className={styles.container}>
-      <Sidebar onSelectSchools={handleSchoolSelection} setFavoriteSchools={setFavoriteSchools}/>
+      <Sidebar onSelectSchools={handleSchoolSelection} setFavoriteSchools={setFavoriteSchools} />
 
+      {isModalOpen && user && <PersonalizedMessageModal
+        userId={user.id}
+        pMessages={personalizedMessages}
+        setPMessages={setPersonalizedMessages}
+        needPMessages={needPMessages}
+        setNeedPMessages={setNeedPMessages}
+        onClose={() => setIsModalOpen(false)}
+      />}
       <div className="flex-1 p-6">
         <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-50 to-babyblue-200 p-8 shadow-xl rounded-2xl">
           <h1 className={styles.title}>Auto Compose</h1>
@@ -223,8 +270,8 @@ export default function AutoComposePage() {
               Select Template
             </button>
 
-            {toPersonalize && <button
-              onClick={() => console.log("PERSONALIZE THIS")}
+            {toPersonalize && needPMessages && <button
+              onClick={() => setIsModalOpen(true)}
               className={styles.templateButton}
             >
               Personalize Message

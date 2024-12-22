@@ -58,7 +58,6 @@ export default function FavoriteButton({ school, userId }: FavoriteButtonProps) 
         if (error) {
             console.error('Error checking data:', error);
         } else {
-            console.log("ID", data)
             const id = (data && data[0] && data[0].id) ? data[0].id : null;
             setPersonalizedMessageId(id);
         }
@@ -71,15 +70,13 @@ export default function FavoriteButton({ school, userId }: FavoriteButtonProps) 
                 const isFav = !isFavorite;
                 isSupFav = isSupFav ? isSupFav : isSuperFavorite;
 
-                // Change personalizedMessages
+                // **Change personalizedMessages**
                 if (personalizedMessageId) { // If existing personalized message, update status
-                    console.log("ENTER", personalizedMessageId);
                     const { data, error } = await supabase
                         .from('personalized_messages')
                         .update({ 'is_super_fav': isSupFav, 'is_curr_fav': isFav })
                         .eq("id", personalizedMessageId);
                 } else { // If not existing personalized message, add to supabase
-                    console.log("CREATE");
                     const uuid = uuidv4();
                     const { data, error } = await supabase
                         .from('personalized_messages')
@@ -89,7 +86,7 @@ export default function FavoriteButton({ school, userId }: FavoriteButtonProps) 
                 }
 
 
-                // Change data
+                // **Change data**
                 if (!superFavs && !isFav && isSuperFavorite) { // If user unfavorited, but is still superFavorite, change superFav data to remove school and remove unSuperFavorite
                     superFavs = changeSuperFavData();
                     setIsSuperFavorite(!isSuperFavorite);
