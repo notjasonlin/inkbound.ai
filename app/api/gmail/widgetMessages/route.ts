@@ -2,7 +2,7 @@ import { google } from 'googleapis';
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from 'next/server';
 import { gmail_v1 } from 'googleapis';
-import { corsHeaders, handleOptions } from '@/utils/api-headers';
+import { getCorsHeaders, handleOptions } from '@/utils/api-headers';
 
 export const OPTIONS = handleOptions;
 
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
-        { status: 401, headers: corsHeaders }
+        { status: 401, headers: getCorsHeaders(request) }
       );
     }
   
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     if (!accessToken) {
       return NextResponse.json(
         { error: 'No access token available' },
-        { status: 401, headers: corsHeaders }
+        { status: 401, headers: getCorsHeaders(request) }
       );
     }
   
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     if (!coachEmails || !Array.isArray(coachEmails) || coachEmails.length === 0) {
       return NextResponse.json(
         { error: 'Coach emails are required' },
-        { status: 400, headers: corsHeaders }
+        { status: 400, headers: getCorsHeaders(request) }
       );
     }
   
@@ -79,13 +79,13 @@ export async function POST(request: Request) {
   
       return NextResponse.json(
         { messages: fullEmails },
-        { headers: corsHeaders }
+        { headers: getCorsHeaders(request) }
       );
     } catch (error) {
       console.error('Error fetching messages:', error);
       return NextResponse.json(
         { error: 'Failed to fetch messages' },
-        { status: 500, headers: corsHeaders }
+        { status: 500, headers: getCorsHeaders(request) }
       );
     }
   }

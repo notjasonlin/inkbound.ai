@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
-import { corsHeaders, handleOptions } from '@/utils/api-headers';
+import { getCorsHeaders, handleOptions } from '@/utils/api-headers';
 
 export const OPTIONS = handleOptions;
 
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   if (userError || !user) {
     return NextResponse.json(
       { error: 'Unauthorized' }, 
-      { status: 401, headers: corsHeaders }
+      { status: 401, headers: getCorsHeaders(request) }
     );
   }
 
@@ -24,9 +24,9 @@ export async function GET(request: Request) {
   if (error) {
     return NextResponse.json(
       { error: 'Failed to fetch templates' }, 
-      { status: 500, headers: corsHeaders }
+      { status: 500, headers: getCorsHeaders(request) }
     );
   }
 
-  return NextResponse.json(templates, { headers: corsHeaders });
+  return NextResponse.json(templates, { headers: getCorsHeaders(request) });
 }

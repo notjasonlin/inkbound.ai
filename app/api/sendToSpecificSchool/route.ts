@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { createClient } from '@/utils/supabase/server';
-import { corsHeaders, handleOptions } from '@/utils/api-headers';
+import { getCorsHeaders, handleOptions } from '@/utils/api-headers';
 
 export const OPTIONS = handleOptions;
 
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   if (!session?.provider_token) {
     return NextResponse.json(
       { error: 'Not authenticated' },
-      { status: 401, headers: corsHeaders }
+      { status: 401, headers: getCorsHeaders(req) }
     );
   }
 
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     if (!userEmail) {
       return NextResponse.json(
         { error: 'Unable to fetch user email' },
-        { status: 500, headers: corsHeaders }
+        { status: 500, headers: getCorsHeaders(req) }
       );
     }
 
@@ -91,13 +91,13 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       { success: true, messageId: response.data.id },
-      { headers: corsHeaders }
+      { headers: getCorsHeaders(req) }
     );
   } catch (error: any) {
     console.error('Error sending data:', error);
     return NextResponse.json({ 
       error: 'Failed to send email', 
       details: error.message || 'Unknown error'
-    }, { status: 500, headers: corsHeaders });
+    }, { status: 500, headers: getCorsHeaders(req) });
   }
 }

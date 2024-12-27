@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { google } from "googleapis";
-import { corsHeaders, handleOptions } from "@/utils/api-headers";
+import { getCorsHeaders, handleOptions } from "@/utils/api-headers";
 
 export const OPTIONS = handleOptions;
 
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     console.error("Not authenticated");
     return NextResponse.json(
       { error: "Not authenticated" },
-      { status: 401, headers: corsHeaders },
+      { status: 401, headers: getCorsHeaders(request) },
     );
   }
 
@@ -31,7 +31,6 @@ export async function POST(request: Request) {
     const paragraphs = content.split("\n").map((
       p: string,
     ) => (p.trim() ? `<p>${p}</p>` : "<br>")).join("");
-    console.log(paragraphs);
 
     const htmlContent = `<!DOCTYPE html>
     <html>
@@ -45,8 +44,6 @@ export async function POST(request: Request) {
       ${paragraphs}
     </body>
     </html>`;
-
-    console.log("HTML", htmlContent);
 
     // Construct the raw email message
     let message = [
@@ -94,7 +91,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(
       { success: true, messageId: response.data.id },
-      { headers: corsHeaders },
+      { headers: getCorsHeaders(request) },
     );
   } catch (error: any) {
     console.error("Error sending email:", error);

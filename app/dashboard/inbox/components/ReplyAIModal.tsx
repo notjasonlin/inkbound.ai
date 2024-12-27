@@ -37,14 +37,33 @@ export default function ReplyAIModal({
 
   if (!isOpen) return null;
 
-  const replyAI = () => {
-    console.log("Reply AI");
-    console.log("Coach message", coachMessage);
-    if (lastMessage && !lastMessage.isCoachMessage) {
-        console.log("Last message", lastMessage);
-    } else {
-        console.log("Last message is a coach message")
-    }
+  const replyAI = async () => {
+
+    const response = await fetch('/api/replyAI', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        coach_email: coachMessage,
+        classification: "genuine",
+        action_item: "send GPA and transcript",
+        example_email: "Hello Coach,\n\nHere is my unofficial transcript. I hope to hear from you soon!\n\nThank you and have a great evening\n\nBest,\nJohn",
+        user_email: "",
+      }),
+    });
+
+    // console.log("Reply AI");
+    // console.log("Coach message", coachMessage);
+    // if (lastMessage && !lastMessage.isCoachMessage) {
+    //   console.log("Last message", lastMessage);
+    // } else {
+    //   console.log("Last message is a coach message")
+    // }
+
+    const data = await response.json()
+    console.log("RESPONSE", data);
+
     onClose();
   }
 
