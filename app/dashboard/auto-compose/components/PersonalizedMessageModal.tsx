@@ -89,6 +89,10 @@ const PersonalizedMessageModal: React.FC<PMessageModalProps> = ({
         }
     };
 
+    useEffect(() => {
+        //console.log('Need Messages in Modal:', needPMessages);
+    }, [needPMessages]);
+
     return (
         <div className="modal-container" onClick={handleModalClick}>
             <div className="modal">
@@ -100,21 +104,30 @@ const PersonalizedMessageModal: React.FC<PMessageModalProps> = ({
                 </div>
                 <div className="modal-content">
                     <div className="modal-select">
-                        <label htmlFor="pMessageSelect">Select a Message:</label>
-                        <select
-                            id="pMessageSelect"
-                            onChange={(e) => handleSelectPMessage(Number(e.target.value))}
-                            value={selectedIndex !== -1 ? selectedIndex : ""}
-                        >
-                            <option value="" disabled>
-                                -- No school selected --
-                            </option>
-                            {needPMessages.map((pMessage, index) => (
-                                <option key={pMessage.id} value={index}>
-                                    {pMessage.school_name}
+                        <label htmlFor="pMessageSelect">Select a School:</label>
+                        {needPMessages.length > 0 ? (
+                            <select
+                                id="pMessageSelect"
+                                onChange={(e) => handleSelectPMessage(Number(e.target.value))}
+                                value={selectedIndex !== -1 ? selectedIndex : ""}
+                            >
+                                <option value="" disabled>
+                                    -- Select a school --
                                 </option>
-                            ))}
-                        </select>
+                                {needPMessages.map((pMessage, index) => (
+                                    <option 
+                                        key={pMessage.id} 
+                                        value={index}
+                                    >
+                                        {pMessage.school_name} {pMessage.is_super_fav ? '⭐' : ''}
+                                    </option>
+                                ))}
+                            </select>
+                        ) : (
+                            <div className="text-gray-500 italic">
+                                No schools currently need personalized messages
+                            </div>
+                        )}
                     </div>
                     {selectedPMessage && (
                         <div className="modal-editor">

@@ -65,44 +65,48 @@ export default function AutoComposePage() {
   }, [selectedTemplate])
 
   useEffect(() => {
-    const grabPersonalizedMessages = async () => {
-      if (favoriteSchools && user) {
-        const { data, error } = await supabase
-          .from('personalized_messages')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('is_curr_fav', true);
+    const fetchPersonalizedMessages = async () => {
+        if (!user) return;
 
-        if (error) {
-          console.error('Error checking data:', error);
-        }
-        const pMessages: { [key: string]: PersonalizedMessage } = {};
-        const needMessages: PersonalizedMessage[] = [];
-        if (data) {
-          data.map((message) => {
-            const pMessage: PersonalizedMessage = {
-              id: message.id,
-              user_id: message.user_id,
-              school_id: message.school_id,
-              school_name: message.school_name,
-              message: message.message,
-              is_super_fav: message.is_super_fav,
-              is_curr_fav: message.is_curr_fav,
+        try {
+            const { data, error } = await supabase
+                .from('personalized_messages')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('is_curr_fav', true);
+
+            if (error) {
+                console.error('Error fetching personalized messages:', error);
+                return;
             }
-            pMessages[pMessage.id] = pMessage;
-            if (pMessage.message === null && pMessage.is_super_fav) {
-              needMessages.push(pMessage);
-            }
-          })
+
+            // Convert array to object with school_id as key
+            const messagesObj: { [key: string]: PersonalizedMessage } = {};
+            data?.forEach(msg => {
+                if (msg.school_id) { // Make sure school_id exists
+                    messagesObj[msg.school_id] = {
+                        id: msg.id,
+                        user_id: msg.user_id,
+                        school_id: msg.school_id,
+                        school_name: msg.school_name,
+                        message: msg.message,
+                        is_super_fav: msg.is_super_fav,
+                        is_curr_fav: msg.is_curr_fav,
+                        is_generated: msg.is_generated,
+                        needs_handwritten: msg.needs_handwritten
+                    };
+                }
+            });
+
+            console.log('Fetched personalized messages:', messagesObj); // Debug log
+            setPersonalizedMessages(messagesObj);
+        } catch (err) {
+            console.error('Error processing personalized messages:', err);
         }
-        setPersonalizedMessages(pMessages);
-        setNeedPMessages(needMessages);
-      }
-    }
-    grabPersonalizedMessages();
+    };
 
-
-  }, [favoriteSchools]);
+    fetchPersonalizedMessages();
+}, [user]);
 
   const fetchTemplates = async () => {
     try {
@@ -136,14 +140,14 @@ export default function AutoComposePage() {
 
     const newPreviews: { [key: string]: EmailPreviewData } = {};
     selectedSchools.forEach(school => {
-      const content = readTemplate(selectedTemplate, school);
-      const subject = selectedTemplate.content.title.replace(/\[schoolName\]/g, school.school);
+        const content = readTemplate(selectedTemplate, school, personalizedMessages);
+        const subject = selectedTemplate.content.title.replace(/\[schoolName\]/g, school.school);
 
-      newPreviews[school.id] = {
-        to: school.coaches.map(coach => coach.email).join(', '),
-        subject,
-        content: content || ''
-      };
+        newPreviews[school.id] = {
+            to: school.coaches.map(coach => coach.email).join(', '),
+            subject,
+            content: content || ''
+        };
     });
     setPreviewEmails(newPreviews);
   };
