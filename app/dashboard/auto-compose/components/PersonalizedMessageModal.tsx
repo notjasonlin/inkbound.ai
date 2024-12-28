@@ -31,44 +31,47 @@ const PersonalizedMessageModal: React.FC<PMessageModalProps> = ({
     const [selectedIndex, setSelectedIndex] = useState<number>(-1);
     const [updateItemTrigger, setUpdateItemTrigger] = useState(false);
 
-    const saveMessage = useCallback(
-        async (message: string) => {
-            if (!userId || !selectedPMessage) return;
+    const handleSave = useCallback(async () => {
+        if (selectedPMessage && message) {
+            const pMessage: PersonalizedMessage = {
+                id: selectedPMessage.id,
+                user_id: selectedPMessage.user_id,
+                school_id: selectedPMessage.school_id,
+                school_name: selectedPMessage.school_name,
+                message: message,
+                is_super_fav: selectedPMessage.is_super_fav,
+                is_curr_fav: selectedPMessage.is_curr_fav,
+                is_generated: false,
+                needs_handwritten: false
+            }
 
             try {
                 const { error } = await supabase
                     .from('personalized_messages')
-                    .update({ message })
+                    .update({
+                        message: message,
+                        is_generated: false,
+                        needs_handwritten: false
+                    })
                     .eq('id', selectedPMessage.id);
 
                 if (error) throw error;
 
-                const pMessage = {
-                    id: selectedPMessage.id,
-                    user_id: selectedPMessage.user_id,
-                    school_id: selectedPMessage.school_id,
-                    school_name: selectedPMessage.school_name,
-                    message: message,
-                    is_super_fav: selectedPMessage.is_super_fav,
-                    is_curr_fav: selectedPMessage.is_curr_fav,
-                }
                 needPMessages[selectedIndex] = pMessage;
-                setNeedPMessages(needPMessages);
-                pMessages[pMessage.id] = pMessage;
-                setPMessages(pMessages);
-
+                setNeedPMessages([...needPMessages]);
+                pMessages[pMessage.school_id] = pMessage;
+                setPMessages({ ...pMessages });
             } catch (error) {
-                console.error('Error', error);
+                console.error('Error saving message:', error);
             }
-        },
-        [userId, selectedPMessage]
-    );
+        }
+    }, []);
 
-    const debouncedSave = useCallback(debounce(saveMessage, 1000), [saveMessage]);
+    const debouncedSave = useCallback(debounce(handleSave, 1000), [handleSave]);
 
     useEffect(() => {
         if (selectedPMessage) {
-            debouncedSave(message);
+            debouncedSave();
         }
     }, [updateItemTrigger]);
 
