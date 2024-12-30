@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { PersonalizedMessage } from "@/types/personalized_messages";
 import { createClient } from "@/utils/supabase/client";
 import { debounce } from 'lodash';
 import "@/styles/PersonalizedMessageModal.css";
+import { generatePersonalizedMessage } from '@/utils/generateMessage';
+import { showToast } from '@/utils/toast';
 
 interface PMap {
     [key: string]: PersonalizedMessage;
@@ -11,143 +13,167 @@ interface PMap {
 interface PMessageModalProps {
     userId: string;
     pMessages: PMap;
-    setPMessages: (pMap: PMap) => void;
-    needPMessages: PersonalizedMessage[];
-    setNeedPMessages: (pMessages: PersonalizedMessage[]) => void;
     onClose: () => void;
+    template: string;
+    onMessagesUpdated?: () => void;
 }
 
 const PersonalizedMessageModal: React.FC<PMessageModalProps> = ({
     userId,
     pMessages,
-    setPMessages,
-    needPMessages,
-    setNeedPMessages,
     onClose,
+    template,
+    onMessagesUpdated
 }) => {
     const supabase = createClient();
-    const [selectedPMessage, setSelectedPMessage] = useState<PersonalizedMessage | null>(null);
-    const [message, setMessage] = useState<string>("");
-    const [selectedIndex, setSelectedIndex] = useState<number>(-1);
-    const [updateItemTrigger, setUpdateItemTrigger] = useState(false);
+    const [selectedSchoolId, setSelectedSchoolId] = useState<string>("");
+    const [currentMessage, setCurrentMessage] = useState<string>("");
+    const [isGenerating, setIsGenerating] = useState(false);
 
-    const handleSave = useCallback(async () => {
-        if (selectedPMessage && message) {
-            const pMessage: PersonalizedMessage = {
-                id: selectedPMessage.id,
-                user_id: selectedPMessage.user_id,
-                school_id: selectedPMessage.school_id,
-                school_name: selectedPMessage.school_name,
-                message: message,
-                is_super_fav: selectedPMessage.is_super_fav,
-                is_curr_fav: selectedPMessage.is_curr_fav,
-                is_generated: false,
-                needs_handwritten: false
+    const superFavSchools = Object.values(pMessages).filter(
+        msg => msg.is_super_fav && msg.is_curr_fav
+    );
+
+    const handleSchoolSelect = (schoolId: string) => {
+        setSelectedSchoolId(schoolId);
+        const school = pMessages[schoolId];
+        setCurrentMessage(school?.message || "");
+    };
+
+    const handleSaveMessage = async (message: string) => {
+        if (!selectedSchoolId) return;
+
+        try {
+            const { error } = await supabase
+                .from('personalized_messages')
+                .update({
+                    message: message,
+                    is_generated: false,
+                    needs_handwritten: false
+                })
+                .eq('school_id', selectedSchoolId)
+                .eq('user_id', userId);
+
+            if (error) throw error;
+            onMessagesUpdated?.();
+        } catch (error) {
+            console.error('Error saving message:', error);
+        }
+    };
+
+    const debouncedSave = useCallback(debounce(handleSaveMessage, 1000), [selectedSchoolId]);
+
+    const handleGenerateOthers = async () => {
+        try {
+            setIsGenerating(true);
+            showToast('Generating personalized messages...', 'loading');
+
+            const { data: currentFavs, error: fetchError } = await supabase
+                .from('personalized_messages')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('is_curr_fav', true)
+                .eq('is_super_fav', false);
+
+            if (fetchError) throw fetchError;
+            if (!currentFavs?.length) {
+                showToast('No schools found to generate messages for', 'error');
+                return;
             }
 
-            try {
-                const { error } = await supabase
+            for (const message of currentFavs) {
+                const response = await generatePersonalizedMessage(
+                    message.school_id, 
+                    userId,
+                    template
+                );
+                
+                if (!response.generatedMessage) continue;
+
+                await supabase
                     .from('personalized_messages')
                     .update({
-                        message: message,
-                        is_generated: false,
+                        message: response.generatedMessage,
+                        is_generated: true,
                         needs_handwritten: false
                     })
-                    .eq('id', selectedPMessage.id);
-
-                if (error) throw error;
-
-                needPMessages[selectedIndex] = pMessage;
-                setNeedPMessages([...needPMessages]);
-                pMessages[pMessage.school_id] = pMessage;
-                setPMessages({ ...pMessages });
-            } catch (error) {
-                console.error('Error saving message:', error);
+                    .eq('id', message.id);
             }
-        }
-    }, []);
 
-    const debouncedSave = useCallback(debounce(handleSave, 1000), [handleSave]);
-
-    useEffect(() => {
-        if (selectedPMessage) {
-            debouncedSave();
-        }
-    }, [updateItemTrigger]);
-
-    const handleSelectPMessage = (index: number) => {
-        if (index === -1) {
-            setSelectedPMessage(null);
-        } else {
-            const pMessage = needPMessages[index];
-            setSelectedPMessage(pMessage);
-            setSelectedIndex(index);
-            setMessage(pMessage.message ? pMessage.message : "");
+            onMessagesUpdated?.();
+            showToast('Successfully generated messages!', 'success');
+        } catch (error) {
+            console.error('Error generating messages:', error);
+            showToast('Failed to generate messages', 'error');
+        } finally {
+            setIsGenerating(false);
         }
     };
-
-    const handleModalClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        if ((e.target as HTMLElement).classList.contains('modal-container')) {
-            onClose();
-        }
-    };
-
-    useEffect(() => {
-        //console.log('Need Messages in Modal:', needPMessages);
-    }, [needPMessages]);
 
     return (
-        <div className="modal-container" onClick={handleModalClick}>
+        <div className="modal-container" onClick={(e) => {
+            if ((e.target as HTMLElement).classList.contains('modal-container')) {
+                onClose();
+            }
+        }}>
             <div className="modal">
                 <div className="modal-header">
-                    <h2>Personalized Message</h2>
-                    <button className="close-button" onClick={onClose}>
-                        &times;
-                    </button>
+                    <h2>Personalized Messages</h2>
+                    <button className="close-button" onClick={onClose}>&times;</button>
                 </div>
                 <div className="modal-content">
-                    <div className="modal-select">
-                        <label htmlFor="pMessageSelect">Select a School:</label>
-                        {needPMessages.length > 0 ? (
-                            <select
-                                id="pMessageSelect"
-                                onChange={(e) => handleSelectPMessage(Number(e.target.value))}
-                                value={selectedIndex !== -1 ? selectedIndex : ""}
-                            >
-                                <option value="" disabled>
-                                    -- Select a school --
+                    <div className="mb-4">
+                        <label htmlFor="schoolSelect" className="block text-sm font-medium text-gray-700 mb-2">
+                            Select Super Favorite School:
+                        </label>
+                        <select
+                            id="schoolSelect"
+                            value={selectedSchoolId}
+                            onChange={(e) => handleSchoolSelect(e.target.value)}
+                            className="w-full p-2 border rounded"
+                        >
+                            <option value="">-- Select a school --</option>
+                            {superFavSchools.map((school) => (
+                                <option key={school.id} value={school.school_id}>
+                                    {school.school_name} ⭐
                                 </option>
-                                {needPMessages.map((pMessage, index) => (
-                                    <option 
-                                        key={pMessage.id} 
-                                        value={index}
-                                    >
-                                        {pMessage.school_name} {pMessage.is_super_fav ? '⭐' : ''}
-                                    </option>
-                                ))}
-                            </select>
-                        ) : (
-                            <div className="text-gray-500 italic">
-                                No schools currently need personalized messages
-                            </div>
-                        )}
+                            ))}
+                        </select>
                     </div>
-                    {selectedPMessage && (
-                        <div className="modal-editor">
-                            <label htmlFor="messageInput">Edit Message:</label>
+
+                    {selectedSchoolId && (
+                        <div className="mb-4">
+                            <label htmlFor="messageInput" className="block text-sm font-medium text-gray-700 mb-2">
+                                Write Personalized Message:
+                            </label>
                             <textarea
                                 id="messageInput"
-                                value={message}
+                                value={currentMessage}
                                 onChange={(e) => {
-                                    setMessage(e.target.value);
-                                    setUpdateItemTrigger(!updateItemTrigger);
+                                    setCurrentMessage(e.target.value);
+                                    debouncedSave(e.target.value);
                                 }}
-                                rows={10}
+                                rows={5}
+                                className="w-full p-2 border rounded"
+                                placeholder="Write your personalized message here..."
                             />
+                        </div>
+                    )}
+
+                    {superFavSchools.length === 0 && (
+                        <div className="text-gray-500 italic">
+                            No super favorite schools to write messages for
                         </div>
                     )}
                 </div>
                 <div className="modal-footer">
+                    <button 
+                        className="primary-button mr-2"
+                        onClick={handleGenerateOthers}
+                        disabled={isGenerating}
+                    >
+                        {isGenerating ? 'Generating...' : 'Generate Other Messages'}
+                    </button>
                     <button className="secondary-button" onClick={onClose}>
                         Close
                     </button>

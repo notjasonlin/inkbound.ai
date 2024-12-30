@@ -1,6 +1,7 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import BackgroundEditor from './components/BackgroundEditor';
+import { v4 as uuidv4 } from 'uuid';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ export default async function BackgroundPage() {
     // Create a new profile if one doesn't exist
     const { data: newProfile, error } = await supabase
       .from('player_profiles')
-      .insert({ user_id: user.id, stats: {} })
+      .insert({ user_id: user.id, stats: {}, profile_id:uuidv4() })
       .select()
       .single();
     

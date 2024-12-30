@@ -64,49 +64,48 @@ export default function AutoComposePage() {
     }
   }, [selectedTemplate])
 
-  useEffect(() => {
-    const fetchPersonalizedMessages = async () => {
-        if (!user) return;
+  const fetchPersonalizedMessages = async () => {
+    if (!user) return;
 
-        try {
-            const { data, error } = await supabase
-                .from('personalized_messages')
-                .select('*')
-                .eq('user_id', user.id)
-                .eq('is_curr_fav', true);
+    try {
+        const { data, error } = await supabase
+            .from('personalized_messages')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_curr_fav', true);
 
-            if (error) {
-                console.error('Error fetching personalized messages:', error);
-                return;
-            }
-
-            // Convert array to object with school_id as key
-            const messagesObj: { [key: string]: PersonalizedMessage } = {};
-            data?.forEach(msg => {
-                if (msg.school_id) { // Make sure school_id exists
-                    messagesObj[msg.school_id] = {
-                        id: msg.id,
-                        user_id: msg.user_id,
-                        school_id: msg.school_id,
-                        school_name: msg.school_name,
-                        message: msg.message,
-                        is_super_fav: msg.is_super_fav,
-                        is_curr_fav: msg.is_curr_fav,
-                        is_generated: msg.is_generated,
-                        needs_handwritten: msg.needs_handwritten
-                    };
-                }
-            });
-
-            console.log('Fetched personalized messages:', messagesObj); // Debug log
-            setPersonalizedMessages(messagesObj);
-        } catch (err) {
-            console.error('Error processing personalized messages:', err);
+        if (error) {
+            console.error('Error fetching personalized messages:', error);
+            return;
         }
-    };
 
+        // Convert array to object with school_id as key
+        const messagesObj: { [key: string]: PersonalizedMessage } = {};
+        data?.forEach(msg => {
+            if (msg.school_id) {
+                messagesObj[msg.school_id] = {
+                    id: msg.id,
+                    user_id: msg.user_id,
+                    school_id: msg.school_id,
+                    school_name: msg.school_name,
+                    message: msg.message,
+                    is_super_fav: msg.is_super_fav,
+                    is_curr_fav: msg.is_curr_fav,
+                    is_generated: msg.is_generated,
+                    needs_handwritten: msg.needs_handwritten
+                };
+            }
+        });
+
+        setPersonalizedMessages(messagesObj);
+    } catch (err) {
+        console.error('Error processing personalized messages:', err);
+    }
+  };
+
+  useEffect(() => {
     fetchPersonalizedMessages();
-}, [user]);
+  }, [user]);
 
   const fetchTemplates = async () => {
     try {
@@ -252,10 +251,9 @@ export default function AutoComposePage() {
       {isModalOpen && user && <PersonalizedMessageModal
         userId={user.id}
         pMessages={personalizedMessages}
-        setPMessages={setPersonalizedMessages}
-        needPMessages={needPMessages}
-        setNeedPMessages={setNeedPMessages}
         onClose={() => setIsModalOpen(false)}
+        template={selectedTemplate?.content.content || ''}
+        onMessagesUpdated={fetchPersonalizedMessages}
       />}
       <div className="flex-1 p-6">
         <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-50 to-babyblue-200 p-8 shadow-xl rounded-2xl">
