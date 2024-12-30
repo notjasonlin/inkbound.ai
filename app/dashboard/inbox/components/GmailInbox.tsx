@@ -20,7 +20,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
   const [isSending, setIsSending] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
-  const [lastMessage, setLastMessage] = useState<Message | null>(null);
+  const [firstMessage, setFirstMessage] = useState<Message | null>(null);
   const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
   const [modalPosition, setModalPosition] = useState<{ top: number; left: number } | null>(null);
   const [coachEmailsMap, setCoachEmailsMap] = useState<{ [id: string]: Message }>({});
@@ -244,7 +244,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
       className={styles["coach-message"]}
       onClick={(e) => {
         setSelectedMessage(message);
-        setLastMessage(message.messageNum > 0 ? messages[message.messageNum - 1] : null);
+        setFirstMessage(message.messageNum > 0 ? messages[0] : null);
         handleCoachMessageClick(e, message.id)
       }}
       tabIndex={0}
@@ -316,7 +316,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
             left: modalPosition.left,
           }}
           coachMessage={selectedMessage}
-          lastMessage={lastMessage}
+          firstMessage={firstMessage}
         />
       )}
     </div>

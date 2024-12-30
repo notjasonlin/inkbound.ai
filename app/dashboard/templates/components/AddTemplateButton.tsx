@@ -42,7 +42,7 @@ const AddTemplateButton = () => {
       title: title,
       content: {
         title: "",
-        content: "",
+        content: "Hello [coachLastName],\n\n\n\nSincerely,\n[studentFullName]",
       }
     }
 

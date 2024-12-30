@@ -37,8 +37,9 @@ export async function POST(req: Request) {
                     content:
                         `I just received this email from a coach: \n${coach_email}\n
                         The coach's response seems ${classification}. I need to do the following: ${action_item}\n
+                        This is how I started the conversation: \n${user_email}\n
                         This is an example of how I should respond to a coach email like the one above: \n${example_email}\n
-                        Based on the information I gave you, can you help me draft a response to this coach? Only send the draft and nothing else`,
+                        In the style of my writing, can you help me draft a response to this coach? Only send the body of the email and nothing else. Do not send "Dear coach" or a sign-off`,
                 },
             ],
         });

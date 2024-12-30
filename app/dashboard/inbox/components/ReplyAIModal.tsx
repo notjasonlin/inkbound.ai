@@ -7,7 +7,7 @@ interface ModalProps {
   onClose: () => void;
   style: { top: number; left: number }; // Add position prop
   coachMessage: Message | null;
-  lastMessage: Message | null;
+  firstMessage: Message | null;
 }
 
 export default function ReplyAIModal({
@@ -15,7 +15,7 @@ export default function ReplyAIModal({
   onClose,
   style,
   coachMessage,
-  lastMessage
+  firstMessage
 }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -49,7 +49,7 @@ export default function ReplyAIModal({
         classification: "genuine",
         action_item: "send GPA and transcript",
         example_email: "Hello Coach,\n\nHere is my unofficial transcript. I hope to hear from you soon!\n\nThank you and have a great evening\n\nBest,\nJohn",
-        user_email: "",
+        user_email: firstMessage,
       }),
     });
 
