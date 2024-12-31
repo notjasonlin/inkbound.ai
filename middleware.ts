@@ -1,14 +1,15 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { updateSession } from "@/utils/supabase/middleware";
 
 const allowedOrigins = [
   "https://inkbound.ai",
   "https://www.inkbound.ai",
   "https://staging.inkbound.ai",
   "https://app.inkbound.ai",
-  "https://*.inkbound.ai",
-  "https://*.vercel.app",
-  "http://localhost:3000",
-  "http://localhost:3001",
+  "https://*.inkbound.ai", // Covers all subdomains
+  "https://*.vercel.app", // For Vercel preview deployments
+  "http://localhost:3000", // Local development
+  "http://localhost:3001", // Alternative local port
   process.env.NEXT_PUBLIC_FRONTEND_URL,
   process.env.NEXT_PUBLIC_API_URL,
 ].filter(Boolean) as string[];
@@ -32,7 +33,62 @@ export async function middleware(request: NextRequest) {
     });
   }
 
-  const response = NextResponse.next();
+  // Generate nonce
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+
+  // Define Content Security Policy
+  let cspHeader = `
+    default-src 'none';
+    script-src 'self' 'nonce-${nonce}' 'strict-dynamic';
+    script-src-elem 'self' 'nonce-${nonce}' 'strict-dynamic';
+    style-src 'self' 'nonce-${nonce}';
+    style-src-elem 'self' 'nonce-${nonce}';
+    img-src 'self' https://vercel.live/ https://vercel.com *.pusher.com/ data: blob:;
+    font-src 'self' https://fonts.gstatic.com https://*.vercel.live;
+    connect-src 'self' https://tvjclbhclyozgziixpcp.supabase.co wss://tvjclbhclyozgziixpcp.supabase.co https://api.openai.com https://accounts.google.com https://vitals.vercel-insights.com https://vercel.live/ https://vercel.com https://jtf79lf49l.execute-api.us-east-2.amazonaws.com/fetch-email-data *.pusher.com *.pusherapp.com;
+    frame-src 'self' https://vercel.live/ https://vercel.com;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+    frame-ancestors 'none';
+    media-src 'self' https://*.vercel.live;
+    upgrade-insecure-requests;
+  `;
+
+  // Remove any extra spaces or newline characters
+  const contentSecurityPolicyHeaderValue = cspHeader.replace(/\s+/g, " ")
+    .trim();
+
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set(
+    "Content-Security-Policy",
+    contentSecurityPolicyHeaderValue,
+  );
+
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+
+  // Add cache control headers
+  response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate, private");
+  response.headers.set("Pragma", "no-cache");
+
+  // Set all security headers
+  response.headers.set(
+    "Content-Security-Policy",
+    contentSecurityPolicyHeaderValue,
+  );
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set(
+    "Permissions-Policy",
+    "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
+  );
 
   // Handle CORS for actual requests
   const origin = request.headers.get("origin");
