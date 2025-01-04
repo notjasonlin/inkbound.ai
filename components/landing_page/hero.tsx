@@ -36,15 +36,6 @@ const Hero: React.FC = () => {
 
           {/* Button Container */}
           <div className="flex space-x-4">
-            {/* Waitlist Button */}
-            <motion.button
-              onClick={toggleForm}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-base md:text-lg px-6 py-3 rounded-lg font-bold shadow-lg transition-transform transform hover:scale-105 active:scale-95"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Join the Waitlist!
-            </motion.button>
 
             {/* Try it out now Button */}
             <LoginButton

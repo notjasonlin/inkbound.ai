@@ -4,9 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useUser } from '@/components/UserContext';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import PlanSelector from './components/PlanSelector';
+import SubscriptionManager from './components/SubscriptionManager';
 import { Plan, plans } from './constants';
 import { fetchUserSubscription, fetchUserUsage } from './utils';
 import UsageDisplay from '@/components/UsageDisplay';
+import SubscriptionUsage from './components/SubscriptionUsage';
 
 interface Usage {
   user_id: string;
@@ -38,14 +40,12 @@ export default function UpgradePage() {
     setIsLoading(true);
     
     try {
-      const productId = interval === 'month' ? plan.stripePriceIdMonthly : plan.stripePriceIdYearly;
       const response = await fetch('/api/create-subscription', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          productId,
-          userId: user.id,
           planId: plan.id,
+          userId: user.id,
           interval
         }),
       });
@@ -58,8 +58,29 @@ export default function UpgradePage() {
       const data = await response.json();
       window.location.href = data.url;
     } catch (error) {
-      console.error('Error fetching data:', error);
-      // Show an error message to the user
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch('/api/create-portal-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      if (!response.ok) throw new Error('Failed to create portal session');
+      
+      const data = await response.json();
+      window.location.href = data.url;
+    } catch (error) {
+      console.error('Error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -68,16 +89,33 @@ export default function UpgradePage() {
   return (
     <div className="max-w-4xl mx-auto p-6">
       {currentSubscription && userUsage && (
-        <UsageDisplay subscription={currentSubscription} usage={userUsage} />
+        <SubscriptionUsage
+          plan={currentSubscription?.plan_name}
+          status={currentSubscription?.status}
+          aiCalls={{ used: userUsage?.ai_calls_used || 0, total: currentSubscription?.ai_call_limit || 0 }}
+          schools={{ used: userUsage?.schools_sent || 0, total: currentSubscription?.schools_sent_limit || 0 }}
+          templates={{ used: userUsage?.templates_used || 0, total: currentSubscription?.template_limit || 0 }}
+          periodEnd={currentSubscription?.current_period_end}
+        />
       )}
-      <PlanSelector 
-        plans={plans} 
-        selectedPlan={selectedPlan} 
-        onSelectPlan={(plan, interval) => {
-          setSelectedPlan(plan);
-          handleUpgrade(plan, interval);
-        }} 
-      />
+      
+      {currentSubscription?.status === 'active' ? (
+        <SubscriptionManager
+          currentSubscription={currentSubscription}
+          onManageSubscription={handleManageSubscription}
+          onChangePlan={handleUpgrade}
+        />
+      ) : (
+        <PlanSelector 
+          plans={plans} 
+          selectedPlan={selectedPlan} 
+          onSelectPlan={(plan, interval) => {
+            setSelectedPlan(plan);
+            handleUpgrade(plan, interval);
+          }}
+          isLoading={isLoading}
+        />
+      )}
     </div>
   );
 }
