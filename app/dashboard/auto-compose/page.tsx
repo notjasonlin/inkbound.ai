@@ -33,7 +33,6 @@ interface QueueStatusItem {
 export default function AutoComposePage() {
   const [favoriteSchools, setFavoriteSchools] = useState<FavoriteSchoolsData | null>();
   const [personalizedMessages, setPersonalizedMessages] = useState<{ [key: string]: PersonalizedMessage }>({});
-  const [needPMessages, setNeedPMessages] = useState<PersonalizedMessage[]>([]);
   const [selectedSchools, setSelectedSchools] = useState<SchoolData[]>([]);
   const [templates, setTemplates] = useState<TemplateData[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateData | null>(null);
@@ -272,13 +271,12 @@ export default function AutoComposePage() {
               Select Template
             </button>
 
-            {toPersonalize && needPMessages && <button
+            <button
               onClick={() => setIsModalOpen(true)}
               className={styles.templateButton}
             >
               Personalize Message
             </button>
-            }
           </div>
 
 
@@ -314,3 +312,4 @@ export default function AutoComposePage() {
     </div>
   );
 }
+
