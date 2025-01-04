@@ -291,7 +291,7 @@ return (
               isOpen={true}
               onClose={() => setSelectPlaceHolder(false)}
               setPlaceHolder={setPlaceHolder}
-              trigger={() => setupdatePHTrigger(!updateTrigger)}
+              trigger={() => setupdatePHTrigger(!updatePHTrigger)}
               position={modalPosition}
             />
           )}
