@@ -253,6 +253,7 @@ export default function AutoComposePage() {
         onClose={() => setIsModalOpen(false)}
         template={selectedTemplate?.content.content || ''}
         onMessagesUpdated={fetchPersonalizedMessages}
+        selectedSchools={selectedSchools}
       />}
       <div className="flex-1 p-6">
         <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-50 to-babyblue-200 p-8 shadow-xl rounded-2xl">
@@ -272,8 +273,15 @@ export default function AutoComposePage() {
             </button>
 
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => {
+                if (selectedSchools.length === 0) {
+                  alert('Please select schools first');
+                  return;
+                }
+                setIsModalOpen(true);
+              }}
               className={styles.templateButton}
+              disabled={selectedSchools.length === 0}
             >
               Personalize Message
             </button>

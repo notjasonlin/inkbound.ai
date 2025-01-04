@@ -5,6 +5,7 @@ import { debounce } from 'lodash';
 import "@/styles/PersonalizedMessageModal.css";
 import { generatePersonalizedMessage } from '@/utils/generateMessage';
 import { showToast } from '@/utils/toast';
+import { SchoolData } from "@/types/school";
 
 interface PMap {
     [key: string]: PersonalizedMessage;
@@ -15,7 +16,8 @@ interface PMessageModalProps {
     pMessages: PMap;
     onClose: () => void;
     template: string;
-    onMessagesUpdated?: () => void;
+    onMessagesUpdated: () => void;
+    selectedSchools: SchoolData[];
 }
 
 const PersonalizedMessageModal: React.FC<PMessageModalProps> = ({
@@ -23,7 +25,8 @@ const PersonalizedMessageModal: React.FC<PMessageModalProps> = ({
     pMessages,
     onClose,
     template,
-    onMessagesUpdated
+    onMessagesUpdated,
+    selectedSchools
 }) => {
     const supabase = createClient();
     const [selectedSchoolId, setSelectedSchoolId] = useState<string>("");
@@ -82,13 +85,18 @@ const PersonalizedMessageModal: React.FC<PMessageModalProps> = ({
             }
 
             for (const message of currentFavs) {
+                console.log('Generating for school:', message.school_id);
                 const response = await generatePersonalizedMessage(
                     message.school_id, 
                     userId,
                     template
                 );
                 
-                if (!response.generatedMessage) continue;
+                console.log('Generation response:', response);
+                if (!response.generatedMessage) {
+                    console.error('No message generated for:', message.school_id);
+                    continue;
+                }
 
                 await supabase
                     .from('personalized_messages')

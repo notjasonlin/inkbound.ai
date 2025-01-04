@@ -10,8 +10,19 @@ const openai = new OpenAI({
 export async function POST(req: Request) {
   
   try {
-    const { schoolId, userId } = await req.json();
+    const body = await req.json();
+    console.log('Received request body:', body);
+
+    const { schoolId, userId } = body;
     
+    if (!schoolId || !userId) {
+      console.error('Missing required parameters:', { schoolId, userId });
+      return NextResponse.json(
+        { error: 'Missing required parameters' }, 
+        { status: 400 }
+      );
+    }
+
     // Create supabase client with properly awaited cookies
     const cookieStore = await cookies();
     const supabase = createServerClient(
@@ -39,9 +50,9 @@ export async function POST(req: Request) {
       .eq('user_id', userId)
       .single();
 
-    if (profileError) {
-      console.error('Error:', profileError);
-      throw profileError;
+    if (profileError && profileError.code !== 'PGRST116') { // PGRST116 is the "not found" error code
+      console.error('Profile fetch error:', profileError.message, { userId });
+      return NextResponse.json({ error: 'Failed to fetch user profile' }, { status: 500 });
     }
 
     // Fetch school information
@@ -51,15 +62,15 @@ export async function POST(req: Request) {
       .eq('school_id', schoolId)
       .single();
 
-    if (schoolError) {
-      console.error('Error:', schoolError);
-      throw schoolError;
+    if (schoolError && schoolError.code !== 'PGRST116') {
+      console.error('School fetch error:', schoolError.message, { schoolId });
+      return NextResponse.json({ error: 'Failed to fetch school data' }, { status: 500 });
     }
 
     const prompt = `Generate a 2-3 line personalized message for a college coach showing genuine interest in their program. 
     Do not include any greeting or closing - only generate the personalized part.
-    Student profile: ${JSON.stringify(profile)}
-    School information: ${JSON.stringify(schoolBio)}
+    Student profile: ${JSON.stringify(profile || {})}
+    School information: ${JSON.stringify(schoolBio || {})}
     
     Focus on matching the student's interests with specific school attributes. Keep it concise and authentic.`;
 
