@@ -20,20 +20,22 @@ interface Template {
   };
 }
 
-const placeholders = [
-  { label: 'School Name', value: '[schoolName]' },
-  { label: 'Coach', value: '[coachLastName]' }
-];
+// const placeholders = [
+//   { label: 'School Name', value: '[schoolName]' },
+//   { label: 'Coach', value: '[coachLastName]' },
+//   { label: 'Personalized Message', value: '[personalizedMessage]' }
+// ];
 
 export default function TemplateEditor({ templateTitle }: { templateTitle: string; }) {
   const [template, setTemplate] = useState<Template | null>(null);
   const [title, setTitle] = useState(templateTitle);
   const [itemTitle, setItemTitle] = useState("");
   const [itemContent, setItemContent] = useState("");
+  const [updateItemTrigger, setUpdateItemTrigger] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectPlaceHolder, setSelectPlaceHolder] = useState<boolean>(false);
   const [placeHolder, setPlaceHolder] = useState<string>("");
-  const [updateTrigger, setUpdateTrigger] = useState<boolean>(false);
+  const [updatePHTrigger, setupdatePHTrigger] = useState<boolean>(false);
   const [modalPosition, setModalPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [selectedText, setSelectedText] = useState('');
   const [showAIHelper, setShowAIHelper] = useState(false);
@@ -77,9 +79,10 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
       const { selectionStart, selectionEnd } = editorRef.current;
       const newText = itemContent.substring(0, selectionStart - 1) + placeHolder + itemContent.substring(selectionEnd);
       updateContent(newText);
+      setUpdateItemTrigger(!updateItemTrigger);
       setPlaceHolder("");
     }
-  }, [updateTrigger]);
+  }, [updatePHTrigger]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -138,11 +141,14 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     ai_call_limit: number;
   } | null>(null);
 
+
+  // **Debounced Save**
   const saveTemplate = useCallback(async (newTitle: string, newItemTitle: string, newItemContent: string) => {
     if (isUpdatingRef.current || !userId || !template?.id) return;
     isUpdatingRef.current = true;
     setError(null);
     const supabase = createClient();
+
     try {
       const { error } = await supabase
         .from('templates')
@@ -150,7 +156,8 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
           title: newTitle,
           content: {
             title: newItemTitle,
-            content: newItemContent
+            content: newItemContent,
+            personalizedMessage: newItemContent.includes("[personalizedMessage]"),
           }
         })
         .eq('id', template.id)
@@ -172,7 +179,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
 
   useEffect(() => {
     debouncedSave(title, itemTitle, itemContent);
-  }, [title, itemTitle, itemContent, debouncedSave]);
+  }, [updateItemTrigger]);
 
   useEffect(() => {
     const fetchUsage = async () => {
@@ -200,7 +207,6 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
 
 
   const undo = useCallback(() => {
-
     if (historyIndex > 0) {
       setHistoryIndex(prev => prev - 1);
       setItemContent(history[historyIndex - 1]);
@@ -214,9 +220,6 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     }
   }, [history, historyIndex]);
 
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    updateContent(e.target.value);
-  };
 
   const handleTextSelection = () => {
     if (editorRef.current) {
@@ -255,45 +258,46 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     setSuggestions([]);
   };
 
-  const handleSendMessageToAI = async (message: string) => {
-    if (!userId) return 'User not authenticated';
+  // const handleSendMessageToAI = async (message: string) => {
+  //   if (!userId) return 'User not authenticated';
 
-    const canUseAI = await checkUserLimits(userId, 'aiCall');
-    if (!canUseAI) {
-      return 'You have reached your AI usage limit. Please upgrade your plan to continue using AI features.';
-    }
+  //   const canUseAI = await checkUserLimits(userId, 'aiCall');
+  //   if (!canUseAI) {
+  //     return 'You have reached your AI usage limit. Please upgrade your plan to continue using AI features.';
+  //   }
 
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: message,
-          placeholders,
-        }),
-      });
+  //   try {
+  //     const response = await fetch('/api/chat', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         prompt: message,
+  //         placeholders,
+  //       }),
+  //     });
 
-      if (!response.ok) {
-        throw new Error('Failed to get AI response');
-      }
+  //     if (!response.ok) {
+  //       throw new Error('Failed to get AI response');
+  //     }
 
-      const data = await response.json();
-      await incrementUsage(userId, { ai_calls_used: 1 });
-      setUserUsage(prev => prev ? {
-        ...prev,
-        ai_calls_used: (prev.ai_calls_used || 0) + 1
-      } : null);
-      return data.content;
-    } catch (error) {
-      console.error('Error sending data', error);
-      return 'Sorry, there was an error processing your request.';
-    }
-  };
+  //     const data = await response.json();
+  //     await incrementUsage(userId, { ai_calls_used: 1 });
+  //     setUserUsage(prev => prev ? {
+  //       ...prev,
+  //       ai_calls_used: (prev.ai_calls_used || 0) + 1
+  //     } : null);
+  //     return data.content;
+  //   } catch (error) {
+  //     console.error('Error sending data', error);
+  //     return 'Sorry, there was an error processing your request.';
+  //   }
+  // };
 
   return (
-    <div className="template-editor-container">
+    // <div className="template-editor-container">
+    <>
       {loading || !userId ? (
         <div className="flex justify-center items-center h-96">
           <div className="text-2xl font-semibold">Loading template...</div>
@@ -305,11 +309,11 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               isOpen={true}
               onClose={() => setSelectPlaceHolder(false)}
               setPlaceHolder={setPlaceHolder}
-              trigger={() => setUpdateTrigger(!updateTrigger)}
+              trigger={() => setupdatePHTrigger(!updatePHTrigger)}
               position={modalPosition} // Pass modal position
             />
           )}
-  
+
           {alert && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
               <Alert
@@ -321,7 +325,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               />
             </div>
           )}
-  
+
           <div className="template-editor-header">
             <button
               onClick={() => {
@@ -348,20 +352,24 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               Back
             </button>
             <h1 className="template-title">{title}</h1>
-            <button onClick={() => setShowAIChat(!showAIChat)} className="ai-chat-toggle">
+            {/* <button onClick={() => setShowAIChat(!showAIChat)} className="ai-chat-toggle">
               {showAIChat ? "Hide AI Chat" : "Show AI Chat"}
-            </button>
+            </button> */}
           </div>
-  
+
           <div className="template-editor-body">
             <div className="checklist-container">
               <TemplateChecklist
                 title={"Mandatory"}
-                placeholders={["[coachLastName]", "[schoolName]"]}
+                placeholders={[
+                  "[coachLastName]",
+                  "[schoolName]",
+                  "[personalizedMessage]"
+                ]}
                 content={itemContent}
                 setAllMandatory={setAllMandatory}
               />
-              <TemplateChecklist
+              {/* <TemplateChecklist
                 title={"Optional"}
                 placeholders={[
                   "[studentFullName]",
@@ -369,23 +377,29 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                   "[studentLastName]",
                 ]}
                 content={itemContent}
-              />
+              /> */}
             </div>
-  
+
             <div className="input-container">
               <input
                 type="text"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  setTitle(e.target.value)
+                  setUpdateItemTrigger(!updateItemTrigger);
+                }}
                 className="template-title-input"
                 placeholder="Template Title"
               />
-  
+
               <div className="input-box">
                 <input
                   type="text"
                   value={itemTitle}
-                  onChange={(e) => setItemTitle(e.target.value)}
+                  onChange={(e) => {
+                    setItemTitle(e.target.value)
+                    setUpdateItemTrigger(!updateItemTrigger);
+                  }}
                   placeholder="Item Title"
                   className="item-title-input"
                 />
@@ -400,16 +414,19 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                 <textarea
                   ref={editorRef}
                   value={itemContent}
-                  onChange={handleInput}
+                  onChange={(e) => {
+                    updateContent(e.target.value);
+                    setUpdateItemTrigger(!updateItemTrigger);
+                  }}
                   onSelect={handleTextSelection}
                   className="text-area"
                 />
               </div>
-  
+
               {error && <div className="error-message">{error}</div>}
             </div>
-  
-            {showAIChat && (
+
+            {/* {showAIChat && (
               <div className="ai-chat-container">
                 <AIChatInterface
                   userCredits={
@@ -418,13 +435,12 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                   onSendMessage={handleSendMessageToAI}
                 />
               </div>
-            )}
+            )} */}
           </div>
         </div>
       )}
-    </div>
+    </>
+    // </div>
   );
-  
+
 }
-
-
