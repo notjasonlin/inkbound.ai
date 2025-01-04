@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from "@/utils/supabase/client";
-import { FiSend, FiChevronDown } from 'react-icons/fi';
+import { FiSend } from 'react-icons/fi';
 import { CoachData } from '@/types/school';
 
 interface Message {
@@ -41,28 +41,28 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
 
   const fetchMessages = async (coachEmail: string) => {
     setLoading(true);
-    setMessages([]); // Clear existing messages when switching coaches
-
-
+    setMessages([]);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.error("Error fetching data");
+        console.error("Error: User not authenticated");
       } else {
-        const { data: trackingData, error: trackingError } = await supabase
+        const { data: trackingData } = await supabase
           .from('user_message_tracking')
           .select('last_fetched_message_id, id')
           .eq('user_id', user.id)
           .eq('coach_email', coachEmail)
           .single();
 
-        // Grab messages
         const response = await fetch('/api/gmail/messages', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ coachEmail, }),
+          body: JSON.stringify({ coachEmail }),
         });
+
+        if (!response.ok) throw new Error('Error fetching messages');
+
         const data = await response.json();
 
         const processedMessages: Message[] = data.messages.map((message: any) => ({
@@ -71,23 +71,19 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           from: message.from,
           date: message.date,
           isCoachMessage: message.from.includes(coachEmail),
-          threadId: message.id, // Should be separate id???
+          threadId: message.id,
         })).reverse();
-        // End grab messages
-
 
         let newMessages = processedMessages;
         if (trackingData) {
-          const lastFetchedMessageId = trackingData ? trackingData.last_fetched_message_id : null;
-          const idx = processedMessages.findIndex((message) => message.id === lastFetchedMessageId);
+          const lastFetchedMessageId = trackingData.last_fetched_message_id;
+          const idx = processedMessages.findIndex((m) => m.id === lastFetchedMessageId);
           if (idx >= 0) {
             newMessages = processedMessages.slice(idx + 1);
           }
         }
 
-
-        // console.log("MESSAGES", newMessages);
-        // Send each new message to the AWS API endpoint
+        // Optionally send new messages to external API if needed
         for (const message of newMessages) {
           if (message.isCoachMessage) {
             await fetch('https://jtf79lf49l.execute-api.us-east-2.amazonaws.com/fetch-email-data', {
@@ -104,30 +100,26 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           }
         }
 
+        // Update tracking if new messages
         if (newMessages.length > 0) {
-          // Update the last fetched message ID with the most recent message
           const latestMessageId = newMessages[newMessages.length - 1].id;
           const toTrack: any = {
             user_id: user.id,
             coach_email: coachEmail,
             last_fetched_message_id: latestMessageId
-          }
+          };
           if (trackingData && trackingData.id) toTrack.id = trackingData.id;
 
           const { error: upsertError } = await supabase
             .from('user_message_tracking')
             .upsert(toTrack);
-
-          if (upsertError) {
-            console.error('Error fetching data:', upsertError);
-          }
+          if (upsertError) console.error('Error updating tracking:', upsertError);
         }
 
         setMessages(processedMessages);
 
         if (processedMessages.length > 0) {
-          setThreadId(processedMessages[0].threadId); // THREAD ID MAY NOT BE ACCURATE
-          // Fetch messages from the API
+          setThreadId(processedMessages[0].threadId);
         }
       }
     } catch (error) {
@@ -159,122 +151,104 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Error fetching data:');
+        throw new Error('Error sending message.');
       }
 
-      const sentMessage = {
+      const sentMessage: Message = {
         id: `temp-${Date.now()}`,
         content: newMessage,
         from: 'You',
         date: new Date().toISOString(),
         isCoachMessage: false,
-        threadId,
+        threadId: threadId!,
       };
 
       setMessages((prevMessages) => [sentMessage, ...prevMessages]);
       setNewMessage('');
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error sending data:', error);
     } finally {
       setIsSending(false);
     }
   };
 
-  const formatMessageContent = (content: string) => {
-    // Normalize line endings
-    const normalizedContent = content.replace(/\r\n/g, '\n'); // Replace all \r\n with \n
-
-    // Split into paragraphs by two consecutive newlines
-    const paragraphs = normalizedContent.split('\n');
-
-    // Wrap paragraphs with <p> and preserve single newlines as <br>
-    return paragraphs.map((p: string) => (p.trim() ? `<p>${p}</p>` : "<br>")).join("");
-  }
-
-
-  const generateHTMLContent = (paragraphs: string) => {
-    return `<!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="UTF-8">
-    <style>
-      p { margin: 0 0 70px; line-height: 1.8; }
-      body { font-family: Arial, sans-serif; }
-    </style>
-  </head>
-  <body>
-    ${paragraphs}
-  </body>
-  </html>`;
-  }
-
+  const currentCoach = coachEmails.find(c => c.email === selectedCoachEmail);
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b text-black from-blue-50 to-blue-100 rounded-lg shadow-lg">
-      <div className="p-4 border-b rounded-t-lg">
-        <h2 className="text-lg font-bold text-gray-800 mb-2">Filter by Coach</h2>
-        <div className="relative">
-          <select
-            value={selectedCoachEmail}
-            onChange={(e) => handleCoachChange(e.target.value)}
-            className="w-full py-2 px-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            {coachEmails.map(coach => (
-              <option key={coach.email} value={coach.email}>
-                {coach.name + " — " + coach.position}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {loading ? (
-          <div className="text-center text-black">Loading messages...</div>
-        ) : messages.length > 0 ? (
-          messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${message.isCoachMessage ? 'justify-start' : 'justify-end'}`}
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 py-8 px-4">
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg border border-gray-200 flex flex-col h-[80vh]">
+        {/* Header */}
+        <div className="p-4 border-b border-gray-200 rounded-t-lg bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">Your Inbox</h2>
+            {currentCoach && (
+              <p className="text-sm text-gray-600 mt-1">
+                Conversation with <span className="font-medium">{currentCoach.name}</span> ({currentCoach.position})
+              </p>
+            )}
+          </div>
+          <div className="relative w-full sm:w-64">
+            <select
+              value={selectedCoachEmail}
+              onChange={(e) => handleCoachChange(e.target.value)}
+              className="w-full py-2 px-3 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             >
+              {coachEmails.map(coach => (
+                <option key={coach.email} value={coach.email}>
+                  {coach.name} — {coach.position}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          {loading ? (
+            <div className="text-center text-black">Loading messages...</div>
+          ) : messages.length > 0 ? (
+            messages.map((message) => (
               <div
-                className={`max-w-xs p-3 rounded-lg shadow-md ${message.isCoachMessage ? 'bg-gray-300 text-black' : 'bg-blue-500 text-white'
-                  }`}
+                key={message.id}
+                className={`flex ${message.isCoachMessage ? 'justify-start' : 'justify-end'}`}
               >
                 <div
-                  className="text-sm"
-                  dangerouslySetInnerHTML={{
-                    __html: generateHTMLContent(formatMessageContent(message.content)),
-                  }}
-                />
-                <p className="text-xs mt-2 text-black">
-                  {new Date(message.date).toLocaleString()}
-                </p>
+                  className={`max-w-2xl w-fit p-4 rounded-lg shadow-sm border whitespace-pre-wrap break-words leading-relaxed ${
+                    message.isCoachMessage
+                      ? 'bg-gray-100 border-gray-300 text-gray-900'
+                      : 'bg-blue-600 border-blue-700 text-white'
+                  }`}
+                  style={{ whiteSpace: 'pre-wrap' }}
+                >
+                  {message.content}
+                  <p className={`text-xs mt-3 ${message.isCoachMessage ? 'text-gray-700' : 'text-blue-100'}`}>
+                    {new Date(message.date).toLocaleString()}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))
-        ) : (
-          <div className="text-center text-black">No messages found.</div>
-        )}
+            ))
+          ) : (
+            <div className="text-center text-black">No messages found.</div>
+          )}
+        </div>
 
-
-      </div>
-
-      <div className="p-4 border-t bg-gradient-to-b from-blue-50 to-blue-100 rounded-b-lg flex items-center space-x-2">
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Type a new message..."
-          className="flex-1 py-2 px-4 border rounded-lg focus:outline-none text-black focus:ring focus:border-blue-500"
-        />
-        <button
-          onClick={handleSendMessage}
-          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-          disabled={isSending || !newMessage.trim()}
-        >
-          {isSending ? 'Sending...' : <FiSend />}
-        </button>
+        {/* Input Area */}
+        <div className="p-4 border-t border-gray-200 bg-white rounded-b-lg flex items-center space-x-2">
+          <input
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Type a new message..."
+            className="flex-1 py-2 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
+          />
+          <button
+            onClick={handleSendMessage}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center text-sm font-semibold"
+            disabled={isSending || !newMessage.trim()}
+          >
+            {isSending ? 'Sending...' : <FiSend className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
     </div>
   );
