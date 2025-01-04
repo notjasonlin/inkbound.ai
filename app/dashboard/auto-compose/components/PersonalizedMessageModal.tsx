@@ -80,7 +80,7 @@ const PersonalizedMessageModal: React.FC<PMessageModalProps> = ({
 
             if (fetchError) throw fetchError;
             if (!currentFavs?.length) {
-                showToast('No schools found to generate messages for', 'error');
+                showToast('No Schools Found to generate messages for', 'error');
                 return;
             }
 

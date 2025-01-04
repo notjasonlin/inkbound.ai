@@ -241,7 +241,7 @@ const SchoolSelector: React.FC<SchoolSelectorProps> = ({ onSelectSchool }) => {
           ))}
         </ul>
       ) : (
-        <div className="text-center text-gray-600">No schools found.</div>
+        <div className="text-center text-gray-600">No Schools Found.</div>
       )}
     </div>
   );
