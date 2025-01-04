@@ -112,7 +112,6 @@ export default function BackgroundEditor({ profile, userId }: { profile: Backgro
       const { error, data } = await supabase
         .from('player_profiles')
         .update({ stats: transformedData })
-        .eq('id', profile.id)
         .eq('user_id', userId)
         .select();
 

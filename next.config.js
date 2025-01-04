@@ -33,7 +33,7 @@ const nextConfig = {
               "script-src-elem 'self' 'nonce-{nonce}' 'strict-dynamic'",
               "style-src 'self' 'nonce-{nonce}'",
               "style-src-elem 'self' 'nonce-{nonce}'",
-              "img-src 'self' https://vercel.live/ https://vercel.com *.pusher.com/ data: blob:",
+              "img-src 'self' https://vercel.live/ https://vercel.com https://tvjclbhclyozgziixpcp.supabase.co *.pusher.com/ data: blob:",
               "font-src 'self' https://fonts.gstatic.com https://*.vercel.live",
               "connect-src 'self' https://tvjclbhclyozgziixpcp.supabase.co wss://tvjclbhclyozgziixpcp.supabase.co https://api.openai.com https://accounts.google.com https://vitals.vercel-insights.com https://vercel.live/ https://vercel.com *.pusher.com *.pusherapp.com",
               "frame-src 'self' https://vercel.live/ https://vercel.com",

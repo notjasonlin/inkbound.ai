@@ -13,6 +13,9 @@ import { checkUserLimits, incrementUsage } from '@/utils/checkUserLimits';
 import { User } from '@supabase/supabase-js';
 import readTemplate from "@/functions/readTemplate";
 import styles from './styles/AutoCompose.module.css';
+import { FavoriteSchoolsData } from '@/types/favorite_schools';
+import { PersonalizedMessage } from '@/types/personalized_messages';
+import PersonalizedMessageModal from './components/PersonalizedMessageModal';
 
 interface EmailPreviewData {
   to: string;
@@ -28,20 +31,22 @@ interface QueueStatusItem {
 }
 
 export default function AutoComposePage() {
-  const [favoriteSchools, setFavoriteSchools] = useState<SchoolData[]>([]);
+  const [favoriteSchools, setFavoriteSchools] = useState<FavoriteSchoolsData | null>();
+  const [personalizedMessages, setPersonalizedMessages] = useState<{ [key: string]: PersonalizedMessage }>({});
   const [selectedSchools, setSelectedSchools] = useState<SchoolData[]>([]);
   const [templates, setTemplates] = useState<TemplateData[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateData | null>(null);
   const [queueStatus, setQueueStatus] = useState<QueueStatusItem[]>([]);
   const [previewEmails, setPreviewEmails] = useState<{ [key: string]: EmailPreviewData }>({});
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [isSending, setIsSending] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState<boolean>(false);
+  const [isSending, setIsSending] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [toPersonalize, setToPersonalize] = useState<boolean>(false) // State for prompting user to write personalized message for super fav school
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    fetchFavoriteSchools();
     fetchTemplates();
     fetchUser();
   }, []);
@@ -52,22 +57,54 @@ export default function AutoComposePage() {
     }
   }, [selectedTemplate, selectedSchools]);
 
-  const fetchFavoriteSchools = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+  useEffect(() => {
+    if (selectedTemplate) {
+      selectedTemplate.content.personalizedMessage ? setToPersonalize(true) : setToPersonalize(false);
+    }
+  }, [selectedTemplate])
+
+  const fetchPersonalizedMessages = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from("favorite_schools")
-      .select("data")
-      .eq("uuid", user.id)
-      .single();
+    try {
+        const { data, error } = await supabase
+            .from('personalized_messages')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_curr_fav', true);
 
-    if (error) {
-      console.error("Error fetching data:", error);
-    } else if (data && data.data) {
-      setFavoriteSchools(data.data);
+        if (error) {
+            console.error('Error fetching personalized messages:', error);
+            return;
+        }
+
+        // Convert array to object with school_id as key
+        const messagesObj: { [key: string]: PersonalizedMessage } = {};
+        data?.forEach(msg => {
+            if (msg.school_id) {
+                messagesObj[msg.school_id] = {
+                    id: msg.id,
+                    user_id: msg.user_id,
+                    school_id: msg.school_id,
+                    school_name: msg.school_name,
+                    message: msg.message,
+                    is_super_fav: msg.is_super_fav,
+                    is_curr_fav: msg.is_curr_fav,
+                    is_generated: msg.is_generated,
+                    needs_handwritten: msg.needs_handwritten
+                };
+            }
+        });
+
+        setPersonalizedMessages(messagesObj);
+    } catch (err) {
+        console.error('Error processing personalized messages:', err);
     }
   };
+
+  useEffect(() => {
+    fetchPersonalizedMessages();
+  }, [user]);
 
   const fetchTemplates = async () => {
     try {
@@ -101,14 +138,14 @@ export default function AutoComposePage() {
 
     const newPreviews: { [key: string]: EmailPreviewData } = {};
     selectedSchools.forEach(school => {
-      const content = readTemplate(selectedTemplate, school);
-      const subject = selectedTemplate.content.title.replace(/\[schoolName\]/g, school.school);
+        const content = readTemplate(selectedTemplate, school, personalizedMessages);
+        const subject = selectedTemplate.content.title.replace(/\[schoolName\]/g, school.school);
 
-      newPreviews[school.id] = {
-        to: school.coaches.map(coach => coach.email).join(', '),
-        subject,
-        content: content || ''
-      };
+        newPreviews[school.id] = {
+            to: school.coaches.map(coach => coach.email).join(', '),
+            subject,
+            content: content || ''
+        };
     });
     setPreviewEmails(newPreviews);
   };
@@ -173,7 +210,7 @@ export default function AutoComposePage() {
 
   const sendEmail = async (emailData: EmailPreviewData, schoolId: string, schoolName: string) => {
     try {
-      setQueueStatus(prev => prev.map(item => 
+      setQueueStatus(prev => prev.map(item =>
         item.schoolId === schoolId ? { ...item, status: 'sending' } : item
       ));
 
@@ -185,8 +222,8 @@ export default function AutoComposePage() {
 
       if (!response.ok) throw new Error('Failed to send email');
 
-      setQueueStatus(prev => prev.map(item => 
-        item.schoolId === schoolId 
+      setQueueStatus(prev => prev.map(item =>
+        item.schoolId === schoolId
           ? { ...item, status: 'sent', timestamp: new Date().toISOString() }
           : item
       ));
@@ -198,8 +235,8 @@ export default function AutoComposePage() {
       }
     } catch (error) {
       console.error(error);
-      setQueueStatus(prev => prev.map(item => 
-        item.schoolId === schoolId 
+      setQueueStatus(prev => prev.map(item =>
+        item.schoolId === schoolId
           ? { ...item, status: 'failed', timestamp: new Date().toISOString() }
           : item
       ));
@@ -208,8 +245,16 @@ export default function AutoComposePage() {
 
   return (
     <div className={styles.container}>
-      <Sidebar onSelectSchools={handleSchoolSelection} />
+      <Sidebar onSelectSchools={handleSchoolSelection} setFavoriteSchools={setFavoriteSchools} />
 
+      {isModalOpen && user && <PersonalizedMessageModal
+        userId={user.id}
+        pMessages={personalizedMessages}
+        onClose={() => setIsModalOpen(false)}
+        template={selectedTemplate?.content.content || ''}
+        onMessagesUpdated={fetchPersonalizedMessages}
+        selectedSchools={selectedSchools}
+      />}
       <div className="flex-1 p-6">
         <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-50 to-babyblue-200 p-8 shadow-xl rounded-2xl">
           <h1 className={styles.title}>Auto Compose</h1>
@@ -226,7 +271,22 @@ export default function AutoComposePage() {
             >
               Select Template
             </button>
+
+            <button
+              onClick={() => {
+                if (selectedSchools.length === 0) {
+                  alert('Please select schools first');
+                  return;
+                }
+                setIsModalOpen(true);
+              }}
+              className={styles.templateButton}
+              disabled={selectedSchools.length === 0}
+            >
+              Personalize Message
+            </button>
           </div>
+
 
           <button
             onClick={handleSubmit}
@@ -260,3 +320,4 @@ export default function AutoComposePage() {
     </div>
   );
 }
+
