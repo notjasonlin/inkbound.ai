@@ -37,7 +37,7 @@ export default function FavoriteSchools() {
           .single();
 
         if (error) {
-          setError('Failed to fetch favorite schools');
+          setError('No Schools Found');
         } else if (data && data.data) {
           const schoolsData = Array.isArray(data.data) ? data.data : [];
           setSchools(schoolsData);

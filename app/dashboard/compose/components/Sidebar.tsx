@@ -46,7 +46,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
           .single();
 
         if (error) {
-          setError("Failed to fetch favorite schools");
+          setError("No Schools Found");
           setIsLoading(false);
           return;
         }
