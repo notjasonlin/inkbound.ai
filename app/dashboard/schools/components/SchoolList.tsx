@@ -6,6 +6,7 @@ import SearchBar, { SearchFilters } from './SearchBar';
 import { SchoolData } from '@/types/school';
 import SchoolPreview from './SchoolPreview';
 import FavoriteButton from '../[school]/components/FavoriteButton';
+import { createClient } from '@supabase/supabase-js';
 
 interface SchoolListProps {
   schools: SchoolData[];
