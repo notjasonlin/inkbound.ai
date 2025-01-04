@@ -59,14 +59,17 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-  const userId = session.client_reference_id;
+  const userId = session.metadata?.userId;
   const subscriptionId = session.subscription as string;
 
   if (userId && subscriptionId) {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    await stripe.subscriptions.update(subscriptionId, {
+      metadata: session.metadata || {}
+    });
     await updateUserSubscription(userId, subscription);
   } else {
-    console.error('Missing data');
+    console.error('Missing data:', { userId, subscriptionId });
   }
 }
 
@@ -84,36 +87,52 @@ async function updateUserSubscription(userId: string, subscription: Stripe.Subsc
   const plan = plans.find(p => p.stripePriceIdMonthly === priceId || p.stripePriceIdYearly === priceId);
 
   if (!plan) {
-    console.error('No matching data:', priceId);
+    console.error('No matching plan found for priceId:', priceId);
     return;
   }
 
-  const { error: subscriptionError } = await supabase
+  const subscriptionData = {
+    user_id: userId,
+    stripe_subscription_id: subscription.id,
+    stripe_customer_id: subscription.customer as string,
+    plan_id: plan.id,
+    plan_name: plan.name,
+    status: subscription.status,
+    current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+    current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+    cancel_at_period_end: subscription.cancel_at_period_end || false,
+    ai_call_limit: plan.aiCallLimit,
+    schools_sent_limit: plan.schoolLimit,
+    template_limit: plan.templateLimit,
+    updated_at: new Date().toISOString()
+  };
+
+  console.log('Attempting to upsert subscription data:', subscriptionData);
+
+  // First check if a subscription exists
+  const { data: existingSub } = await supabase
     .from('user_subscriptions')
-    .upsert({
-      user_id: userId,
-      stripe_subscription_id: subscription.id,
-      stripe_customer_id: subscription.customer as string,
-      plan_id: plan.id,
-      status: subscription.status,
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-    });
+    .select('id')
+    .eq('user_id', userId)
+    .single();
+
+  const { data: subData, error: subscriptionError } = await supabase
+    .from('user_subscriptions')
+    .upsert(
+      {
+        ...(existingSub?.id ? { id: existingSub.id } : {}), // Include existing ID if found
+        ...subscriptionData
+      },
+      {
+        onConflict: 'user_id', // Specify the conflict target
+        ignoreDuplicates: false // We want to update, not ignore
+      }
+    )
+    .select();
 
   if (subscriptionError) {
-    console.error('Error updating data:', subscriptionError);
-  }
-
-  const { error: userError } = await supabase
-    .from('users')
-    .update({
-      subscription_tier: plan.name,
-      school_limit: plan.schoolLimit,
-      template_limit: plan.templateLimit,
-      ai_call_limit: plan.aiCallLimit,
-    })
-    .eq('id', userId);
-
-  if (userError) {
-    console.error('Error updating data:', userError);
+    console.error('Subscription update error:', subscriptionError);
+  } else {
+    console.log('Subscription update successful:', subData);
   }
 }

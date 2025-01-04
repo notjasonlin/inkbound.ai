@@ -3,13 +3,19 @@ import { Plan } from '../constants';
 import { useInView } from 'react-intersection-observer';
 import styles from '../styles/PlanSelector.module.css';
 
-type PlanSelectorProps = {
+interface PlanSelectorProps {
   plans: Plan[];
   selectedPlan: Plan | null;
   onSelectPlan: (plan: Plan, interval: 'month' | 'year') => void;
-};
+  isLoading: boolean;
+}
 
-export default function PlanSelector({ plans, selectedPlan, onSelectPlan }: PlanSelectorProps) {
+export default function PlanSelector({ 
+  plans, 
+  selectedPlan, 
+  onSelectPlan,
+  isLoading 
+}: PlanSelectorProps) {
   const [billingInterval, setBillingInterval] = useState<'month' | 'year'>('year');
   const { ref, inView } = useInView({
     triggerOnce: true,

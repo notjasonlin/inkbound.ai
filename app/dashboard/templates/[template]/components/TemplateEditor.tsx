@@ -20,12 +20,6 @@ interface Template {
   };
 }
 
-// const placeholders = [
-//   { label: 'School Name', value: '[schoolName]' },
-//   { label: 'Coach', value: '[coachLastName]' },
-//   { label: 'Personalized Message', value: '[personalizedMessage]' }
-// ];
-
 export default function TemplateEditor({ templateTitle }: { templateTitle: string; }) {
   const [template, setTemplate] = useState<Template | null>(null);
   const [title, setTitle] = useState(templateTitle);
@@ -51,7 +45,6 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
   const [allMandatory, setAllMandatory] = useState<boolean>(false);
   const [alert, setAlert] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-
 
   const addPlaceHolder = useCallback((event: KeyboardEvent) => {
     if (event.key === ":") {
@@ -134,7 +127,6 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     }
   }, [templateTitle, userId]);
 
-
   const [showAIChat, setShowAIChat] = useState(false);
   const [userUsage, setUserUsage] = useState<{
     ai_calls_used: number;
@@ -205,20 +197,19 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     }
   }, [itemContent, historyIndex]);
 
-
   const undo = useCallback(() => {
     if (historyIndex > 0) {
       setHistoryIndex(prev => prev - 1);
       setItemContent(history[historyIndex - 1]);
     }
-  }, []);
+  }, [historyIndex, history]);
 
   const redo = useCallback(() => {
     if (historyIndex < history.length - 1) {
       setHistoryIndex(prev => prev + 1);
       setItemContent(history[historyIndex + 1]);
     }
-  }, [history, historyIndex]);
+  }, [historyIndex, history]);
 
 
   const handleTextSelection = () => {
@@ -247,7 +238,6 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
       const newContent = itemContent.substring(0, start) + suggestion + itemContent.substring(end);
       updateContent(newContent);
 
-      // Set cursor position after the inserted suggestion
       setTimeout(() => {
         if (editorRef.current) {
           editorRef.current.selectionStart = editorRef.current.selectionEnd = start + suggestion.length;
@@ -258,75 +248,67 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     setSuggestions([]);
   };
 
-  // const handleSendMessageToAI = async (message: string) => {
-  //   if (!userId) return 'User not authenticated';
 
-  //   const canUseAI = await checkUserLimits(userId, 'aiCall');
-  //   if (!canUseAI) {
-  //     return 'You have reached your AI usage limit. Please upgrade your plan to continue using AI features.';
-  //   }
+  const handleSendMessageToAI = async (message: string) => {
+    if (!userId) return 'User not authenticated';
 
-  //   try {
-  //     const response = await fetch('/api/chat', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({
-  //         prompt: message,
-  //         placeholders,
-  //       }),
-  //     });
+    const canUseAI = await checkUserLimits(userId, 'aiCall');
+    if (!canUseAI) {
+      return 'You have reached your AI usage limit. Please upgrade to continue using AI features.';
+    }
 
-  //     if (!response.ok) {
-  //       throw new Error('Failed to get AI response');
-  //     }
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: message, placeHolder }),
+      });
 
-  //     const data = await response.json();
-  //     await incrementUsage(userId, { ai_calls_used: 1 });
-  //     setUserUsage(prev => prev ? {
-  //       ...prev,
-  //       ai_calls_used: (prev.ai_calls_used || 0) + 1
-  //     } : null);
-  //     return data.content;
-  //   } catch (error) {
-  //     console.error('Error sending data', error);
-  //     return 'Sorry, there was an error processing your request.';
-  //   }
-  // };
+      if (!response.ok) {
+        throw new Error('Failed to get AI response');
+      }
 
-  return (
-    // <div className="template-editor-container">
-    <>
+      const data = await response.json();
+      await incrementUsage(userId, { ai_calls_used: 1 });
+      setUserUsage(prev => prev ? { ...prev, ai_calls_used: (prev.ai_calls_used || 0) + 1 } : null);
+      return data.content;
+    } catch (error) {
+      console.error('Error sending data', error);
+      return 'Sorry, there was an error processing your request.';
+    }
+  };
+
+return (
+    <div className="w-full min-h-screen bg-white">
       {loading || !userId ? (
         <div className="flex justify-center items-center h-96">
-          <div className="text-2xl font-semibold">Loading template...</div>
+          <div className="text-2xl font-semibold text-gray-700">Loading template...</div>
         </div>
       ) : (
-        <div className="max-w-4xl mx-auto p-6 bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {selectPlaceHolder && (
             <PlaceHolderModal
               isOpen={true}
               onClose={() => setSelectPlaceHolder(false)}
               setPlaceHolder={setPlaceHolder}
               trigger={() => setupdatePHTrigger(!updatePHTrigger)}
-              position={modalPosition} // Pass modal position
+              position={modalPosition}
             />
           )}
 
           {alert && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
               <Alert
-                header={"Mandatory Placeholders Missing!"}
-                message={"Are you sure you want to exit without these placeholders?"}
-                type={"warning"}
+                header="Mandatory Placeholders Missing!"
+                message="Are you sure you want to exit without these placeholders?"
+                type="warning"
                 onClose={() => setAlert(false)}
                 onConfirm={() => router.back()}
               />
             </div>
           )}
 
-          <div className="template-editor-header">
+          <div className="flex items-center justify-between mb-8">
             <button
               onClick={() => {
                 if (!allMandatory) {
@@ -335,7 +317,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                   router.back();
                 }
               }}
-              className="back-button"
+              className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -343,24 +325,23 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-                  clipRule="evenodd"
-                />
+                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
               </svg>
               Back
             </button>
-            <h1 className="template-title">{title}</h1>
-            {/* <button onClick={() => setShowAIChat(!showAIChat)} className="ai-chat-toggle">
+            <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
+            <button
+              onClick={() => setShowAIChat(!showAIChat)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md shadow-sm transition-colors"
+            >
               {showAIChat ? "Hide AI Chat" : "Show AI Chat"}
-            </button> */}
+            </button>
           </div>
 
-          <div className="template-editor-body">
-            <div className="checklist-container">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1 space-y-6">
               <TemplateChecklist
-                title={"Mandatory"}
+                title="Mandatory"
                 placeholders={[
                   "[coachLastName]",
                   "[schoolName]",
@@ -369,48 +350,42 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                 content={itemContent}
                 setAllMandatory={setAllMandatory}
               />
-              {/* <TemplateChecklist
-                title={"Optional"}
-                placeholders={[
-                  "[studentFullName]",
-                  "[studentFirstName]",
-                  "[studentLastName]",
-                ]}
-                content={itemContent}
-              /> */}
             </div>
 
-            <div className="input-container">
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => {
-                  setTitle(e.target.value)
-                  setUpdateItemTrigger(!updateItemTrigger);
-                }}
-                className="template-title-input"
-                placeholder="Template Title"
-              />
-
-              <div className="input-box">
+            <div className="lg:col-span-2 space-y-8">
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 space-y-4">
                 <input
                   type="text"
-                  value={itemTitle}
-                  onChange={(e) => {
-                    setItemTitle(e.target.value)
-                    setUpdateItemTrigger(!updateItemTrigger);
-                  }}
-                  placeholder="Item Title"
-                  className="item-title-input"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full text-lg font-semibold text-gray-900 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Template Title"
                 />
-                <div className="action-buttons">
-                  <button onClick={undo} className="action-button">
-                    Undo
-                  </button>
-                  <button onClick={redo} className="action-button">
-                    Redo
-                  </button>
+
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 sm:space-x-4">
+                  <input
+                    type="text"
+                    value={itemTitle}
+                    onChange={(e) => setItemTitle(e.target.value)}
+                    placeholder="Item Title"
+                    className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <div className="space-x-2 flex-shrink-0">
+                    <button
+                      onClick={undo}
+                      className="px-3 py-1.5 text-sm font-medium bg-gray-200 hover:bg-gray-300 rounded-md transition-colors"
+                    >
+                      Undo
+                    </button>
+                    <button
+                      onClick={redo}
+                      className="px-3 py-1.5 text-sm font-medium bg-gray-200 hover:bg-gray-300 rounded-md transition-colors"
+                    >
+                      Redo
+                    </button>
+                  </div>
                 </div>
+
                 <textarea
                   ref={editorRef}
                   value={itemContent}
@@ -419,28 +394,25 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                     setUpdateItemTrigger(!updateItemTrigger);
                   }}
                   onSelect={handleTextSelection}
-                  className="text-area"
+                  className="w-full h-48 border border-gray-300 rounded-md px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Type your template content here..."
                 />
-              </div>
 
-              {error && <div className="error-message">{error}</div>}
+                {error && <div className="text-red-600 text-sm font-medium">{error}</div>}
+              </div>
+              {showAIChat && (
+                <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 space-y-4">
+                  <h2 className="text-xl font-bold text-gray-900">AI Chat</h2>
+                  <AIChatInterface
+                    userCredits={userUsage ? userUsage.ai_call_limit - userUsage.ai_calls_used : 0}
+                    onSendMessage={handleSendMessageToAI}
+                  />
+                </div>
+              )}
             </div>
-
-            {/* {showAIChat && (
-              <div className="ai-chat-container">
-                <AIChatInterface
-                  userCredits={
-                    userUsage ? userUsage.ai_call_limit - userUsage.ai_calls_used : 0
-                  }
-                  onSendMessage={handleSendMessageToAI}
-                />
-              </div>
-            )} */}
           </div>
         </div>
       )}
-    </>
-    // </div>
+    </div>
   );
-
 }
