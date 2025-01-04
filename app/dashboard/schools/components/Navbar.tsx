@@ -6,11 +6,11 @@ import { FaUniversity, FaStar, FaHeart } from 'react-icons/fa';
 
 const Navbar: React.FC = () => {
   return (
-    <nav className="bg-blue-600 text-white py-3 shadow-lg rounded-lg mx-4 mt-4">
-      <div className="container mx-auto flex justify-center space-x-10 md:space-x-16 lg:space-x-24">
+    <nav className="bg-white shadow-sm border-b border-gray-200 py-2 sticky top-0 z-20">
+      <div className="container mx-auto flex justify-center space-x-8 text-sm sm:text-base">
         <NavItem href="/dashboard/schools" icon={<FaUniversity />} label="Find Schools" />
-        <NavItem href="/dashboard/schools/recommended-schools" icon={<FaStar />} label="Recommended Schools" />
-        <NavItem href="/dashboard/schools/favorite-schools" icon={<FaHeart />} label="Your Schools" />
+        <NavItem href="/dashboard/schools/recommended-schools" icon={<FaStar />} label="Recommended" />
+        <NavItem href="/dashboard/schools/favorite-schools" icon={<FaHeart />} label="Favorites" />
       </div>
     </nav>
   );
@@ -23,11 +23,12 @@ interface NavItemProps {
 }
 
 const NavItem: React.FC<NavItemProps> = ({ href, icon, label }) => (
-  <Link href={href} className="flex flex-col items-center hover:text-blue-200 transition-all duration-200">
-    <div className="flex items-center space-x-2">
-      <span className="text-xl">{icon}</span>
-      <span className="hidden md:inline text-lg font-medium">{label}</span>
-    </div>
+  <Link
+    href={href}
+    className="flex items-center space-x-2 text-gray-600 hover:text-blue-600 transition font-medium"
+  >
+    <span className="text-xl">{icon}</span>
+    <span>{label}</span>
   </Link>
 );
 

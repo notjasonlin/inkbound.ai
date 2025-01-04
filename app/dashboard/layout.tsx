@@ -1,7 +1,9 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   FaInbox,
   FaHome,
@@ -14,145 +16,290 @@ import {
   FaListAlt,
 } from "react-icons/fa";
 import { Shrikhand } from "next/font/google";
-import { useEffect, useMemo, useState } from "react";
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { signout } from '../../lib/auth-actions';  // Import the signout function from your server actions
+import { useEffect, useState } from "react";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { signout } from "../../lib/auth-actions";
+import inkboundLogo from '@public/inkbound-full-logo.png'
 
+// Google font import
 const shrikhand = Shrikhand({ subsets: ["latin"], weight: "400" });
 
+// Nav items for the sidebar and bottom nav
 const sidebarItems = [
   { name: "Home", path: "/dashboard", icon: FaHome },
   { name: "Schools", path: "/dashboard/schools", icon: FaSchool },
   { name: "Profile", path: "/dashboard/profile/background", icon: FaUser },
-  { name: "Templates", path: "/dashboard/templates", icon: FaListAlt},
+  { name: "Templates", path: "/dashboard/templates", icon: FaListAlt },
   { name: "Compose", path: "/dashboard/auto-compose", icon: FaEdit },
   { name: "Inbox", path: "/dashboard/inbox", icon: FaInbox },
-  { name: "Upgrade", path: "/dashboard/upgrade", icon: FaDollarSign }
+  { name: "Upgrade", path: "/dashboard/upgrade", icon: FaDollarSign },
 ];
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const router = useRouter();  // Use the Next.js router for redirection
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const supabase = createClientComponentClient();  // Initialize Supabase client
+/**
+ * Only highlight "Home" if path === "/dashboard"
+ * Otherwise, highlight if `pathname` starts with the link path.
+ * Safely handle cases where `pathname` might be null or undefined.
+ */
+function getIsActive(pathname: string, itemPath: string) {
+  if (itemPath === "/dashboard") {
+    return pathname === "/dashboard";
+  }
+  return pathname.startsWith(itemPath);
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const rawPathname = usePathname();
+  const pathname = rawPathname ?? ""; // fallback if null
+  const router = useRouter();
+
+  const [userEmail, setUserEmail] = useState<string>("");
+  const supabase = createClientComponentClient();
+
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Fetch the user's email on component mount
   useEffect(() => {
     const fetchUserInfo = async () => {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
       if (error) {
-        console.error('Error fetching data:', error.message);
+        console.error("Error fetching data:", error.message);
       } else if (user) {
-        setUserEmail(user.email || '');  // Store user email
+        setUserEmail(user.email ?? "");
       }
     };
-
     fetchUserInfo();
   }, [supabase]);
-
-  // Determine the active sidebar item based on the pathname
-  const activeItemName = useMemo(() => {
-    if (!pathname) return "Dashboard";
-    
-    const activeItem = sidebarItems.find((item) =>
-      pathname.startsWith(item.path)
-    );
-    return activeItem ? activeItem.name : "Dashboard";
-  }, [pathname]);
 
   // Handle the sign-out process
   const handleLogout = async () => {
     try {
-      await signout();  // Call the server-side signout function
-      router.push("/");  // Redirect to the landing page after logout
+      await signout(); 
+      router.push("/"); 
     } catch (error) {
       console.error("Error during logout:", error);
     }
   };
 
+  // Sidebar toggle (mobile)
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
   return (
-    <div className="flex h-screen bg-gradient-to-br from-blue-50 to-blue-100 text-black">
-      {/* Sidebar for Desktop */}
-      <aside className="hidden md:block w-64 bg-white shadow-lg">
-        <div className="p-4">
-          <h1
-            className={`text-3xl font-bold bg-gradient-to-r from-babyblue-500 to-blue-500 bg-clip-text text-transparent ${shrikhand.className}`}
+    <div className="flex flex-col min-h-screen bg-white text-gray-700">
+      {/* Top Bar */}
+      <header className="flex items-center justify-between bg-white border-b border-gray-200 p-4 shadow-sm z-10">
+        {/* Left: Logo + hamburger (mobile) */}
+        <div className="flex items-center space-x-3">
+          <button
+            className="md:hidden p-2 rounded hover:bg-gray-100 transition"
+            onClick={toggleSidebar}
+            aria-label="Toggle sidebar"
           >
-            Inkbound
-          </h1>
+            {!sidebarOpen ? (
+              <svg
+                className="h-6 w-6 text-gray-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            ) : (
+              <svg
+                className="h-6 w-6 text-gray-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            )}
+          </button>
+
+          <Link href="/dashboard">
+            <img
+              src='/inkbound-full-logo.png'
+              alt="Inkbound"
+              className="h-11 w-auto"
+            />
+          </Link>
         </div>
-        <nav className="mt-6">
-          {sidebarItems.map((item) => (
-            <Link
-              key={item.path}
-              href={item.path}
-              className={`flex items-center px-6 py-3 text-gray-600 hover:bg-gradient-to-r from-blue-100 to-blue-200 hover:text-blue-800 transition-colors ${
-                pathname === item.path
-                  ? "bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border-r-4 border-blue-500"
-                  : ""
-              }`}
+
+        {/* Right: user email, settings, log out */}
+        <div className="hidden md:flex items-center space-x-4">
+          <span className="text-sm text-gray-600">{userEmail}</span>
+
+          <button className="flex items-center space-x-1 bg-blue-600 text-white px-4 py-2 text-sm rounded-full hover:bg-blue-700 transition">
+            <FaCog />
+            <span>Settings</span>
+          </button>
+
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-1 bg-red-500 text-white px-4 py-2 text-sm rounded-full hover:bg-red-600 transition"
+          >
+            <FaSignOutAlt />
+            <span>Log Out</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Main Layout Wrapper */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* SIDEBAR - Desktop */}
+        <aside className="hidden md:flex md:flex-col w-64 border-r border-gray-200 bg-white shadow-sm">
+          {/* Remove the "Main Menu" header */}
+          <nav className="flex-1 overflow-y-auto">
+            {sidebarItems.map((item) => {
+              const isActive = getIsActive(pathname, item.path);
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  className={`
+                    flex items-center px-6 py-3 text-sm transition-colors
+                    ${
+                      isActive
+                        ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border-r-4 border-blue-500"
+                        : "text-gray-600 hover:bg-gray-50"
+                    }
+                  `}
+                >
+                  <item.icon className="mr-3" />
+                  {item.name}
+                </Link>
+              );
+            })}
+          </nav>
+        </aside>
+
+        {/* SIDEBAR - Mobile (slide in/out) */}
+        <AnimatePresence>
+          {sidebarOpen && (
+            <motion.aside
+              key="mobile-sidebar"
+              className="
+                fixed
+                top-0
+                left-0
+                z-50
+                w-64
+                h-full
+                bg-white
+                shadow-2xl
+                border-r
+                border-gray-200
+                flex
+                flex-col
+                md:hidden
+              "
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.3 }}
             >
-              <item.icon className="mr-3" />
-              <span className="text-sm">{item.name}</span>
-            </Link>
-          ))}
-        </nav>
-      </aside>
+              {/* Close button */}
+              <div className="flex items-center justify-end p-4 border-b border-gray-200">
+                <button
+                  className="p-2 rounded hover:bg-gray-100 transition"
+                  onClick={toggleSidebar}
+                  aria-label="Close sidebar"
+                >
+                  <svg
+                    className="h-6 w-6 text-gray-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-x-hidden overflow-y-auto">
-        {/* Top bar with email, settings, and logout */}
-        <div className="bg-white shadow-md">
-          <div className="container mx-auto px-6 py-2 flex justify-between items-center">
-            {/* User email and buttons */}
-            <div className="flex items-center space-x-4">
-              {/* Display the user's email */}
-              <span className="text-gray-700">{userEmail || 'Loading...'}</span>
-              
-              {/* Settings button */}
-              <button className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition">
+              {/* Sidebar Nav */}
+              <nav className="flex-1 overflow-y-auto">
+                {sidebarItems.map((item) => {
+                  const isActive = getIsActive(pathname, item.path);
+                  return (
+                    <Link
+                      key={item.path}
+                      href={item.path}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`
+                        flex items-center px-6 py-3 text-sm transition-colors
+                        ${
+                          isActive
+                            ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border-r-4 border-blue-500"
+                            : "text-gray-600 hover:bg-gray-50"
+                        }
+                      `}
+                    >
+                      <item.icon className="mr-3" />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </motion.aside>
+          )}
+        </AnimatePresence>
+
+        {/* MAIN CONTENT AREA */}
+        <div className="flex-1 overflow-x-hidden overflow-y-auto">
+          {/* TOP BAR (Mobile only) - user info & signout */}
+          <div className="md:hidden bg-white border-b border-gray-200 p-3 flex items-center justify-between shadow-sm">
+            <span className="text-sm text-gray-600">{userEmail}</span>
+            <div className="flex items-center space-x-2">
+              <button className="p-2 rounded-full hover:bg-gray-100 transition text-gray-600">
                 <FaCog />
-                <span>Settings</span>
               </button>
-
-              {/* Logout button */}
               <button
                 onClick={handleLogout}
-                className="flex items-center space-x-2 bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition"
+                className="p-2 rounded-full hover:bg-gray-100 transition text-red-500"
               >
                 <FaSignOutAlt />
-                <span>Log Out</span>
               </button>
             </div>
-
-            {/* Inbox icon */}
-            <Link href="/dashboard/inbox">
-              <button className="p-2 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 transition-colors shadow-md">
-                <FaInbox className="text-blue-600" size={20} />
-              </button>
-            </Link>
           </div>
+
+          {/* MAIN CONTENT */}
+          <div className="p-4 md:p-6 min-h-[calc(100vh-5rem)]">{children}</div>
         </div>
+      </div>
 
-        {/* Page content */}
-        <div className="container mx-auto px-6 py-4">{children}</div>
-      </main>
-
-      {/* Bottom Navbar for Mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white shadow-lg md:hidden">
+      {/* MOBILE BOTTOM NAVBAR */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-sm">
         <div className="flex justify-around items-center py-2">
-          {sidebarItems.map((item) => (
-            <Link key={item.path} href={item.path}>
-              <button
-                className={`flex flex-col items-center text-xs transition-colors ${
-                  pathname === item.path ? "text-blue-600" : "text-gray-600"
-                }`}
+          {sidebarItems.map((item) => {
+            const isActive = getIsActive(pathname, item.path);
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                onClick={() => setSidebarOpen(false)}
               >
-                <item.icon className="mb-1" size={20} />
-                <span className="text-xs">{item.name}</span>
-              </button>
-            </Link>
-          ))}
+                <div
+                  className={`
+                    flex flex-col items-center text-xs transition-colors px-2
+                    ${
+                      isActive
+                        ? "text-blue-600"
+                        : "text-gray-600 hover:text-blue-500"
+                    }
+                  `}
+                >
+                  <item.icon className="mb-1" size={20} />
+                  <span>{item.name}</span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </nav>
     </div>
