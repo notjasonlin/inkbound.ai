@@ -278,9 +278,8 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     }
   };
 
-  return (
+return (
     <div className="w-full min-h-screen bg-white">
-
       {loading || !userId ? (
         <div className="flex justify-center items-center h-96">
           <div className="text-2xl font-semibold text-gray-700">Loading template...</div>
@@ -300,15 +299,14 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
           {alert && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
               <Alert
-                header={"Mandatory Placeholders Missing!"}
-                message={"Are you sure you want to exit without these placeholders?"}
-                type={"warning"}
+                header="Mandatory Placeholders Missing!"
+                message="Are you sure you want to exit without these placeholders?"
+                type="warning"
                 onClose={() => setAlert(false)}
                 onConfirm={() => router.back()}
               />
             </div>
           )}
-
 
           <div className="flex items-center justify-between mb-8">
             <button
@@ -327,7 +325,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
-                <path fillRule="evenodd" d="M9.707 16.707a1 1 ... " clipRule="evenodd" />
+                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
               </svg>
               Back
             </button>
@@ -337,14 +335,13 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md shadow-sm transition-colors"
             >
               {showAIChat ? "Hide AI Chat" : "Show AI Chat"}
-            </button> */}
+            </button>
           </div>
-
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 space-y-6">
               <TemplateChecklist
-                title={"Mandatory"}
+                title="Mandatory"
                 placeholders={[
                   "[coachLastName]",
                   "[schoolName]",
@@ -353,17 +350,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                 content={itemContent}
                 setAllMandatory={setAllMandatory}
               />
-              {/* <TemplateChecklist
-                title={"Optional"}
-                placeholders={[
-                  "[studentFullName]",
-                  "[studentFirstName]",
-                  "[studentLastName]",
-                ]}
-                content={itemContent}
-              /> */}
             </div>
-
 
             <div className="lg:col-span-2 space-y-8">
               <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 space-y-4">
@@ -426,8 +413,6 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
           </div>
         </div>
       )}
-    </>
-    // </div>
+    </div>
   );
-}
 
