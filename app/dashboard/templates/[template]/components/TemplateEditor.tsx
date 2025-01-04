@@ -261,7 +261,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: message, placeholders }),
+        body: JSON.stringify({ prompt: message, placeholder }),
       });
 
       if (!response.ok) {
