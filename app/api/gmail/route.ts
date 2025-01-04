@@ -38,7 +38,6 @@ export async function GET(req: Request) {
 
     const res = await gmail.users.messages.list({
       userId: 'me',
-      q: `bcc:${userEmail}`,
       maxResults: parseInt(numEmails[0]),
     });
 
@@ -88,7 +87,6 @@ export async function POST(req: Request) {
     const content = formData.get('content') as string;
     const attachments = formData.getAll('attachments') as File[];
 
-    // Fetch user's email for BCC
     const profile = await gmail.users.getProfile({ userId: 'me' });
     const userEmail = profile.data.emailAddress;
 
@@ -103,7 +101,6 @@ export async function POST(req: Request) {
     let message = [
       `To: ${to}`,
       `Subject: ${subject}`,
-      `Bcc: ${userEmail}`,
       'MIME-Version: 1.0',
       `Content-Type: multipart/mixed; boundary="${boundary}"`,
       '',

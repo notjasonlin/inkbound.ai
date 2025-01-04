@@ -6,8 +6,6 @@ import SearchBar, { SearchFilters } from './SearchBar';
 import { SchoolData } from '@/types/school';
 import SchoolPreview from './SchoolPreview';
 import FavoriteButton from '../[school]/components/FavoriteButton';
-import { useFavorites } from '../../schools/[school]/components/FavoritesProvider';
-import { createClient } from '@supabase/supabase-js';
 
 interface SchoolListProps {
   schools: SchoolData[];
@@ -31,7 +29,7 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
   const [hoveredSchool, setHoveredSchool] = useState<SchoolData | null>(null);
   const [lastHoveredSchool, setLastHoveredSchool] = useState<SchoolData | null>(null);
   const schoolsPerPage = 10;
-  const { favorites } = useFavorites();
+
 
   useEffect(() => {}, [schools, filteredSchools]);
 

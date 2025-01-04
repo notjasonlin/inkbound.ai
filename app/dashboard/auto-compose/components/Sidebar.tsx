@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { SchoolData } from '@/types/school/index';
 import { createClient } from "@/utils/supabase/client";
 import { FiChevronRight, FiChevronDown, FiMenu } from "react-icons/fi";
+import { FavoriteSchoolsData } from '@/types/favorite_schools';
 
 interface SidebarProps {
   onSelectSchools: (schools: SchoolData[]) => void;
+  setFavoriteSchools: (favs: FavoriteSchoolsData) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools, setFavoriteSchools }) => {
   const supabase = createClient();
   const [schools, setSchools] = useState<SchoolData[]>([]);
   const [selectedSchools, setSelectedSchools] = useState<SchoolData[]>([]);
@@ -40,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
 
       const { data, error } = await supabase
         .from("favorite_schools")
-        .select("data")
+        .select("data, super_favorites")
         .eq("uuid", user.id)
         .single();
 
@@ -52,7 +54,12 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
 
       if (data && data.data) {
         const schoolsData = Array.isArray(data.data) ? data.data : [];
-        setSchools(schoolsData);
+        setSchools(schoolsData); 
+        const favs = {
+          schools: schoolsData,
+          super_favorites: data.super_favorites ? data.super_favorites : []
+        }
+        setFavoriteSchools(favs);
       } else {
         setSchools([]);
       }

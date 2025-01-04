@@ -20,7 +20,7 @@ export const InputField: React.FC<InputFieldProps> = ({ label, name, value, onCh
         onChange={onChange}
         className="p-2.5 text-base rounded border border-gray-300 bg-white hover:bg-gray-50 focus:outline-none focus:border-blue-500 transition duration-150"
       >
-        <option value="" disabled>Select {label}</option>
+        <option value="" disabled> {label}</option>
         {options.map((option) => (
           <option key={option} value={option}>
             {option}

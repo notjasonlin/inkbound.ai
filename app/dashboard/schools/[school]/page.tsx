@@ -1,7 +1,6 @@
 import { getSchool } from '@/utils/supabase/client';
 import { createClient } from "@/utils/supabase/server";
 import { SchoolData } from '@/types/school/index';
-import FavoritesProvider from './components/FavoritesProvider';
 import SchoolContent from './components/SchoolContent';
 
 type SchoolPageProps = {
@@ -38,8 +37,8 @@ export default async function SchoolPage({ params }: SchoolPageProps) {
   };
 
   return (
-    <FavoritesProvider userId={user.id}>
+    <>
       <SchoolContent schoolData={sanitizedSchoolData} userID={user.id} />
-    </FavoritesProvider>
+    </>
   );
 }

@@ -11,15 +11,15 @@
 }
 
 .emailCard {
-  @apply absolute top-0 left-0 w-full p-4 bg-white rounded-lg shadow-md h-full;
+  @apply absolute top-0 left-0 w-full p-2 bg-white rounded-lg shadow-md h-full;
 }
 
 .schoolTitle {
   @apply text-lg font-semibold mb-2;
 }
 
-.emailContent {
-  @apply border border-gray-300 rounded p-3 bg-gray-50 text-sm sm:text-base whitespace-pre-line h-full overflow-y-auto;
+.emailContent { /*h-80 ensures no cut off*/
+  @apply border border-gray-300 rounded p-3 bg-gray-50 text-sm sm:text-base whitespace-pre-line h-80 overflow-y-auto;
 }
 
 .contentText {

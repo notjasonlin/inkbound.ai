@@ -20,20 +20,16 @@ interface Template {
   };
 }
 
-const placeholders = [
-  { label: 'School Name', value: '[schoolName]' },
-  { label: 'Coach', value: '[coachLastName]' }
-];
-
 export default function TemplateEditor({ templateTitle }: { templateTitle: string; }) {
   const [template, setTemplate] = useState<Template | null>(null);
   const [title, setTitle] = useState(templateTitle);
   const [itemTitle, setItemTitle] = useState("");
   const [itemContent, setItemContent] = useState("");
+  const [updateItemTrigger, setUpdateItemTrigger] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectPlaceHolder, setSelectPlaceHolder] = useState<boolean>(false);
   const [placeHolder, setPlaceHolder] = useState<string>("");
-  const [updateTrigger, setUpdateTrigger] = useState<boolean>(false);
+  const [updatePHTrigger, setupdatePHTrigger] = useState<boolean>(false);
   const [modalPosition, setModalPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [selectedText, setSelectedText] = useState('');
   const [showAIHelper, setShowAIHelper] = useState(false);
@@ -76,9 +72,10 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
       const { selectionStart, selectionEnd } = editorRef.current;
       const newText = itemContent.substring(0, selectionStart - 1) + placeHolder + itemContent.substring(selectionEnd);
       updateContent(newText);
+      setUpdateItemTrigger(!updateItemTrigger);
       setPlaceHolder("");
     }
-  }, [updateTrigger]);
+  }, [updatePHTrigger]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -136,11 +133,14 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     ai_call_limit: number;
   } | null>(null);
 
+
+  // **Debounced Save**
   const saveTemplate = useCallback(async (newTitle: string, newItemTitle: string, newItemContent: string) => {
     if (isUpdatingRef.current || !userId || !template?.id) return;
     isUpdatingRef.current = true;
     setError(null);
     const supabase = createClient();
+
     try {
       const { error } = await supabase
         .from('templates')
@@ -148,7 +148,8 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
           title: newTitle,
           content: {
             title: newItemTitle,
-            content: newItemContent
+            content: newItemContent,
+            personalizedMessage: newItemContent.includes("[personalizedMessage]"),
           }
         })
         .eq('id', template.id)
@@ -170,7 +171,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
 
   useEffect(() => {
     debouncedSave(title, itemTitle, itemContent);
-  }, [title, itemTitle, itemContent, debouncedSave]);
+  }, [updateItemTrigger]);
 
   useEffect(() => {
     const fetchUsage = async () => {
@@ -210,9 +211,6 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     }
   }, [historyIndex, history]);
 
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    updateContent(e.target.value);
-  };
 
   const handleTextSelection = () => {
     if (editorRef.current) {
@@ -250,6 +248,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     setSuggestions([]);
   };
 
+
   const handleSendMessageToAI = async (message: string) => {
     if (!userId) return 'User not authenticated';
 
@@ -281,6 +280,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
 
   return (
     <div className="w-full min-h-screen bg-white">
+
       {loading || !userId ? (
         <div className="flex justify-center items-center h-96">
           <div className="text-2xl font-semibold text-gray-700">Loading template...</div>
@@ -309,6 +309,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
             </div>
           )}
 
+
           <div className="flex items-center justify-between mb-8">
             <button
               onClick={() => {
@@ -336,23 +337,33 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md shadow-sm transition-colors"
             >
               {showAIChat ? "Hide AI Chat" : "Show AI Chat"}
-            </button>
+            </button> */}
           </div>
+
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-1 space-y-6">
               <TemplateChecklist
-                title="Mandatory"
-                placeholders={["[coachLastName]", "[schoolName]"]}
+                title={"Mandatory"}
+                placeholders={[
+                  "[coachLastName]",
+                  "[schoolName]",
+                  "[personalizedMessage]"
+                ]}
                 content={itemContent}
                 setAllMandatory={setAllMandatory}
               />
-              <TemplateChecklist
-                title="Optional"
-                placeholders={["[studentFullName]", "[studentFirstName]", "[studentLastName]"]}
+              {/* <TemplateChecklist
+                title={"Optional"}
+                placeholders={[
+                  "[studentFullName]",
+                  "[studentFirstName]",
+                  "[studentLastName]",
+                ]}
                 content={itemContent}
-              />
+              /> */}
             </div>
+
 
             <div className="lg:col-span-2 space-y-8">
               <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 space-y-4">
@@ -391,7 +402,10 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                 <textarea
                   ref={editorRef}
                   value={itemContent}
-                  onChange={handleInput}
+                  onChange={(e) => {
+                    updateContent(e.target.value);
+                    setUpdateItemTrigger(!updateItemTrigger);
+                  }}
                   onSelect={handleTextSelection}
                   className="w-full h-48 border border-gray-300 rounded-md px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Type your template content here..."
@@ -399,7 +413,6 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
 
                 {error && <div className="text-red-600 text-sm font-medium">{error}</div>}
               </div>
-
               {showAIChat && (
                 <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 space-y-4">
                   <h2 className="text-xl font-bold text-gray-900">AI Chat</h2>
@@ -413,6 +426,8 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
           </div>
         </div>
       )}
-    </div>
+    </>
+    // </div>
   );
 }
+
