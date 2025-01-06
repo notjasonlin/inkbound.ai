@@ -84,9 +84,6 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           }
         }
 
-        // console.log("MESSAGES", processedMessages);
-        // console.log("MESSAGES", newMessages);
-        // Send each new message to the AWS API endpoint
         for (const message of newMessages) {
           if (message.isCoachMessage) {
             console.log("MESSAGE", message);
@@ -131,7 +128,6 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           }
         });
         setCoachEmailsMap(map);
-        // console.log("Map", map);
 
         setMessages(processedMessages);
 

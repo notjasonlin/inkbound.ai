@@ -42,31 +42,62 @@ export default function ReplyAIModal({ isOpen, onClose, style, coachMessage, fir
       .eq("email_id", coachMessage?.id)
       .single();
 
-    console.log(classification);
+    // console.log(classification);
 
     if (error) {
       console.error("Error fetching data");
     } else {
-      const response = await fetch('/api/replyAI', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          coach_email: coachMessage,
-          classification: genuineArray[classification.predicted_class],
-          genuine_score: (classification.score * 100),
-          category: classification.category[0],
-          example_email: "",
-          user_email: firstMessage,
-        }),
-      });
-  
-      const data = await response.json()
-      console.log("RESPONSE", data);
+
+      // Grab example response
+
+      const bucket = "public/replyai-example-emails/" + classification.predicted_class;
+      const category = classification.category.substring(2, classification.category.length - 2);
+      const path = category + ".txt";
+
+      const { data: example, error } = await supabase
+        .storage
+        .from(bucket)
+        .download(path);
+
+      if (error) {
+        console.error('Error loading data');
+      } else {
+        // **Read File**
+        const reader = new FileReader();
+
+        reader.onload = async (event) => {
+          const fileContent = event.target?.result as string;
+          if (fileContent) {
+            // **Query for AI response**
+            const response = await fetch('/api/replyAI', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                coach_email: coachMessage?.content,
+                classification: genuineArray[classification.predicted_class],
+                genuine_score: (classification.score * 100),
+                category: category,
+                example_email: fileContent,
+                user_email: firstMessage?.content,
+              }),
+            });
+
+            const data = await response.json()
+            console.log("RESPONSE", data);
+          }
+        }
+
+        reader.onerror = (e) => {
+          console.error('Error loading data');
+        };
+
+        reader.readAsText(example);
+      }
+
+      onClose();
     }
-    
-    onClose();
   }
 
   return (

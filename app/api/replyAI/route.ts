@@ -25,6 +25,9 @@ export async function POST(req: Request) {
             example_email,
             user_email,
         } = await req.json();
+
+        const content = `I just received this email from a coach: \n${coach_email}\nThe coach's response seems ${genuine_score}% genuine or ${classification}. What the coach is looking for seems to fall in the category of ${category}\nThis is how I started the conversation: \n${user_email}\nThis is an example of how I should respond to a coach email like the one above: \n${example_email}\nIn the style of my writing, can you help me draft a response to this coach?\n(Only send the body of the email and nothing else. Do not send "Dear coach" or a sign-off. Include newline characters only where you see fit)`;
+        console.log(content);
         const completion = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
@@ -35,13 +38,7 @@ export async function POST(req: Request) {
                 },
                 {
                     role: "user",
-                    content:
-                        `I just received this email from a coach: \n${coach_email}\n
-                        The coach's response seems ${genuine_score}% genuine or ${classification}. What the coach is looking for seems to fall in the category of ${category}\n
-                        This is how I started the conversation: \n${user_email}\n
-                        This is an example of how I should respond to a coach email like the one above: \n${example_email}\n
-                        In the style of my writing, can you help me draft a response to this coach?\n
-                        (Only send the body of the email and nothing else. Do not send "Dear coach" or a sign-off. Include newline characters only where you see fit)`,
+                    content,
                 },
             ],
         });
