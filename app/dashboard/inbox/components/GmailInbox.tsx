@@ -62,6 +62,8 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         });
         const data = await response.json();
 
+        console.log("DATA", data);
+
         const processedMessages: Message[] = data.messages.reverse().map((message: any, index: number) => ({
           id: message.id,
           content: message.content,
@@ -82,12 +84,10 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           }
         }
 
-        // console.log("MESSAGES", processedMessages);
-        // console.log("MESSAGES", newMessages);
-        // Send each new message to the AWS API endpoint
         for (const message of newMessages) {
           if (message.isCoachMessage) {
-            await fetch('https://jtf79lf49l.execute-api.us-east-2.amazonaws.com/fetch-email-data', {
+            console.log("MESSAGE", message);
+            await fetch('https://191gxash54.execute-api.us-east-2.amazonaws.com/email-classifier', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -128,7 +128,6 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           }
         });
         setCoachEmailsMap(map);
-        console.log("Map", map);
 
         setMessages(processedMessages);
 

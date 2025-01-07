@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "@/styles/ReplyAIModal.css";
 import { Message } from "@/types/message";
+import { createClient } from "@/utils/supabase/client";
 
 interface ModalProps {
   isOpen: boolean;
@@ -10,14 +11,10 @@ interface ModalProps {
   firstMessage: Message | null;
 }
 
-export default function ReplyAIModal({
-  isOpen,
-  onClose,
-  style,
-  coachMessage,
-  firstMessage
-}: ModalProps) {
+export default function ReplyAIModal({ isOpen, onClose, style, coachMessage, firstMessage }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const supabase = createClient();
+  const [genuineArray, setGenuineArray] = useState<String[]>(["not genuine", "somewhat genuine", "genuine"])
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
@@ -37,34 +34,70 @@ export default function ReplyAIModal({
 
   if (!isOpen) return null;
 
+  // ***REPLY AI FUNCTION***
   const replyAI = async () => {
+    const { data: classification, error } = await supabase
+      .from('email_classifications')
+      .select('predicted_class, category, score')
+      .eq("email_id", coachMessage?.id)
+      .single();
 
-    const response = await fetch('/api/replyAI', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        coach_email: coachMessage,
-        classification: "genuine",
-        action_item: "send GPA and transcript",
-        example_email: "Hello Coach,\n\nHere is my unofficial transcript. I hope to hear from you soon!\n\nThank you and have a great evening\n\nBest,\nJohn",
-        user_email: firstMessage,
-      }),
-    });
+    // console.log(classification);
 
-    // console.log("Reply AI");
-    // console.log("Coach message", coachMessage);
-    // if (lastMessage && !lastMessage.isCoachMessage) {
-    //   console.log("Last message", lastMessage);
-    // } else {
-    //   console.log("Last message is a coach message")
-    // }
+    if (error) {
+      console.error("Error fetching data");
+    } else {
 
-    const data = await response.json()
-    console.log("RESPONSE", data);
+      // Grab example response
 
-    onClose();
+      const bucket = "public/replyai-example-emails/" + classification.predicted_class;
+      const category = classification.category.substring(2, classification.category.length - 2);
+      const path = category + ".txt";
+
+      const { data: example, error } = await supabase
+        .storage
+        .from(bucket)
+        .download(path);
+
+      if (error) {
+        console.error('Error loading data');
+      } else {
+        // **Read File**
+        const reader = new FileReader();
+
+        reader.onload = async (event) => {
+          const fileContent = event.target?.result as string;
+          if (fileContent) {
+            // **Query for AI response**
+            const response = await fetch('/api/replyAI', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                coach_email: coachMessage?.content,
+                classification: genuineArray[classification.predicted_class],
+                genuine_score: (classification.score * 100),
+                category: category,
+                example_email: fileContent,
+                user_email: firstMessage?.content,
+              }),
+            });
+
+            const data = await response.json()
+            console.log("RESPONSE", data);
+          }
+        }
+
+        reader.onerror = (e) => {
+          console.error('Error loading data');
+        };
+
+        reader.readAsText(example);
+      }
+
+      onClose();
+    }
   }
 
   return (
