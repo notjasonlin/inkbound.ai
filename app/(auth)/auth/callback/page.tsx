@@ -37,7 +37,7 @@ export default function AuthCallbackPage() {
           }
 
           // Add to SendGrid contact list
-          await fetch('/api/sendgrid/welcome', {
+          await fetch('/api/sendgrid/addToContact', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
