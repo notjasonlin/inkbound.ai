@@ -61,25 +61,6 @@ export async function checkUserLimits(userId: string, action: 'template' | 'scho
   }
 }
 
-export async function incrementUsage(userId: string, usage: { [key: string]: number }) {
-  const supabase = createClientComponentClient();
-  
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    console.error('Authentication error:', authError);
-    return;
-  }
-
-  const { error } = await supabase
-    .from('user_usage')
-    .update(usage)
-    .eq('user_id', user.id);
-
-  if (error) {
-    console.error('Error fetching data', error);
-  }
-}
 
 export async function getUserUsage() {
   const supabase = createClientComponentClient();

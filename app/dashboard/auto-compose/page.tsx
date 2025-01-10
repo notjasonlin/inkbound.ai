@@ -8,7 +8,7 @@ import QueueStatus from './components/QueueStatus';
 import TemplateModal from './components/TemplateModal';
 import Sidebar from './components/Sidebar';
 import { TemplateData } from '@/types/template/index';
-import { checkUserLimits, incrementUsage } from '@/utils/checkUserLimits';
+import { checkUserLimits } from '@/utils/checkUserLimits';
 import { User } from '@supabase/supabase-js';
 import readTemplate from "@/functions/readTemplate";
 import styles from './styles/AutoCompose.module.css';
@@ -238,7 +238,6 @@ export default function AutoComposePage() {
         .from('email_queue')
         .update({ 
           status: 'sending',
-          attempts: supabase.rpc('increment_attempts', { row_id: schoolId }),
           updated_at: new Date().toISOString()
         })
         .eq('school_id', schoolId)
@@ -271,7 +270,18 @@ export default function AutoComposePage() {
         .eq('user_id', user?.id);
 
       if (user && 'id' in user) {
-        await incrementUsage(user.id, { schools_sent: 1 });
+        const { data: currentUsage } = await supabase
+          .from('user_usage')
+          .select('schools_sent')
+          .eq('user_id', user.id)
+          .single();
+
+        const newCount = (currentUsage?.schools_sent || 0) + 1;
+
+        await supabase
+          .from('user_usage')
+          .update({ schools_sent: newCount })
+          .eq('user_id', user.id);
       }
     } catch (error) {
       console.error(error);

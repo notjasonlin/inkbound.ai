@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { debounce } from 'lodash';
 import PlaceHolderModal from './PlaceHolderModal';
 import AIChatInterface from './AIChatInterface';
-import { checkUserLimits, incrementUsage, getUserUsage } from '@/utils/checkUserLimits';
+import { checkUserLimits, getUserUsage } from '@/utils/checkUserLimits';
 import TemplateChecklist from './TemplateChecklist';
 import Alert from "@/components/ui/Alert";
 import '@/styles/TemplateEditor.css';
@@ -269,8 +269,23 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
       }
 
       const data = await response.json();
-      await incrementUsage(userId, { ai_calls_used: 1 });
-      setUserUsage(prev => prev ? { ...prev, ai_calls_used: (prev.ai_calls_used || 0) + 1 } : null);
+      const { data: currentUsage } = await supabase
+        .from('user_usage')
+        .select('ai_calls_used')
+        .eq('user_id', userId)
+        .single();
+
+      const newCount = (currentUsage?.ai_calls_used || 0) + 1;
+
+      await supabase
+        .from('user_usage')
+        .update({ ai_calls_used: newCount })
+        .eq('user_id', userId);
+
+      setUserUsage(prev => prev ? { 
+        ...prev, 
+        ai_calls_used: newCount 
+      } : null);
       return data.content;
     } catch (error) {
       console.error('Error sending data', error);
