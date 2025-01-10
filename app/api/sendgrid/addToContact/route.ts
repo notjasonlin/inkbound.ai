@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { Client } from '@sendgrid/client';
 
 const client = new Client();
-client.setApiKey(process.env.SENDGRID_API_KEY!);
+client.setApiKey(process.env.NEXT_PUBLIC_SENDGRID_API_KEY!);
 
 export async function POST(req: Request) {
     try {
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
                 email,
                 first_name: firstName,
             }],
-            list_ids: [process.env.SENDGRID_LIST_ID!]
+            list_ids: [process.env.NEXT_PUBLIC_SENDGRID_LIST_ID!]
         };
 
         await client.request({

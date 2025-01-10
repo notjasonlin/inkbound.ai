@@ -36,7 +36,7 @@ export default function RecommendedSchools() {
         setUser(user);
 
         const { data, error } = await supabase
-          .from('initial_school_recs')
+          .from('AWS-reccomend_list_of_recs')
           .select('recommendations')
           .eq('user_id', user.id)
           .single();

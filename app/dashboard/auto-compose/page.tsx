@@ -8,8 +8,7 @@ import QueueStatus from './components/QueueStatus';
 import TemplateModal from './components/TemplateModal';
 import Sidebar from './components/Sidebar';
 import { TemplateData } from '@/types/template/index';
-import { motion, AnimatePresence } from 'framer-motion';
-import { checkUserLimits, incrementUsage } from '@/utils/checkUserLimits';
+import { checkUserLimits } from '@/utils/checkUserLimits';
 import { User } from '@supabase/supabase-js';
 import readTemplate from "@/functions/readTemplate";
 import styles from './styles/AutoCompose.module.css';
@@ -74,7 +73,7 @@ export default function AutoComposePage() {
             .eq('is_curr_fav', true);
 
         if (error) {
-            console.error('Error fetching personalized messages:', error);
+            console.error('Error fetching data:', error);
             return;
         }
 
@@ -98,7 +97,7 @@ export default function AutoComposePage() {
 
         setPersonalizedMessages(messagesObj);
     } catch (err) {
-        console.error('Error processing personalized messages:', err);
+        console.error('Error processing data:', err);
     }
   };
 
@@ -191,21 +190,42 @@ export default function AutoComposePage() {
   };
 
   const processQueue = async (queue: { emailData: EmailPreviewData, schoolId: string, schoolName: string }[]) => {
-    const processNextBatch = async () => {
-      if (queue.length === 0) {
-        setIsSending(false);
-        return;
+    try {
+      // First, insert all emails into the queue table for backup
+      const queueInserts = queue.map(item => ({
+        user_id: user?.id,
+        school_id: item.schoolId,
+        school_name: item.schoolName,
+        email_data: item.emailData,
+        status: 'queued'
+      }));
+
+      if (queueInserts.length > 0) {
+        supabase
+          .from('email_queue')
+          .insert(queueInserts)
+          .then(() => console.log('Data backed up'))
       }
 
-      const batch = queue.slice(0, 2);
-      queue = queue.slice(2);
+      const processNextBatch = async () => {
+        if (queue.length === 0) {
+          setIsSending(false);
+          return;
+        }
 
-      await Promise.all(batch.map(item => sendEmail(item.emailData, item.schoolId, item.schoolName)));
+        const batch = queue.slice(0, 2);
+        queue = queue.slice(2);
 
-      setTimeout(() => processNextBatch(), 1000);
-    };
+        await Promise.all(batch.map(item => sendEmail(item.emailData, item.schoolId, item.schoolName)));
 
-    await processNextBatch();
+        setTimeout(() => processNextBatch(), 1000);
+      };
+
+      await processNextBatch();
+    } catch (error) {
+      console.error('Error processing:', error);
+      setIsSending(false);
+    }
   };
 
   const sendEmail = async (emailData: EmailPreviewData, schoolId: string, schoolName: string) => {
@@ -213,6 +233,15 @@ export default function AutoComposePage() {
       setQueueStatus(prev => prev.map(item =>
         item.schoolId === schoolId ? { ...item, status: 'sending' } : item
       ));
+
+      await supabase
+        .from('email_queue')
+        .update({ 
+          status: 'sending',
+          updated_at: new Date().toISOString()
+        })
+        .eq('school_id', schoolId)
+        .eq('user_id', user?.id);
 
       const response = await fetch('/api/sendEmail', {
         method: 'POST',
@@ -222,26 +251,137 @@ export default function AutoComposePage() {
 
       if (!response.ok) throw new Error('Failed to send email');
 
+      // Update UI status
       setQueueStatus(prev => prev.map(item =>
         item.schoolId === schoolId
           ? { ...item, status: 'sent', timestamp: new Date().toISOString() }
           : item
       ));
 
+      // Update database status
+      await supabase
+        .from('email_queue')
+        .update({ 
+          status: 'sent',
+          sent_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('school_id', schoolId)
+        .eq('user_id', user?.id);
+
       if (user && 'id' in user) {
-        await incrementUsage(user.id, { schools_sent: 1 });
-      } else {
-        console.error('Error fetching data');
+        const { data: currentUsage } = await supabase
+          .from('user_usage')
+          .select('schools_sent')
+          .eq('user_id', user.id)
+          .single();
+
+        const newCount = (currentUsage?.schools_sent || 0) + 1;
+
+        await supabase
+          .from('user_usage')
+          .update({ schools_sent: newCount })
+          .eq('user_id', user.id);
       }
     } catch (error) {
       console.error(error);
+      
+      // Update UI status
       setQueueStatus(prev => prev.map(item =>
         item.schoolId === schoolId
           ? { ...item, status: 'failed', timestamp: new Date().toISOString() }
           : item
       ));
+
+      // Update database status
+      await supabase
+        .from('email_queue')
+        .update({ 
+          status: 'failed',
+          error_message: (error as Error).message,
+          updated_at: new Date().toISOString()
+        })
+        .eq('school_id', schoolId)
+        .eq('user_id', user?.id);
     }
   };
+
+  // Add this useEffect to check for and resume any interrupted queues
+  useEffect(() => {
+    const checkInterruptedQueue = async () => {
+      if (!user) return;
+
+      const { data: interruptedEmails, error } = await supabase
+        .from('email_queue')
+        .select()
+        .eq('user_id', user.id)
+        .in('status', ['queued', 'sending'])
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error:', error);
+        return;
+      }
+
+      if (interruptedEmails?.length) {
+        const shouldResume = window.confirm(
+          `Found ${interruptedEmails.length} unsent emails from a previous session. Would you like to resume sending?`
+        );
+
+        if (shouldResume) {
+          const queueToResume = interruptedEmails.map(item => ({
+            emailData: item.email_data as EmailPreviewData,
+            schoolId: item.school_id,
+            schoolName: item.school_name
+          }));
+
+          setQueueStatus(interruptedEmails.map(item => ({
+            schoolId: item.school_id,
+            schoolName: item.school_name,
+            status: 'queued',
+            timestamp: item.created_at
+          })));
+
+          setIsSending(true);
+          processQueue(queueToResume);
+        }
+      }
+    };
+
+    checkInterruptedQueue();
+  }, [user]);
+
+  useEffect(() => {
+    let isLeaving = false;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isSending && !isLeaving) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && isSending && !isLeaving) {
+        const shouldLeave = window.confirm(
+          "Emails are still being sent. Are you sure you want to leave? Your progress is saved and you can resume sending later."
+        );
+        isLeaving = shouldLeave;
+        
+        if (!shouldLeave) {
+          window.focus();
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isSending]);
 
   return (
     <div className={styles.container}>
