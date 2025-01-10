@@ -14,26 +14,28 @@ export default function DynamicTemplateList({ initialTemplates, userId }: Dynami
   const [templates, setTemplates] = useState<TemplateData[]>(initialTemplates);
   const supabase = createClient();
 
-  useEffect(() => {
-    const channel = supabase
-      .channel('table-db-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'templates' }, payload => {
-        if (payload.eventType === 'INSERT' && payload.new.user_id === userId) {
-          setTemplates(prev => [payload.new as TemplateData, ...prev]);
-        } else if (payload.eventType === 'DELETE' && payload.old.user_id === userId) {
-          setTemplates(prev => prev.filter(template => template.id !== payload.old.id));
-        } else if (payload.eventType === 'UPDATE' && payload.new.user_id === userId) {
-          setTemplates(prev => prev.map(template =>
-            template.id === payload.new.id ? payload.new as TemplateData : template
-          ));
-        }
-      })
-      .subscribe();
+  const fetchTemplates = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('templates')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [supabase, userId]);
+      if (error) throw error;
+      setTemplates(data || []);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+    }
+  }, [userId]);
+
+  // Fetch templates periodically
+  useEffect(() => {
+    fetchTemplates();
+    const interval = setInterval(fetchTemplates, 5000); // Refresh every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [fetchTemplates]);
 
   const handleDelete = useCallback(async (id: string) => {
     try {
@@ -43,33 +45,59 @@ export default function DynamicTemplateList({ initialTemplates, userId }: Dynami
         .eq('id', id);
 
       if (error) throw error;
-      setTemplates(prev => prev.filter(template => template.id !== id));
+      await fetchTemplates(); // Refresh the list after deletion
     } catch (error) {
-      console.error('Error deleting data:', error);
+      console.error('Error deleting template:', error);
     }
-  }, [supabase]);
+  }, [supabase, fetchTemplates]);
 
   const handleDuplicate = useCallback(async (templateToDuplicate: TemplateData) => {
     try {
+      // Get existing templates with similar names
+      const { data: existingTemplates, error: fetchError } = await supabase
+        .from('templates')
+        .select('title')
+        .ilike('title', `${templateToDuplicate.title}%`)
+        .order('title', { ascending: true });
+
+      if (fetchError) throw fetchError;
+
+      // Find next available copy number
+      let copyNumber = 1;
+      let newTitle = `${templateToDuplicate.title} (Copy)`;
+
+      if (existingTemplates && existingTemplates.length > 0) {
+        const copyRegex = new RegExp(`${templateToDuplicate.title} \\(Copy( (\\d+))?\\)`);
+        const usedNumbers = existingTemplates
+          .map(template => {
+            const match = template.title.match(copyRegex);
+            return match ? (match[2] ? parseInt(match[2]) : 1) : 0;
+          })
+          .filter(num => num > 0);
+
+        if (usedNumbers.length > 0) {
+          copyNumber = Math.max(...usedNumbers) + 1;
+          newTitle = `${templateToDuplicate.title} (Copy ${copyNumber})`;
+        }
+      }
+
       const duplicatedTemplate = {
         ...templateToDuplicate,
         id: undefined,
-        title: `${templateToDuplicate.title} (Copy)`,
+        title: newTitle,
         updated_at: new Date().toISOString(),
       };
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('templates')
-        .insert(duplicatedTemplate)
-        .select()
-        .single();
+        .insert(duplicatedTemplate);
 
       if (error) throw error;
-      setTemplates(prev => [data as TemplateData, ...prev]);
+      await fetchTemplates(); // Refresh the list after duplication
     } catch (error) {
-      console.error('Error duplicating data:', error);
+      console.error('Error duplicating template:', error);
     }
-  }, [supabase]);
+  }, [supabase, fetchTemplates]);
 
   return (
     <div className="min-h-screen py-8 px-6">
