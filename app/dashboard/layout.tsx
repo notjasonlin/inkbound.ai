@@ -17,6 +17,8 @@ import { Shrikhand } from "next/font/google";
 import { useEffect, useMemo, useState } from "react";
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { signout } from '../../lib/auth-actions';  // Import the signout function from your server actions
+import { Tooltip } from "@/app/components/Tooltip";
+
 
 const shrikhand = Shrikhand({ subsets: ["latin"], weight: "400" });
 
@@ -30,11 +32,42 @@ const sidebarItems = [
   { name: "Upgrade", path: "/dashboard/upgrade", icon: FaDollarSign }
 ];
 
+interface PlanBadgeProps {
+  plan: string;
+  className?: string;
+}
+
+const PlanBadge = ({ plan, className = '' }: PlanBadgeProps) => {
+  const badgeStyles = {
+    basic: "bg-gray-100 text-gray-800",
+    plus: "bg-blue-100 text-blue-800",
+    pro: "bg-yellow-100 text-yellow-800",
+    admin: "bg-purple-100 text-purple-800",
+    'basic_plan': "bg-gray-100 text-gray-800",
+    'plus_plan': "bg-blue-100 text-blue-800",
+    'pro_plan': "bg-yellow-100 text-yellow-800",
+    'Admin': "bg-purple-100 text-purple-800"
+  };
+
+  const displayName = plan.toLowerCase().replace('_plan', '');
+
+  return (
+    <Tooltip text="Usage resets every Sunday">
+      <Link href="/dashboard/upgrade">
+        <div className={`${badgeStyles[plan as keyof typeof badgeStyles]} px-3 py-1 rounded-full text-sm font-medium cursor-pointer hover:opacity-80 ${className}`}>
+          {displayName.charAt(0).toUpperCase() + displayName.slice(1)}
+        </div>
+      </Link>
+    </Tooltip>
+  );
+};
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();  // Use the Next.js router for redirection
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const supabase = createClientComponentClient();  // Initialize Supabase client
+  const [plan, setPlan] = useState<string>('basic');
 
   // Fetch the user's email on component mount
   useEffect(() => {
@@ -43,7 +76,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (error) {
         console.error('Error fetching data:', error.message);
       } else if (user) {
-        setUserEmail(user.email || '');  // Store user email
+        setUserEmail(user.email || '');
+        // Fetch user's plan from user_subscriptions
+        const { data: subscriptionData } = await supabase
+          .from('user_subscriptions')
+          .select('plan_id')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (subscriptionData) {
+          setPlan(subscriptionData.plan_id.toLowerCase());
+        } else {
+          setPlan('basic'); // Default to basic if no subscription found
+        }
       }
     };
 
@@ -104,12 +149,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Top bar with email, settings, and logout */}
         <div className="bg-white shadow-md">
           <div className="container mx-auto px-6 py-2 flex justify-between items-center">
-            {/* User email and buttons */}
+            {/* Left side: Email and Plan Badge */}
             <div className="flex items-center space-x-4">
-              {/* Display the user's email */}
               <span className="text-gray-700">{userEmail || 'Loading...'}</span>
-              
-              {/* Settings button */}
+              <PlanBadge plan={plan} />
+            </div>
+
+            {/* Right side: Inbox, Settings, and Logout */}
+            <div className="flex items-center space-x-4">
+              <Tooltip text="Inbox">
+                <Link href="/dashboard/inbox">
+                  <button className="p-2 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 transition-colors shadow-md">
+                    <FaInbox className="text-blue-600" size={20} />
+                  </button>
+                </Link>
+              </Tooltip>
+
               <Link 
                 href="/dashboard/settings"
                 className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition"
@@ -118,7 +173,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <span>Settings</span>
               </Link>
 
-              {/* Logout button */}
               <button
                 onClick={handleLogout}
                 className="flex items-center space-x-2 bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition"
@@ -127,13 +181,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <span>Log Out</span>
               </button>
             </div>
-
-            {/* Inbox icon */}
-            <Link href="/dashboard/inbox">
-              <button className="p-2 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 transition-colors shadow-md">
-                <FaInbox className="text-blue-600" size={20} />
-              </button>
-            </Link>
           </div>
         </div>
 
