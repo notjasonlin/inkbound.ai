@@ -31,7 +31,6 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
   const [lastHoveredSchool, setLastHoveredSchool] = useState<SchoolData | null>(null);
   const schoolsPerPage = 10;
 
-
   useEffect(() => {}, [schools, filteredSchools]);
 
   const filterSchools = useCallback((filters: SearchFilters) => {
@@ -67,11 +66,15 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
     const buttons = [];
     const range = 2;
 
+    const buttonClass = "px-3 py-1.5 text-sm font-medium rounded-md";
+    const activeClass = "bg-blue-600 text-white hover:bg-blue-700";
+    const inactiveClass = "bg-white text-gray-700 hover:bg-gray-50 border";
+
     buttons.push(
       <button
         key="first"
         onClick={() => handlePageChange(1)}
-        className={`px-3 py-1 rounded ${currentPage === 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+        className={`${buttonClass} ${currentPage === 1 ? activeClass : inactiveClass}`}
         disabled={currentPage === 1}
       >
         First
@@ -87,7 +90,7 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
         <button
           key={i}
           onClick={() => handlePageChange(i)}
-          className={`px-3 py-1 rounded ${currentPage === i ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+          className={`${buttonClass} ${currentPage === i ? activeClass : inactiveClass}`}
         >
           {i}
         </button>
@@ -102,7 +105,7 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
       <button
         key="last"
         onClick={() => handlePageChange(totalPages)}
-        className={`px-3 py-1 rounded ${currentPage === totalPages ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+        className={`${buttonClass} ${currentPage === totalPages ? activeClass : inactiveClass}`}
         disabled={currentPage === totalPages}
       >
         Last
@@ -183,11 +186,19 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
       <div className="flex flex-grow">
         {/* Left side: School list */}
         <div className="w-1/2 border-r overflow-hidden">
-          <div className="mt-4 flex justify-center space-x-2">
-            {renderPaginationButtons()}
+          <div className="mt-6 px-6">
+            <div className="flex justify-between items-center mb-4">
+              <p className="text-gray-600 text-sm">
+                Showing <span className="font-medium text-gray-900">{filteredSchools.length}</span> schools
+              </p>
+              <div className="flex items-center gap-2">
+                {renderPaginationButtons()}
+              </div>
+            </div>
+            <div className="border-t"></div>
           </div>
-          <p>Showing {filteredSchools.length} schools</p>
-          <div className="p-4 h-80 overflow-y-auto">
+
+          <div className="p-4">
             <ul className="space-y-2">
               {currentSchools.map((school, index) => (
                 <li
