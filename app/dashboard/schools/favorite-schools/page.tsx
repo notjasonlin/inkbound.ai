@@ -37,7 +37,7 @@ export default function FavoriteSchools() {
           .single();
 
         if (error) {
-          setError('No Schools Found');
+          setError('Add your first school to get started.');
         } else if (data && data.data) {
           const schoolsData = Array.isArray(data.data) ? data.data : [];
           setSchools(schoolsData);
