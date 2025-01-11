@@ -29,7 +29,7 @@ const FavoriteSchoolsWidget = () => {
           .single();
 
         if (error) {
-          setError("No Schools Found");
+          setError("Add your first school to get started.");
           setIsLoading(false);
           return;
         }
@@ -59,7 +59,18 @@ const FavoriteSchoolsWidget = () => {
   }
 
   if (error) {
-    return <div className="text-red-500 text-center text-xs">{error}</div>;
+    return (
+      <div className="text-center">
+        <p className="text-gray-500 text-xs mb-4">Add your first school to get started.</p>
+        <div
+          onClick={() => window.location.href = '/dashboard/schools'}
+          className="flex items-center justify-center space-x-2 text-xs font-medium text-blue-600 cursor-pointer"
+        >
+          <FaPlusCircle />
+          <span>Add New School</span>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -3,6 +3,7 @@ import { SchoolData } from '@/types/school/index';
 import { createClient } from "@/utils/supabase/client";
 import { FiChevronRight, FiChevronDown, FiMenu } from "react-icons/fi";
 import { FavoriteSchoolsData } from '@/types/favorite_schools';
+import { FaPlusCircle } from 'react-icons/fa';
 
 interface SidebarProps {
   onSelectSchools: (schools: SchoolData[]) => void;
@@ -47,7 +48,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools, setFavoriteSchools }
         .single();
 
       if (error) {
-        setError("No Schools Found");
+        setError("Add your first school to get started.");
         setIsLoading(false);
         return;
       }
@@ -151,7 +152,20 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools, setFavoriteSchools }
   };
 
   if (isLoading) return <div className="p-4 text-center">Loading...</div>;
-  if (error) return <div className="p-4 text-center text-red-600">{error}</div>;
+  if (error) {
+    return (
+      <div className="text-center text-gray-600">
+        <p className="text-gray-500 text-xs mb-4">Add your first school to get started.</p>
+        <button
+          onClick={() => window.location.href = '/dashboard/schools'}
+          className="flex items-center justify-center space-x-2 text-xs font-medium text-blue-600 cursor-pointer"
+        >
+          <FaPlusCircle />
+          <span>Add New School</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <>
