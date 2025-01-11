@@ -152,12 +152,24 @@ export default function AutoComposePage() {
   const handleSubmit = async () => {
     if (!selectedTemplate || selectedSchools.length === 0 || !user) return;
 
-    const canSendEmails = await checkUserLimits((user as any)?.id, 'school');
+    const { data: usage } = await supabase
+      .from('user_usage')
+      .select('schools_sent')
+      .eq('user_id', user.id)
+      .single();
+
+    const { data: subscription } = await supabase
+      .from('user_subscriptions')
+      .select('schools_sent_limit')
+      .eq('user_id', user.id)
+      .single();
+
+    const canSendEmails = await checkUserLimits((user as any)?.id, 'school', selectedSchools.length);
     const canUseTemplate = await checkUserLimits((user as any)?.id, 'template');
     const canUseAI = await checkUserLimits((user as any)?.id, 'aiCall');
 
     if (!canSendEmails) {
-      alert('You have reached your school limit. Please upgrade your plan to send more emails.');
+      alert(`You can only send to ${subscription?.schools_sent_limit - usage?.schools_sent} more schools this month. Please upgrade your plan or try again next week.`);
       return;
     }
 
