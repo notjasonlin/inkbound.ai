@@ -44,24 +44,18 @@ export default function SubscriptionManager({
 
   return (
     <div ref={ref} className="w-full h-full flex flex-col items-center">
-      <h1 className={`text-4xl font-bold mb-4 ${styles.title}`}>
-        Manage Your Subscription
-      </h1>
-
-      <h2 className={`text-3xl font-bold mb-6 ${styles.subtitle}`}>
-        Current Plan: {currentSubscription?.plan_name}
-      </h2>
-      
-      <div className="flex space-x-4 mb-8">
-        <button
-          onClick={onManageSubscription}
-          className="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 text-sm font-semibold transition duration-200"
-        >
-          Manage Billing
-        </button>
+      <div className="flex space-x-4">
+        {currentSubscription?.plan_id && ['plus', 'pro'].includes(currentSubscription.plan_id) && (
+          <button
+            onClick={onManageSubscription}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Manage Billing
+          </button>
+        )}
         <button
           onClick={() => setShowPlans(!showPlans)}
-          className="px-6 py-2 bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 text-sm font-semibold transition duration-200"
+          className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors"
         >
           {showPlans ? 'Hide Plans' : 'Change Plan'}
         </button>
@@ -69,7 +63,7 @@ export default function SubscriptionManager({
 
       {showPlans && (
         <>
-          <div className={`flex justify-center mb-8 bg-gray-200 rounded-full p-1 ${styles.intervalSelector}`}>
+          <div className={`flex justify-center mt-8 bg-gray-200 rounded-full p-1 ${styles.intervalSelector}`}>
             <button
               className={`px-6 py-2 rounded-full ${styles.intervalButton} ${
                 billingInterval === 'month' ? 'bg-white text-blue-600' : 'text-gray-600'
@@ -88,7 +82,7 @@ export default function SubscriptionManager({
             </button>
           </div>
 
-          <div className={`flex flex-col md:flex-row justify-center items-stretch space-y-6 md:space-y-0 md:space-x-6 px-4 mb-8 w-full ${styles.planContainer}`}>
+          <div className={`flex flex-col md:flex-row justify-center items-stretch space-y-6 md:space-y-0 md:space-x-6 px-4 mt-8 w-full ${styles.planContainer}`}>
             {availablePlans.map((plan, index) => {
               const bgColor = index === 0 ? 'bg-white' : index === 1 ? 'bg-blue-50' : 'bg-blue-100';
               const monthlyPrice = plan.name === 'Plus' ? 9 : plan.name === 'Pro' ? 29 : 0;
