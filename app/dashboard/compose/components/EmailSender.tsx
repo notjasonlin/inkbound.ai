@@ -5,7 +5,6 @@ import { debounce } from 'lodash';
 import { TemplateData } from '@/types/template';
 import readTemplate from '@/functions/readTemplate';
 import Alert from '@/components/ui/Alert';
-import { incrementUsage } from '@/utils/checkUserLimits';
 
 interface EmailSenderProps {
   school: SchoolData;
@@ -151,7 +150,18 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent, setIsOpe
 
       const { data: { user } } = await supabase.auth.getUser();
       if (user && 'id' in user) {
-        await incrementUsage(user.id, { schools_sent: 1 });
+        const { data: currentUsage } = await supabase
+        .from('user_usage')
+        .select('schools_sent')
+        .eq('user_id', user.id)
+        .single();
+      
+      const newCount = (currentUsage?.schools_sent || 0) + 1;
+      
+      await supabase
+        .from('user_usage')
+        .update({ schools_sent: newCount })
+        .eq('user_id', user.id);
       } else {
         console.error('Error fetching data');
       }

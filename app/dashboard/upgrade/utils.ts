@@ -1,5 +1,16 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 
+// Add this helper function to get next Sunday
+function getNextSunday(): Date {
+  const now = new Date();
+  const today = now.getDay(); // 0 is Sunday, 1 is Monday, etc.
+  const daysUntilSunday = 7 - today;
+  const nextSunday = new Date(now);
+  nextSunday.setDate(now.getDate() + daysUntilSunday);
+  nextSunday.setHours(0, 0, 0, 0);
+  return nextSunday;
+}
+
 export async function fetchOrCreateUserCredits(supabase: SupabaseClient, userId: string): Promise<number> {
   try {
     // First, try to get the user's credits
@@ -61,7 +72,8 @@ export async function fetchUserUsage(supabase: SupabaseClient, userId: string): 
           user_id: userId,
           ai_calls_used: 0,
           schools_sent: 0,
-          templates_used: 0
+          templates_used: 0,
+          reset_day: getNextSunday().toISOString()
         })
         .select()
         .single();
@@ -75,4 +87,10 @@ export async function fetchUserUsage(supabase: SupabaseClient, userId: string): 
     console.error('Error fetching data', error);
     return null;
   }
+}
+
+export function shouldResetUsage(resetDay: string): boolean {
+  const now = new Date();
+  const resetDate = new Date(resetDay);
+  return now >= resetDate;
 }

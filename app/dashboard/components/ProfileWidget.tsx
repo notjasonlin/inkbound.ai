@@ -30,7 +30,7 @@ const ProfileWidget: React.FC<ProfileWidgetProps> = ({ userName }) => {
         profile.stats[key] !== 0
       ).length : 0;
       const totalFields = 8;
-      setCompletion(Math.round((profileFields / totalFields) * 100));
+      setCompletion(Math.min(100, Math.round((profileFields / totalFields) * 100)));
     }
 
     fetchCompletion();
