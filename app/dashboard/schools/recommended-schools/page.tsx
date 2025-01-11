@@ -60,7 +60,7 @@ export default function RecommendedSchools() {
           .single();
 
         if (error) {
-          setError('Failed to fetch recommended schools');
+          setError('Complete your background profile to receive recommendations.');
           return;
         }
 
@@ -190,7 +190,17 @@ export default function RecommendedSchools() {
         {isLoading ? (
           <div className="text-center">Loading...</div>
         ) : error ? (
-          <div className="text-center text-red-500">{error}</div>
+          <div className="text-center">
+            <p className="mb-4">{error}</p>
+            {error.includes('Complete your background profile') && (
+              <button
+                onClick={() => router.push('/dashboard/profile/background')}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Complete Profile
+              </button>
+            )}
+          </div>
         ) : (
           <motion.div
             className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
