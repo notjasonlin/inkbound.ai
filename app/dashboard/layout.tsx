@@ -12,12 +12,14 @@ import {
   FaSignOutAlt,
   FaCog,
   FaListAlt,
+  FaQuestionCircle,
 } from "react-icons/fa";
 import { Shrikhand } from "next/font/google";
 import { useEffect, useMemo, useState } from "react";
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { signout } from '../../lib/auth-actions';  // Import the signout function from your server actions
 import { Tooltip } from "@/app/components/Tooltip";
+import OnboardingModal from '@/components/OnboardingModal';
 
 
 const shrikhand = Shrikhand({ subsets: ["latin"], weight: "400" });
@@ -68,6 +70,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const supabase = createClientComponentClient();  // Initialize Supabase client
   const [plan, setPlan] = useState<string>('basic');
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Fetch the user's email on component mount
   useEffect(() => {
@@ -93,6 +96,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
 
     fetchUserInfo();
+
+    // Check for first visit
+    const isFirstVisit = !localStorage.getItem('onboardingCompleted');
+    setShowOnboarding(isFirstVisit);
   }, [supabase]);
 
   // Determine the active sidebar item based on the pathname
@@ -115,8 +122,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   };
 
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    localStorage.setItem('onboardingCompleted', 'true');
+  };
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-blue-50 to-blue-100 text-black">
+      <OnboardingModal isOpen={showOnboarding} onClose={handleOnboardingComplete} />
+      
       {/* Sidebar for Desktop */}
       <aside className="hidden md:block w-64 bg-white shadow-lg">
         <div className="p-4">
@@ -155,7 +169,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <PlanBadge plan={plan} />
             </div>
 
-            {/* Right side: Inbox, Settings, and Logout */}
+            {/* Right side: Inbox, Instructions, Settings, and Logout */}
             <div className="flex items-center space-x-4">
               <Tooltip text="Inbox">
                 <Link href="/dashboard/inbox">
@@ -165,21 +179,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Link>
               </Tooltip>
 
-              <Link 
-                href="/dashboard/settings"
-                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition"
-              >
-                <FaCog />
-                <span>Settings</span>
-              </Link>
+              <Tooltip text="View Instructions">
+                <button 
+                  onClick={() => setShowOnboarding(true)}
+                  className="p-2 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 transition-colors shadow-md"
+                >
+                  <FaQuestionCircle className="text-blue-600" size={20} />
+                </button>
+              </Tooltip>
 
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 bg-red-500 text-white px-4 py-2 rounded-full hover:bg-red-600 transition"
-              >
-                <FaSignOutAlt />
-                <span>Log Out</span>
-              </button>
+              <Tooltip text="Settings">
+                <Link href="/dashboard/settings">
+                  <button className="p-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 transition-colors shadow-md">
+                    <FaCog className="text-white" size={20} />
+                  </button>
+                </Link>
+              </Tooltip>
+
+              <Tooltip text="Log Out">
+                <button
+                  onClick={handleLogout}
+                  className="p-2 rounded-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 transition-colors shadow-md"
+                >
+                  <FaSignOutAlt className="text-white" size={20} />
+                </button>
+              </Tooltip>
             </div>
           </div>
         </div>
