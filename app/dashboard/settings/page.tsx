@@ -7,7 +7,6 @@ import { FaArrowLeft } from 'react-icons/fa';
 import Link from 'next/link';
 
 interface UserSubscription {
-  subscription_tier: string;
   status: string;
   plan_id: string;
   plan_name: string;
@@ -16,7 +15,7 @@ interface UserSubscription {
 interface ReferralRewards {
   total_earned: number;
   currency: string;
-  next_reward_in: number; // Number of paying users needed for next reward
+  next_reward_in: number;
 }
 
 const isValidReferralCode = (code: string): boolean => {
@@ -25,11 +24,8 @@ const isValidReferralCode = (code: string): boolean => {
 
 const isPayingSubscription = (subscription: UserSubscription | null): boolean => {
   if (!subscription) return false;
-  
-  const planId = subscription.plan_id.toLowerCase();
   const isActive = subscription.status === 'active';
-  const isPaidTier = planId === 'plus' || planId === 'pro';
-  
+  const isPaidTier = subscription.plan_id === 'plus' || subscription.plan_id === 'pro';
   return isActive && isPaidTier;
 };
 
@@ -54,16 +50,14 @@ export default function SettingsPage() {
 
   const updateReferralPayingStatus = async (userId: string) => {
     try {
-      // Get user's subscription status
       const { data: subscription } = await supabase
         .from('user_subscriptions')
-        .select('subscription_tier, status, plan_id, plan_name')
+        .select('status, plan_id, plan_name')
         .eq('user_id', userId)
         .single();
 
       const isPaying = isPayingSubscription(subscription);
 
-      // Get user's used referral code
       const { data: referralUsage } = await supabase
         .from('referral_usage')
         .select('used_referral_code')
@@ -71,27 +65,37 @@ export default function SettingsPage() {
         .single();
 
       if (referralUsage) {
-        // Update the user's paying status in referral_usage
-        await supabase
+        const { error: updateError } = await supabase
           .from('referral_usage')
           .update({ is_paying: isPaying })
-          .eq('user_id', userId);
+          .eq('user_id', userId)
+          .select();
 
-        // Count total paying users for this referral code
-        const { count } = await supabase
+        if (updateError) {
+          throw new Error('Error updating data');
+        }
+
+        const { count: payingCount, error: countError } = await supabase
           .from('referral_usage')
           .select('*', { count: 'exact', head: true })
           .eq('used_referral_code', referralUsage.used_referral_code)
           .eq('is_paying', true);
 
-        // Update the paying_users_count for the referral code
-        await supabase
+        if (countError) {
+          throw new Error('Error fetching data');
+        }
+
+        const { error: updateCodeError } = await supabase
           .from('referral_codes')
-          .update({ paying_users_count: count || 0 })
+          .update({ paying_users_count: payingCount || 0 })
           .eq('referral_code', referralUsage.used_referral_code);
+
+        if (updateCodeError) {
+          throw new Error('Error updating data');
+        }
       }
     } catch (error) {
-      console.error('Error updating referral paying status:', error);
+      console.error('Error fetching data:', error instanceof Error ? error.message : 'Unknown error');
     }
   };
 
@@ -103,11 +107,9 @@ export default function SettingsPage() {
       }
     };
 
-    // Check immediately
     checkSubscription();
 
-    // Set up interval to check periodically (e.g., every 5 minutes)
-    const interval = setInterval(checkSubscription, 5 * 60 * 1000);
+    const interval = setInterval(checkSubscription, 60 * 1000);
 
     return () => clearInterval(interval);
   }, []);
@@ -128,8 +130,8 @@ export default function SettingsPage() {
     if (referralData) {
       setUserReferralCode(referralData.referral_code);
       const payingUsers = referralData.paying_users_count;
-      const rewardsEarned = Math.floor(payingUsers / 5) * 5; // $5 for every 5 paying users
-      const nextRewardIn = 5 - (payingUsers % 5); // Users needed for next reward
+      const rewardsEarned = Math.floor(payingUsers / 5) * 5; 
+      const nextRewardIn = 5 - (payingUsers % 5); 
       
       setReferralStats({
         total_users: referralData.used_by_count,
@@ -143,7 +145,6 @@ export default function SettingsPage() {
       });
     }
 
-    // Check if user has used a referral code
     const { data: usageData } = await supabase
       .from('referral_usage')
       .select('used_referral_code')
@@ -162,12 +163,12 @@ export default function SettingsPage() {
 
     const trimmedCode = referralCode.trim();
     if (!trimmedCode) {
-      setError('Please enter a referral code');
+      setError('Please enter data');
       return;
     }
 
     if (!isValidReferralCode(trimmedCode)) {
-      setError('Referral code can only contain letters and numbers');
+      setError('Invalid data format');
       return;
     }
 
@@ -177,7 +178,6 @@ export default function SettingsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Check if user has already used a referral code
       const { data: existingUsage } = await supabase
         .from('referral_usage')
         .select('used_referral_code')
@@ -185,7 +185,7 @@ export default function SettingsPage() {
         .single();
 
       if (existingUsage) {
-        setError(`You have already used referral code: ${existingUsage.used_referral_code}. This cannot be changed.`);
+        setError('Data already exists');
         setAppliedCode(existingUsage.used_referral_code);
         return;
       }
@@ -198,17 +198,15 @@ export default function SettingsPage() {
         .single();
 
       if (!referralExists) {
-        setError('This referral code does not exist. Please check and try again.');
+        setError('Data not found');
         return;
       }
 
-      // Use the exact case from the database
       const exactCode = referralExists.referral_code;
 
-      // Rest of the code using exactCode instead of normalizedCode
       const { data: subscription } = await supabase
         .from('user_subscriptions')
-        .select('subscription_tier, status, plan_id, plan_name')
+        .select('status, plan_id, plan_name')
         .eq('user_id', user.id)
         .single();
 
@@ -224,16 +222,32 @@ export default function SettingsPage() {
 
       if (usageError) throw usageError;
 
-      await supabase.rpc('increment_referral_usage', {
-        code: exactCode,
-        is_paying: isPaying
-      });
+      const { count: totalCount } = await supabase
+        .from('referral_usage')
+        .select('*', { count: 'exact', head: true })
+        .eq('used_referral_code', exactCode);
+
+      const { count: payingCount } = await supabase
+        .from('referral_usage')
+        .select('*', { count: 'exact', head: true })
+        .eq('used_referral_code', exactCode)
+        .eq('is_paying', true);
+
+      await supabase
+        .from('referral_codes')
+        .update({ 
+          used_by_count: totalCount || 0,
+          paying_users_count: payingCount || 0
+        })
+        .eq('referral_code', exactCode);
 
       setAppliedCode(exactCode);
       setSuccess('Referral code applied successfully!');
       setReferralCode('');
+      
+      fetchUserReferralInfo();
     } catch (error) {
-      setError('Failed to apply referral code');
+      setError('Error processing data');
       console.error(error);
     }
   };
@@ -244,18 +258,16 @@ export default function SettingsPage() {
     setSuccess('');
 
     if (!isValidReferralCode(newReferralCode)) {
-      setError('Referral code can only contain letters and numbers');
+      setError('Invalid data format');
       return;
     }
 
-    // Convert to lowercase after validation
     const normalizedCode = newReferralCode.toLowerCase();
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Check if code already exists (case insensitive)
       const { data: existingCode } = await supabase
         .from('referral_codes')
         .select('id')
@@ -263,16 +275,15 @@ export default function SettingsPage() {
         .single();
 
       if (existingCode) {
-        setError('This referral code is already taken');
+        setError('Data already exists');
         return;
       }
 
-      // Create new referral code
       const { error: createError } = await supabase
         .from('referral_codes')
         .insert({
           user_id: user.id,
-          referral_code: normalizedCode // Store in lowercase
+          referral_code: normalizedCode 
         });
 
       if (createError) throw createError;
@@ -281,7 +292,7 @@ export default function SettingsPage() {
       setUserReferralCode(normalizedCode);
       setNewReferralCode('');
     } catch (error) {
-      setError('Failed to create referral code');
+      setError('Error processing data');
       console.error(error);
     }
   };
