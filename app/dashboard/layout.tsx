@@ -110,10 +110,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <span className="text-gray-700">{userEmail || 'Loading...'}</span>
               
               {/* Settings button */}
-              <button className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition">
+              <Link 
+                href="/dashboard/settings"
+                className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 transition"
+              >
                 <FaCog />
                 <span>Settings</span>
-              </button>
+              </Link>
 
               {/* Logout button */}
               <button
