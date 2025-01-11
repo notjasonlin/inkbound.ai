@@ -1,7 +1,12 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Plan, plans } from '../app/dashboard/upgrade/constants';
 
-export async function checkUserLimits(userId: string, action: 'template' | 'school' | 'aiCall'): Promise<boolean> {
+interface LimitCheckResult {
+  allowed: boolean;
+  remaining?: number;
+}
+
+export async function checkUserLimits(userId: string, action: 'template' | 'school' | 'aiCall', batchSize?: number): Promise<boolean> {
   const supabase = createClientComponentClient();
   
   const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -51,6 +56,9 @@ export async function checkUserLimits(userId: string, action: 'template' | 'scho
 
   switch (action) {
     case 'school':
+      if (batchSize) {
+        return (usage.schools_sent + batchSize) <= subscription.schools_sent_limit;
+      }
       return usage.schools_sent < subscription.schools_sent_limit;
     case 'template':
       return usage.templates_used < subscription.template_limit;
