@@ -20,6 +20,8 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { signout } from '../../lib/auth-actions';  // Import the signout function from your server actions
 import { Tooltip } from "@/app/components/Tooltip";
 import OnboardingModal from '@/components/OnboardingModal';
+import InstructionsModal from "@/app/components/InstructionsModal";
+import { InstructionsProvider, useInstructions } from "@/app/contexts/InstructionsContext";
 
 
 const shrikhand = Shrikhand({ subsets: ["latin"], weight: "400" });
@@ -64,13 +66,14 @@ const PlanBadge = ({ plan, className = '' }: PlanBadgeProps) => {
   );
 };
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();  // Use the Next.js router for redirection
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const supabase = createClientComponentClient();  // Initialize Supabase client
   const [plan, setPlan] = useState<string>('basic');
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const { setShowInstructions } = useInstructions();
 
   // Fetch the user's email on component mount
   useEffect(() => {
@@ -97,10 +100,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     fetchUserInfo();
 
-    // Check for first visit
-    const isFirstVisit = !localStorage.getItem('onboardingCompleted');
-    setShowOnboarding(isFirstVisit);
-  }, [supabase]);
+    // Check for first visit only on dashboard page
+    if (pathname === '/dashboard') {
+      const isFirstVisit = !localStorage.getItem('onboardingCompleted');
+      setShowOnboarding(isFirstVisit);
+    }
+  }, [supabase, pathname]);
 
   // Determine the active sidebar item based on the pathname
   const activeItemName = useMemo(() => {
@@ -129,6 +134,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-blue-50 to-blue-100 text-black">
+      <InstructionsModal />
       <OnboardingModal isOpen={showOnboarding} onClose={handleOnboardingComplete} />
       
       {/* Sidebar for Desktop */}
@@ -181,7 +187,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
               <Tooltip text="View Instructions">
                 <button 
-                  onClick={() => setShowOnboarding(true)}
+                  onClick={() => setShowInstructions(true)}
                   className="p-2 rounded-full bg-gradient-to-r from-blue-100 to-blue-200 hover:from-blue-200 hover:to-blue-300 transition-colors shadow-md"
                 >
                   <FaQuestionCircle className="text-blue-600" size={20} />
@@ -230,5 +236,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </nav>
     </div>
+  );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <InstructionsProvider>
+      <DashboardContent>{children}</DashboardContent>
+    </InstructionsProvider>
   );
 }
