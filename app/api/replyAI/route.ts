@@ -33,7 +33,7 @@ export async function POST(req: Request) {
         const closingContent = `In the style of my writing, can you help me draft a response to this coach?\n(Only send the body of the email and nothing else. Do not send "Dear coach" or a sign-off. Include newline characters only where you see fit)`;
 
         const prompt = coachContent + classificationContent + userContent + exampleContent + closingContent;
-        console.log(prompt);
+        // console.log(prompt);
         const completion = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
