@@ -1,15 +1,14 @@
 import { getSchool } from '@/utils/supabase/client';
 import { createClient } from "@/utils/supabase/server";
 import { SchoolData } from '@/types/school/index';
-import FavoritesProvider from './components/FavoritesProvider';
 import SchoolContent from './components/SchoolContent';
 
 type SchoolPageProps = {
-  params: Promise<{ school: string }>; // CHANGED THIS TO SATISFY NEXT.JS ESLinter
+  params: Promise<{ school: string }>;
 };
 
 export default async function SchoolPage({ params }: SchoolPageProps) {
-  const { school } = await params; // Await params to resolve the promise immediately
+  const { school } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   
@@ -32,14 +31,9 @@ export default async function SchoolPage({ params }: SchoolPageProps) {
     );
   }
 
-  const sanitizedSchoolData = {
-    ...schoolData,
-    biography: null  // Set biography to null by default
-  };
-
   return (
-    <FavoritesProvider userId={user.id}>
-      <SchoolContent schoolData={sanitizedSchoolData} userID={user.id} />
-    </FavoritesProvider>
+    <>
+      <SchoolContent schoolData={schoolData} userID={user.id} />
+    </>
   );
 }

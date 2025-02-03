@@ -32,7 +32,6 @@ export default function Home() {
       />
       <Navbar />
       <main 
-        className="w-full px-4 md:px-12 lg:px-10 text-center bg-gradient-to-r from-blue-100 to-babyblue-300"
         nonce={nonce}
       >
         <Hero/>

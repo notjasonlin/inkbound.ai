@@ -6,6 +6,7 @@ import { UserProvider } from "@/components/UserContext";
 import { headers } from 'next/headers';
 import Script from 'next/script';
 import { NonceProvider } from '@/context/NonceContext';
+import { Toast } from 'flowbite-react';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -28,6 +29,9 @@ function RootLayoutInner({
           <UserProvider>
             {children}
           </UserProvider>
+          <div id="toast-container" className="fixed bottom-5 right-5 z-50">
+            {/* Toasts will be rendered here dynamically */}
+          </div>
         </NonceProvider>
       </body>
     </html>

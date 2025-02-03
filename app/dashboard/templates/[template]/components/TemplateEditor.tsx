@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { debounce } from 'lodash';
 import PlaceHolderModal from './PlaceHolderModal';
 import AIChatInterface from './AIChatInterface';
-import { checkUserLimits, incrementUsage, getUserUsage } from '@/utils/checkUserLimits';
+import { checkUserLimits, getUserUsage } from '@/utils/checkUserLimits';
 import TemplateChecklist from './TemplateChecklist';
 import Alert from "@/components/ui/Alert";
 import '@/styles/TemplateEditor.css';
@@ -20,20 +20,16 @@ interface Template {
   };
 }
 
-const placeholders = [
-  { label: 'School Name', value: '[schoolName]' },
-  { label: 'Coach', value: '[coachLastName]' }
-];
-
 export default function TemplateEditor({ templateTitle }: { templateTitle: string; }) {
   const [template, setTemplate] = useState<Template | null>(null);
   const [title, setTitle] = useState(templateTitle);
   const [itemTitle, setItemTitle] = useState("");
   const [itemContent, setItemContent] = useState("");
+  const [updateItemTrigger, setUpdateItemTrigger] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectPlaceHolder, setSelectPlaceHolder] = useState<boolean>(false);
   const [placeHolder, setPlaceHolder] = useState<string>("");
-  const [updateTrigger, setUpdateTrigger] = useState<boolean>(false);
+  const [updatePHTrigger, setupdatePHTrigger] = useState<boolean>(false);
   const [modalPosition, setModalPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const [selectedText, setSelectedText] = useState('');
   const [showAIHelper, setShowAIHelper] = useState(false);
@@ -76,9 +72,10 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
       const { selectionStart, selectionEnd } = editorRef.current;
       const newText = itemContent.substring(0, selectionStart - 1) + placeHolder + itemContent.substring(selectionEnd);
       updateContent(newText);
+      setUpdateItemTrigger(!updateItemTrigger);
       setPlaceHolder("");
     }
-  }, [updateTrigger]);
+  }, [updatePHTrigger]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -136,11 +133,14 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     ai_call_limit: number;
   } | null>(null);
 
+
+  // **Debounced Save**
   const saveTemplate = useCallback(async (newTitle: string, newItemTitle: string, newItemContent: string) => {
     if (isUpdatingRef.current || !userId || !template?.id) return;
     isUpdatingRef.current = true;
     setError(null);
     const supabase = createClient();
+
     try {
       const { error } = await supabase
         .from('templates')
@@ -148,7 +148,8 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
           title: newTitle,
           content: {
             title: newItemTitle,
-            content: newItemContent
+            content: newItemContent,
+            personalizedMessage: newItemContent.includes("[personalizedMessage]"),
           }
         })
         .eq('id', template.id)
@@ -170,7 +171,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
 
   useEffect(() => {
     debouncedSave(title, itemTitle, itemContent);
-  }, [title, itemTitle, itemContent, debouncedSave]);
+  }, [updateItemTrigger]);
 
   useEffect(() => {
     const fetchUsage = async () => {
@@ -210,9 +211,6 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     }
   }, [historyIndex, history]);
 
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    updateContent(e.target.value);
-  };
 
   const handleTextSelection = () => {
     if (editorRef.current) {
@@ -250,6 +248,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     setSuggestions([]);
   };
 
+
   const handleSendMessageToAI = async (message: string) => {
     if (!userId) return 'User not authenticated';
 
@@ -262,7 +261,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: message, placeholders }),
+        body: JSON.stringify({ prompt: message, placeHolder }),
       });
 
       if (!response.ok) {
@@ -270,8 +269,23 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
       }
 
       const data = await response.json();
-      await incrementUsage(userId, { ai_calls_used: 1 });
-      setUserUsage(prev => prev ? { ...prev, ai_calls_used: (prev.ai_calls_used || 0) + 1 } : null);
+      const { data: currentUsage } = await supabase
+        .from('user_usage')
+        .select('ai_calls_used')
+        .eq('user_id', userId)
+        .single();
+
+      const newCount = (currentUsage?.ai_calls_used || 0) + 1;
+
+      await supabase
+        .from('user_usage')
+        .update({ ai_calls_used: newCount })
+        .eq('user_id', userId);
+
+      setUserUsage(prev => prev ? { 
+        ...prev, 
+        ai_calls_used: newCount 
+      } : null);
       return data.content;
     } catch (error) {
       console.error('Error sending data', error);
@@ -279,7 +293,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
     }
   };
 
-  return (
+return (
     <div className="w-full min-h-screen bg-white">
       {loading || !userId ? (
         <div className="flex justify-center items-center h-96">
@@ -292,7 +306,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
               isOpen={true}
               onClose={() => setSelectPlaceHolder(false)}
               setPlaceHolder={setPlaceHolder}
-              trigger={() => setUpdateTrigger(!updateTrigger)}
+              trigger={() => setupdatePHTrigger(!updatePHTrigger)}
               position={modalPosition}
             />
           )}
@@ -300,9 +314,9 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
           {alert && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
               <Alert
-                header={"Mandatory Placeholders Missing!"}
-                message={"Are you sure you want to exit without these placeholders?"}
-                type={"warning"}
+                header="Mandatory Placeholders Missing!"
+                message="Are you sure you want to exit without these placeholders?"
+                type="warning"
                 onClose={() => setAlert(false)}
                 onConfirm={() => router.back()}
               />
@@ -326,7 +340,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
-                <path fillRule="evenodd" d="M9.707 16.707a1 1 ... " clipRule="evenodd" />
+                <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
               </svg>
               Back
             </button>
@@ -343,14 +357,13 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
             <div className="lg:col-span-1 space-y-6">
               <TemplateChecklist
                 title="Mandatory"
-                placeholders={["[coachLastName]", "[schoolName]"]}
+                placeholders={[
+                  "[coachLastName]",
+                  "[schoolName]",
+                  "[personalizedMessage]"
+                ]}
                 content={itemContent}
                 setAllMandatory={setAllMandatory}
-              />
-              <TemplateChecklist
-                title="Optional"
-                placeholders={["[studentFullName]", "[studentFirstName]", "[studentLastName]"]}
-                content={itemContent}
               />
             </div>
 
@@ -369,7 +382,7 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                     type="text"
                     value={itemTitle}
                     onChange={(e) => setItemTitle(e.target.value)}
-                    placeholder="Item Title"
+                    placeholder="Subject Line"
                     className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <div className="space-x-2 flex-shrink-0">
@@ -391,15 +404,17 @@ export default function TemplateEditor({ templateTitle }: { templateTitle: strin
                 <textarea
                   ref={editorRef}
                   value={itemContent}
-                  onChange={handleInput}
+                  onChange={(e) => {
+                    updateContent(e.target.value);
+                    setUpdateItemTrigger(!updateItemTrigger);
+                  }}
                   onSelect={handleTextSelection}
                   className="w-full h-48 border border-gray-300 rounded-md px-3 py-2 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Type your template content here..."
+                  placeholder="Type your email body here. Use placeholders to add dynamic content.               Example: Dear [coachLastName], I hope this message finds you well. I am reaching out to discuss the upcoming [schoolName] tryouts. [personalizedMessage] Best regards, Jason"
                 />
 
                 {error && <div className="text-red-600 text-sm font-medium">{error}</div>}
               </div>
-
               {showAIChat && (
                 <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 space-y-4">
                   <h2 className="text-xl font-bold text-gray-900">AI Chat</h2>

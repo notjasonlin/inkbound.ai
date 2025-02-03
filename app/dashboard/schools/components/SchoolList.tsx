@@ -87,6 +87,10 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
     const buttons = [];
     const range = 2;
 
+    const buttonClass = "px-3 py-1.5 text-sm font-medium rounded-md";
+    const activeClass = "bg-blue-600 text-white hover:bg-blue-700";
+    const inactiveClass = "bg-white text-gray-700 hover:bg-gray-50 border";
+
     if (totalPages > 1) {
       if (currentPage > 1) {
         buttons.push(
@@ -135,7 +139,7 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Top Row: Search, Filters, Browse Title, and Pagination */}
-      <div className="p-6 bg-white shadow-sm sticky top-0 z-10 flex items-center justify-between">
+      <div className="p-6 bg-white shadow-lg sticky top-0 z-10 flex items-center justify-between">
         <h2 className="text-lg font-bold text-gray-800">Browse Schools</h2>
         <div className="flex space-x-2">{renderPaginationButtons()}</div>
         <SearchBar onSearch={filterSchools} />
@@ -162,7 +166,7 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
                     <img
                       src={logoUrls[school.school]}
                       alt={school.school}
-                      className="w-16 h-16 object-contain rounded-full shadow-md group-hover:scale-105 transition-transform"
+                      className="w-16 h-16 object-contain rounded-full shadow-lg group-hover:scale-105 transition-transform"
                     />
                   ) : (
                     <div className="w-16 h-16 bg-gray-300 animate-pulse rounded-full" />
@@ -180,8 +184,7 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
                   <p className="text-sm text-gray-500">{school.state}</p>
                 </div>
 
-                {/* Favorite Button */}
-                <div className="absolute top-2 right-2">
+                <div className="absolute top-2.5 left-1/2 transform -translate-x-1/2 -translate-y-2">
                   <FavoriteButton school={school} userId={userID} size="text-2xl" />
                 </div>
               </div>
@@ -190,7 +193,7 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
         </div>
 
         {/* Right: School Preview */}
-        <div className="w-full md:w-1/3 bg-white rounded-lg shadow-md border border-gray-200 p-6 flex-grow">
+        <div className="w-full md:w-1/3 bg-white rounded-lg shadow-lg border border-gray-200 p-6 flex-grow">
           {lastHoveredSchool ? (
             <SchoolPreview school={hoveredSchool || lastHoveredSchool} lastHoveredSchool={null} />
           ) : (

@@ -41,7 +41,7 @@ export default function FavoriteSchoolsWidget() {
           .single();
 
         if (error) {
-          setError("Failed to fetch favorite schools");
+          setError("Add your first school to get started.");
           setIsLoading(false);
           return;
         }

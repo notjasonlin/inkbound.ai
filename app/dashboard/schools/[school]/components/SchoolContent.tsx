@@ -48,138 +48,212 @@ export default function SchoolContent({ schoolData, userID }: SchoolContentProps
     );
   }
 
-  const isBiographyDataValid = (bio: any) => {
-    try {
-      return (
-        bio &&
-        typeof bio === 'object' &&
-        Object.keys(bio).length > 0 &&
-        (bio.undergraduates || bio.sat || bio.act || bio.cost)
-      );
-    } catch (error) {
-      return false;
-    }
-  };
+  // Debug logging
+
+
+  // Function to safely check biography data
+  // const isBiographyDataValid = (bio: any) => {
+  //   try {
+  //     return bio && 
+  //            typeof bio === 'object' && 
+  //            Object.keys(bio).length > 0 &&
+  //            (bio.undergraduates || bio.sat || bio.act || bio.cost);
+  //   } catch (error) {
+  //     console.error('Biography validation error:', error);
+  //     return false;
+  //   }
+  // };
+
+  // console.log('School Biography Data:', {
+  //   hasBiography: !!schoolData.biography,
+  //   biography: schoolData.biography,
+  //   validationResult: isBiographyDataValid(schoolData.biography)
+  // });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
-      <div className="max-w-6xl mx-auto p-6 space-y-8">
-        {/* Back Button */}
-        <div className="flex items-center">
-          <Link href="/dashboard/schools" className="flex items-center text-blue-600 hover:text-blue-800">
-            <FiArrowLeft size={20} />
-            <span className="ml-2 font-medium">Back to Schools</span>
-          </Link>
+    <div className="max-w-4xl mx-auto p-6 space-y-8">
+      {/* School Header Section */}
+      <div className="bg-white shadow-md rounded-lg p-6">
+        <div className="flex items-center justify-center space-x-2 mb-6">
+          <h1 className="text-3xl font-bold text-center">{schoolData.school}</h1>
+          <FavoriteButton school={schoolData} userId={userID} />
         </div>
 
-        {/* School Header */}
-        <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col md:flex-row justify-between items-center md:space-x-8">
-          <div className="flex items-center space-x-4">
-            {logoUrl && (
-              <img
-                src={logoUrl}
-                alt={`${schoolData.school} Logo`}
-                className="w-20 h-20 rounded-full object-contain shadow-md"
-              />
-            )}
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">{schoolData.school}</h1>
-              <div className="mt-2 grid grid-cols-3 gap-4 text-center md:text-left">
-                <div>
-                  <p className="font-semibold text-gray-600">Division</p>
-                  <p className="text-gray-800">{schoolData.division || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-600">State</p>
-                  <p className="text-gray-800">{schoolData.state || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-600">Conference</p>
-                  <p className="text-gray-800">{schoolData.conference || 'N/A'}</p>
-                </div>
-              </div>
-            </div>
+        <div className="grid grid-cols-3 gap-6 text-center">
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <p className="font-semibold text-gray-700 mb-2">Division</p>
+            <p className="text-gray-900">{schoolData.division}</p>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <p className="font-semibold text-gray-700 mb-2">State</p>
+            <p className="text-gray-900">{schoolData.state}</p>
+          </div>
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <p className="font-semibold text-gray-700 mb-2">Conference</p>
+            <p className="text-gray-900">{schoolData.conference}</p>
           </div>
           <FavoriteButton school={schoolData} userId={userID} size="text-2xl" />
         </div>
 
-        {/* Coaches Section */}
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-gray-800">Coaches</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {schoolData.coaches.map((coach: CoachData) => (
-              <div key={coach.email} className="bg-white shadow-md rounded-lg p-6">
-                <h3 className="text-xl font-semibold text-gray-800">{coach.name}</h3>
-                <table className="w-full mt-2">
-                  <tbody>
-                    <tr>
-                      <td className="font-medium text-gray-600 pr-4">Position:</td>
-                      <td className="text-gray-800">{coach.position}</td>
-                    </tr>
-                    <tr>
-                      <td className="font-medium text-gray-600 pr-4">Email:</td>
-                      <td>
-                        <a
-                          href={`mailto:${coach.email}`}
-                          className="text-blue-600 hover:underline"
-                        >
-                          {coach.email}
-                        </a>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+      {/* Coaches Section */}
+      <div className="bg-white shadow-md rounded-lg p-6">
+        <h2 className="text-2xl font-bold mb-6 text-gray-900">Coaches</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {schoolData.coaches.map((coach: CoachData) => (
+            <div key={coach.email} className="bg-gray-50 rounded-lg p-6">
+              <h3 className="text-xl font-semibold mb-4 text-gray-900">{coach.name}</h3>
+              <div className="space-y-3">
+                <p className="text-gray-700">
+                  <span className="font-medium">Position:</span> {coach.position}
+                </p>
+                <p className="text-gray-700">
+                  <span className="font-medium">Email:</span>{' '}
+                  <a href={`mailto:${coach.email}`} className="text-blue-600 hover:underline">
+                    {coach.email}
+                  </a>
+                </p>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* School Biography Section */}
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">School Details</h2>
-          {isBiographyDataValid(schoolData.biography) ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-gray-800">
-              {schoolData.biography?.undergraduates && (
-                <p>
-                  <span className="font-semibold">Undergraduates:</span> {schoolData.biography.undergraduates}
-                </p>
-              )}
-              {schoolData.biography?.early_action && (
-                <p>
-                  <span className="font-semibold">Early Action:</span> {schoolData.biography.early_action}
-                </p>
-              )}
-              {schoolData.biography?.early_decision && (
-                <p>
-                  <span className="font-semibold">Early Decision:</span> {schoolData.biography.early_decision}
-                </p>
-              )}
-              {schoolData.biography?.sat && (
-                <p>
-                  <span className="font-semibold">SAT Total:</span> {schoolData.biography.sat}
-                </p>
-              )}
-              {schoolData.biography?.act && (
-                <p>
-                  <span className="font-semibold">ACT:</span> {schoolData.biography.act}
-                </p>
-              )}
-              {schoolData.biography?.cost && (
-                <p>
-                  <span className="font-semibold">Cost:</span> ${schoolData.biography.cost}
-                </p>
-              )}
             </div>
-          ) : (
+          ))}
+        </div>
+      </div>
+
+      {/* School Biography Section */}
+      <div className="bg-white shadow-md rounded-lg p-6">
+        <h2 className="text-2xl font-bold mb-6 text-gray-900">School Details</h2>
+        {(schoolData.biography) ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {schoolData.biography?.undergraduates && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  <span className="font-medium">Undergraduates:</span>{' '}
+                  <span className="text-gray-900">{schoolData.biography.undergraduates}</span>
+                </p>
+              </div>
+            )}
+            {schoolData.biography?.early_action && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  <span className="font-medium">Early Action:</span>{' '}
+                  <span className="text-gray-900">{schoolData.biography.early_action}</span>
+                </p>
+              </div>
+            )}
+            {schoolData.biography?.early_decision && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  <span className="font-medium">Early Decision:</span>{' '}
+                  <span className="text-gray-900">{schoolData.biography.early_decision}</span>
+                </p>
+              </div>
+            )}
+            {schoolData.biography?.reg_admission_deadline && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  <span className="font-medium">Regular Admission Deadline:</span>{' '}
+                  <span className="text-gray-900">{schoolData.biography.reg_admission_deadline}</span>
+                </p>
+              </div>
+            )}
+            {schoolData.biography?.sat_math && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  <span className="font-medium">SAT Math:</span>{' '}
+                  <span className="text-gray-900">{schoolData.biography.sat_math}</span>
+                </p>
+              </div>
+            )}
+            {schoolData.biography?.sat_ebrw && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  <span className="font-medium">SAT EBRW:</span>{' '}
+                  <span className="text-gray-900">{schoolData.biography.sat_ebrw}</span>
+                </p>
+              </div>
+            )}
+            {schoolData.biography?.sat && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  <span className="font-medium">SAT Total:</span>{' '}
+                  <span className="text-gray-900">{schoolData.biography.sat}</span>
+                </p>
+              </div>
+            )}
+            {schoolData.biography?.act && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  <span className="font-medium">ACT:</span>{' '}
+                  <span className="text-gray-900">{schoolData.biography.act}</span>
+                </p>
+              </div>
+            )}
+            {schoolData.biography?.cost && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  <span className="font-medium">Cost:</span>{' '}
+                  <span className="text-gray-900">${schoolData.biography.cost}</span>
+                </p>
+              </div>
+            )}
+            {schoolData.biography?.need_met && schoolData.biography.need_met && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  <span className="font-medium">Financial Need Met:</span>{' '}
+                  <span className="text-gray-900">{parseInt(schoolData.biography.need_met) * 100}%</span>
+                </p>
+              </div>
+            )}
+            {schoolData.biography?.academic_calendar && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  <span className="font-medium">Academic Calendar:</span>{' '}
+                  <span className="text-gray-900">{schoolData.biography.academic_calendar}</span>
+                </p>
+              </div>
+            )}
+            {schoolData.biography?.gen_ed_req && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  <span className="font-medium">General Education Requirements:</span>{' '}
+                  <span className="text-gray-900">{schoolData.biography.gen_ed_req}</span>
+                </p>
+              </div>
+            )}
+            {schoolData.biography?.nearest_metro && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  <span className="font-medium">Nearest Metro Area:</span>{' '}
+                  <span className="text-gray-900">{schoolData.biography.nearest_metro}</span>
+                </p>
+              </div>
+            )}
+            {schoolData.biography?.freshman_housing && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  <span className="font-medium">Freshman Housing:</span>{' '}
+                  <span className="text-gray-900">{schoolData.biography.freshman_housing}</span>
+                </p>
+              </div>
+            )}
+            {schoolData.biography?.gpa && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-gray-700">
+                  <span className="font-medium">GPA:</span>{' '}
+                  <span className="text-gray-900">{schoolData.biography.gpa}</span>
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center p-6 bg-gray-50 rounded-lg">
             <p className="text-gray-600">
               We're currently gathering detailed information about this school.{' '}
               <a href="/support" className="text-blue-600 hover:underline">
-                Submit a ticket
-              </a>{' '}
-              if you'd like to be notified when it's available.
+                Help us improve our database
+              </a>
             </p>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { SchoolData } from '@/types/school/index';
 import { createClient } from "@/utils/supabase/client";
 import { FiSearch } from "react-icons/fi";
+import { FaPlusCircle } from "react-icons/fa";
 
 interface SchoolSelectorProps {
   onSelectSchool: (school: School) => void;
@@ -80,7 +81,7 @@ const SchoolSelector: React.FC<SchoolSelectorProps> = ({ onSelectSchool }) => {
           .single();
 
         if (error) {
-          setError("Failed to fetch schools");
+          setError("Add your first school to get started.");
           setIsLoading(false);
           return;
         }
@@ -218,7 +219,16 @@ const SchoolSelector: React.FC<SchoolSelectorProps> = ({ onSelectSchool }) => {
       {isLoading ? (
         <div className="text-center text-gray-600">Loading schools...</div>
       ) : error ? (
-        <div className="text-center text-red-600">{error}</div>
+        <div className="text-center text-gray-600">
+          <p className="text-gray-500 text-xs mb-4">Add your first school to get started.</p>
+          <button
+            onClick={() => window.location.href = '/dashboard/schools'}
+            className="flex items-center justify-center space-x-2 text-xs font-medium text-blue-600 cursor-pointer"
+          >
+            <FaPlusCircle />
+            <span>Add New School</span>
+          </button>
+        </div>
       ) : filteredSchools.length > 0 ? (
         <ul className="divide-y divide-gray-200 flex-1 overflow-y-auto">
           {filteredSchools.map((school) => (
@@ -241,7 +251,16 @@ const SchoolSelector: React.FC<SchoolSelectorProps> = ({ onSelectSchool }) => {
           ))}
         </ul>
       ) : (
-        <div className="text-center text-gray-600">No schools found.</div>
+        <div className="text-center text-gray-600">
+          <p className="text-gray-500 text-xs mb-4">Add your first school to get started.</p>
+          <button
+            onClick={() => window.location.href = '/dashboard/schools'}
+            className="flex items-center justify-center space-x-2 text-xs font-medium text-blue-600 cursor-pointer"
+          >
+            <FaPlusCircle />
+            <span>Add New School</span>
+          </button>
+        </div>
       )}
     </div>
   );

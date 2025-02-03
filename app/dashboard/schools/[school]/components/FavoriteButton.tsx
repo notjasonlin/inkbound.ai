@@ -1,112 +1,150 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
-import { SchoolData } from "@/types/school/index";
+import { IoStar, IoStarOutline } from 'react-icons/io5';
+import { SchoolData } from '@/types/school';
 import { createClient } from '@/utils/supabase/client';
-import { Button } from '@/components/ui/button';
-import clsx from 'clsx';
+import { showToast } from '@/utils/toast';
+import { v4 as uuidv4 } from 'uuid';
 
 interface FavoriteButtonProps {
-    school: SchoolData;
-    userId: string;
-    size?: string; // Allow customizing the size of the button
+  school: SchoolData;
+  userId: string;
+  size?: string; // Allow customizing the size of the button
 }
 
-export default function FavoriteButton({ school, userId, size = "text-xl" }: FavoriteButtonProps) {
-    const [isFavorite, setIsFavorite] = useState(false);
-    const [isProcessing, setIsProcessing] = useState(false); // Track action state
-    const supabase = createClient();
+export default function FavoriteButton({ school, userId, size = 'text-3xl' }: FavoriteButtonProps) {
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isSuperFavorite, setIsSuperFavorite] = useState(false);
+  const supabase = createClient();
 
-    useEffect(() => {
-        checkFavoriteStatus();
-    }, [checkFavoriteStatus, school.id, userId]);
+  const checkFavoriteStatus = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('favorite_schools')
+        .select('data, super_favorites')
+        .eq('uuid', userId)
+        .single();
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    async function checkFavoriteStatus() {
-        try {
-            const { data, error } = await supabase
-                .from('favorite_schools')
-                .select('data')
-                .eq('uuid', userId)
-                .single();
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking favorites:', error);
+        return;
+      }
 
-            if (error) {
-                console.error('Error checking favorite status:', error);
-            } else {
-                const isFav = data?.data?.some((s: SchoolData) => s.id === school.id) || false;
-                setIsFavorite(isFav);
-            }
-        } catch (err) {
-            console.error('Error fetching favorite status:', err);
-        }
+      const favorites = data?.data || [];
+      const superFavorites = data?.super_favorites || [];
+
+      setIsFavorite(favorites.some((f: any) => f.id === school.id));
+      setIsSuperFavorite(superFavorites.includes(school.id));
+    } catch (err) {
+      console.error('Error fetching favorite status:', err);
     }
+  }, [school.id, userId, supabase]);
 
-    const toggleFavorite = async () => {
-        setIsProcessing(true); // Disable button during processing
+  useEffect(() => {
+    checkFavoriteStatus();
+  }, [checkFavoriteStatus]);
 
-        try {
-            const { data: existingData, error: fetchError } = await supabase
-                .from('favorite_schools')
-                .select('data')
-                .eq('uuid', userId)
-                .single();
+  const handleFavorite = async (isSuperFav = false) => {
+    try {
+      const { data: existingData } = await supabase
+        .from('favorite_schools')
+        .select('data, super_favorites')
+        .eq('uuid', userId)
+        .maybeSingle();
 
-            if (fetchError && fetchError.code !== 'PGRST116') {
-                throw fetchError;
-            }
+      let favorites = existingData?.data || [];
+      let superFavorites = existingData?.super_favorites || [];
 
-            let updatedData = existingData?.data || [];
-            const schoolIndex = updatedData.findIndex((s: SchoolData) => s.id === school.id);
-
-            if (schoolIndex > -1) {
-                updatedData.splice(schoolIndex, 1); // Remove school from favorites
-            } else {
-                updatedData.push({
-                    id: school.id,
-                    state: school.state,
-                    school: school.school,
-                    coaches: school.coaches,
-                    division: school.division,
-                    conference: school.conference
-                });
-            }
-
-            const { error: upsertError } = await supabase
-                .from('favorite_schools')
-                .upsert(
-                    { uuid: userId, data: updatedData },
-                    { onConflict: 'uuid' }
-                );
-
-            if (upsertError) throw upsertError;
-
-            setIsFavorite(!isFavorite);
-        } catch (error) {
-            console.error('Error toggling favorite:', error);
-        } finally {
-            setIsProcessing(false); // Re-enable button
+      if (isSuperFav) {
+        if (superFavorites.includes(school.id)) {
+          superFavorites = superFavorites.filter((id: string) => id !== school.id);
+        } else {
+          superFavorites.push(school.id);
+          if (!favorites.some((f: any) => f.id === school.id)) {
+            favorites.push(school);
+          }
         }
-    };
+      } else {
+        if (favorites.some((f: any) => f.id === school.id)) {
+          favorites = favorites.filter((f: any) => f.id !== school.id);
+          superFavorites = superFavorites.filter((id: string) => id !== school.id);
+        } else {
+          favorites.push(school);
+        }
+      }
 
-    return (
-        <Button
-            onClick={toggleFavorite}
-            disabled={isProcessing}
-            aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
-            className={clsx(
-                "rounded-full p-2 transition-all duration-200",
-                isProcessing
-                    ? "cursor-wait"
-                    : "hover:bg-red-100 focus:ring-2 focus:ring-red-300",
-                "focus:outline-none"
-            )}
-        >
-            {isFavorite ? (
-                <FaHeart className={clsx("text-red-500", size, "transition-transform duration-200 scale-110")} />
-            ) : (
-                <FaRegHeart className={clsx("text-gray-500 hover:text-red-500", size, "transition-transform duration-200")} />
-            )}
-        </Button>
-    );
+      if (!existingData) {
+        await supabase
+          .from('favorite_schools')
+          .insert({
+            uuid: userId,
+            data: favorites,
+            super_favorites: superFavorites,
+            favorite_count: favorites.length,
+          });
+      } else {
+        await supabase
+          .from('favorite_schools')
+          .update({
+            data: favorites,
+            super_favorites: superFavorites,
+            favorite_count: favorites.length,
+          })
+          .eq('uuid', userId);
+      }
+
+      setIsFavorite(favorites.some((f: any) => f.id === school.id));
+      setIsSuperFavorite(superFavorites.includes(school.id));
+
+      showToast(
+        isSuperFav
+          ? superFavorites.includes(school.id)
+            ? 'Added to super favorites'
+            : 'Removed from super favorites'
+          : favorites.some((f: any) => f.id === school.id)
+          ? 'Added to favorites'
+          : 'Removed from favorites',
+        'success'
+      );
+    } catch (error) {
+      console.error('Error updating favorites:', error);
+      showToast('Failed to update favorites', 'error');
+    }
+  };
+
+  return (
+    <div className="flex space-x-14">
+      {/* Favorite Button */}
+      <button
+        onClick={() => handleFavorite(false)}
+        className={`flex items-center justify-center w-8 h-8 rounded-full border ${
+          isFavorite ? 'bg-red-500 border-red-500 text-white' : 'bg-gray-200 border-gray-300 text-gray-600'
+        } shadow-md hover:shadow-lg transition-transform transform hover:scale-110 focus:outline-none`}
+        title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+      >
+        {isFavorite ? (
+          <FaHeart className="text-xl" />
+        ) : (
+          <FaRegHeart className="text-xl" />
+        )}
+      </button>
+
+      {/* Super Favorite Button */}
+      <button
+        onClick={() => handleFavorite(true)}
+        className={`flex items-center justify-center w-8 h-8 rounded-full border ${
+          isSuperFavorite ? 'bg-yellow-500 border-yellow-500 text-white' : 'bg-gray-200 border-gray-300 text-gray-600'
+        } shadow-md hover:shadow-lg transition-transform transform hover:scale-110 focus:outline-none`}
+        title={isSuperFavorite ? 'Remove from super favorites' : 'Mark as super favorite'}
+      >
+        {isSuperFavorite ? (
+          <IoStar className="text-xl" />
+        ) : (
+          <IoStarOutline className="text-xl" />
+        )}
+      </button>
+    </div>
+  );
 }

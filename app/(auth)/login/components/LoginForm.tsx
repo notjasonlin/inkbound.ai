@@ -1,60 +1,87 @@
-'use client'
+'use client';
 
-import React, { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
-import { Shrikhand } from 'next/font/google';
+import React from 'react';
+import { Button } from "@/components/ui/button";
+import { getGoogleSignInUrl } from "@/lib/auth-actions";
+import { useRouter } from "next/navigation";
+import Image from 'next/image';
+import googleLogo from '@/public/google-logo-2.png';
 
-const shrikhand = Shrikhand({
-  subsets: ['latin'],
-  weight: '400',
-});
+const LoginForm = () => {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = React.useState(false);
 
-const SignInWithGoogleButton = dynamic(() => import('./SignInWithGoogleButton'), {
-  ssr: false,
-  loading: () => <p>Loading...</p>,
-});
-
-export function LoginForm() {
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) {
-    return <p>Loading...</p>; // or any loading indicator
-  }
+  const handleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const url = await getGoogleSignInUrl(`${window.location.origin}/auth/callback`);
+      window.location.href = url;
+    } catch (error) {
+      console.error('Error fetching data', error);
+      router.push('/error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      {/* Heading Section with Shrikhand Font */}
-      <div className="text-center mb-8">
-        <h1 className={`text-4xl font-bold text-white mb-4 ${shrikhand.className}`}>
-          Welcome to Inkbound.ai!
-        </h1>
-        <p className="text-lg text-gray-200">AI College Athletic Recruitment Coach</p>
+    <div className="text-center">
+      {/* Heading */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-gray-900">Welcome to Inkbound.ai</h1>
+        <p className="text-gray-600 text-lg">AI College Athletic Recruitment Coach</p>
       </div>
 
-      {/* Floating Card Section */}
-      <div className="text-center mb-6">
-        <SignInWithGoogleButton /> {/* Updated button with Google logo */}
+      {/* Sign-In Button */}
+      <div className="mb-8">
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full py-3 px-6 bg-white border border-gray-300 rounded-full flex items-center justify-center hover:bg-gray-100 transition-all"
+          onClick={handleSignIn}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            'Loading...'
+          ) : (
+            <div className="flex items-center justify-center space-x-2">
+              {/* Google logo */}
+              <Image src={googleLogo} alt="Google" width={20} height={20} className="mr-2" />
+              <span className="text-gray-800 font-semibold">Continue with Google</span>
+            </div>
+          )}
+        </Button>
       </div>
 
-      {/* Terms and Privacy Links */}
-      <div className="text-center mt-6">
-        <p className="text-sm text-gray-500">
-          By signing up, you agree to the{' '}
-          <a href="policy/terms-and-conditions" className="text-blue-600 hover:underline">
-            Terms and Conditions
-          </a>{' '}
-          and{' '}
-          <a href="policy/privacy" className="text-blue-600 hover:underline">
-            Privacy Policy
-          </a>.
-        </p>
+      {/* Divider */}
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-300"></div>
+        </div>
+        <div className="relative text-center">
+          <span className="bg-white px-2 text-sm text-gray-500">or</span>
+        </div>
+      </div>
+
+      {/* Terms and Privacy */}
+      <div className="text-sm text-gray-500">
+        By signing up, you agree to our{' '}
+        <a
+          href="policy/terms-and-conditions"
+          className="text-blue-600 hover:underline"
+        >
+          Terms and Conditions
+        </a>{' '}
+        and{' '}
+        <a
+          href="policy/privacy"
+          className="text-blue-600 hover:underline"
+        >
+          Privacy Policy
+        </a>.
       </div>
     </div>
   );
-}
+};
 
 export default LoginForm;

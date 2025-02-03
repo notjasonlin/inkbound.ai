@@ -122,20 +122,45 @@ export default function BackgroundEditor({
     const transformedData = transformDataForSupabase(capped);
 
     try {
-      const { error: supabaseError } = await supabase
-        .from("player_profiles")
-        .update({ stats: transformedData })
-        .eq("id", profile.id)
-        .eq("user_id", userId)
+      // First check if profile exists
+      const { data: existingProfile } = await supabase
+        .from('player_profiles')
+        .select('id')
+        .eq('user_id', userId)
         .single();
 
-      if (supabaseError) throw supabaseError;
+      let result;
+      if (existingProfile) {
+        // Update existing profile
+        result = await supabase
+          .from('player_profiles')
+          .update({ stats: transformedData })
+          .eq('user_id', userId)
+          .select();
+      } else {
+        // Insert new profile
+        result = await supabase
+          .from('player_profiles')
+          .insert([{ 
+            user_id: userId, 
+            stats: transformedData 
+          }])
+          .select();
+      }
+
+      if (result.error) {
+        throw result.error;
+      }
 
       setSuccess("Changes saved successfully.");
       router.refresh();
-    } catch (err) {
-      console.error("Error details:", err);
-      setError("Failed to save. Please try again.");
+    } catch (error) {
+      console.error('Error details:', {
+        error,
+        userId,
+        formDataKeys: Object.keys(cappedFormData)
+      });
+      setError('Failed to save background. Please try again.');
     } finally {
       setIsLoading(false);
     }

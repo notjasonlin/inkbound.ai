@@ -16,9 +16,10 @@ interface Message {
 
 interface GmailInboxProps {
   coachEmails: CoachData[];
+  schoolName?: string;
 }
 
-export default function GmailInbox({ coachEmails }: GmailInboxProps) {
+export default function GmailInbox({ coachEmails, schoolName }: GmailInboxProps) {
   const [selectedCoachEmail, setSelectedCoachEmail] = useState<string>(coachEmails[0]?.email || '');
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState<string>('');
@@ -175,12 +176,16 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
   const currentCoach = coachEmails.find(c => c.email === selectedCoachEmail);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 py-8 px-4">
+    <div className="min-h-screen bg-white py-8 px-4">
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg border border-gray-200 flex flex-col h-[80vh]">
         {/* Header */}
         <div className="p-4 border-b border-gray-200 rounded-t-lg bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Your Inbox</h2>
+            {schoolName && (
+              <h2 className="text-base font-medium text-gray-800">
+                {schoolName}
+              </h2>
+            )}
             {currentCoach && (
               <p className="text-sm text-gray-600 mt-1">
                 Conversation with <span className="font-medium">{currentCoach.name}</span> ({currentCoach.position})

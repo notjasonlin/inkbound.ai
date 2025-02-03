@@ -10,8 +10,10 @@
     "test": "npx jest"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "@radix-ui/react-label": "^2.0.2",
     "@radix-ui/react-slot": "^1.0.2",
+    "@sendgrid/client": "^8.1.4",
     "@stripe/stripe-js": "^4.4.0",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/auth-helpers-react": "^0.5.0",
@@ -24,6 +26,8 @@
     "clsx": "^2.1.1",
     "debounce": "^2.1.0",
     "express": "^4.21.0",
+    "flowbite": "^2.5.2",
+    "flowbite-react": "^0.10.2",
     "framer-motion": "^11.15.0",
     "googleapis": "^144.0.0",
     "lodash": "^4.17.21",
