@@ -39,6 +39,25 @@ const AIChatHelper: React.FC<AIChatHelperProps> = ({ selectedText, onSuggest, pl
     }
   };
 
+  const generatePersonalizedMessage = async (schoolId: string, userId: string) => {
+    const response = await fetch('/api/generatePersonalizedMessage', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        schoolId,
+        userId,
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to generate message');
+    }
+    
+    return response.json();
+  };
+
   return (
     <div className="bg-white shadow-lg rounded-lg p-2 z-10">
       <button

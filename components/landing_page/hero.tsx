@@ -1,94 +1,187 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import Image from 'next/image';
-import WaitlistForm from './waitlistForm';
-import LoginButton from '../LoginLogoutButton';
+/* eslint-disable @next/next/no-img-element */
 
-const Hero: React.FC = () => {
-  const [isFormVisible, setIsFormVisible] = useState(false);
+"use client";
 
-  // Toggle the visibility of the Waitlist form
-  const toggleForm = () => {
-    setIsFormVisible(!isFormVisible);
-  };
+import React from "react";
+import { motion } from "framer-motion";
+import LoginButton from "../LoginLogoutButton";
 
+export default function Hero() {
   return (
-    <section className="min-h-screen flex flex-col items-center justify-center px-4 py-2 md:py-6 lg:px-10 bg-gradient-to-br from-blue-50 to-babyblue-100 space-y-12 md:space-y-16 relative overflow-hidden">
-      {/* Floating Decorative Elements */}
-      <div className="absolute top-0 left-0 w-1/3 h-1/3 bg-gradient-to-r from-blue-200 to-blue-400 rounded-full blur-3xl opacity-50"></div>
-      <div className="absolute bottom-0 right-0 w-1/3 h-1/3 bg-gradient-to-r from-blue-300 to-blue-500 rounded-full blur-3xl opacity-50"></div>
+    <section
+      className="
+        relative 
+        w-full 
+        overflow-hidden 
+        bg-white 
+        py-20  
+        sm:py-28  
+        lg:py-32  
+      "
+    >
+      {/* Grid Background with Top-Right Fade */}
+      <div
+        className="
+          absolute 
+          inset-0 
+          h-full 
+          w-full 
+          bg-white 
+          bg-[linear-gradient(to_right,#8080801A_1px,transparent_1px),linear-gradient(to_bottom,#8080801A_1px,transparent_1px)] 
+          bg-[size:190px_190px]
+          [mask-image:radial-gradient(ellipse_75%_75%_at_100%_0%,#000_50%,transparent_100%)] 
+          [mask-size:cover] 
+          [mask-repeat:no-repeat]
+          [webkit-mask-image:radial-gradient(ellipse_75%_75%_at_100%_0%,#000_50%,transparent_100%)]
+          [webkit-mask-size:cover] 
+          [webkit-mask-repeat:no-repeat]
+        "
+      ></div>
 
-      {/* Text and Image container */}
-      <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-screen-2xl z-10">
-        {/* Left Side - Text Content */}
+      {/* Main Container */}
+      <div
+        className="
+          relative  
+          z-10 
+          flex 
+          w-full 
+          flex-col 
+          items-start 
+          pl-20  
+          sm:pl-20
+          md:flex-row 
+          md:justify-between
+        "
+      >
+        {/* Left Section with Motion */}
         <motion.div
-          className="w-full md:w-1/2 text-left space-y-4 md:space-y-6 flex flex-col items-center md:items-start"
-          initial={{ opacity: 0, x: -100 }} // Slide in from left
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8 }}
+          className="max-w-2xl space-y-8 py-24 sm:py-24 lg:py-10"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0, y: 50 },
+            visible: {
+              opacity: 1,
+              y: 0,
+              transition: { staggerChildren: 0.2, duration: 0.8, ease: "easeOut" },
+            },
+          }}
         >
-          <h1 className="text-5xl md:text-6xl font-bold text-babyblue-700 leading-snug text-center md:text-left">
-            Welcome to Inkbound.ai!
-          </h1>
-          <p className="text-lg md:text-xl text-blue-900 max-w-lg text-center md:text-left">
-            AI Coach for College Athletic Recruiting.
-          </p>
+          {/* Logo */}
+          <motion.div
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+            className="mb-6"
+          >
+            <img
+              src="/inkbound-mini-logo.png"
+              alt="Inkbound Logo"
+              className="h-10 w-auto sm:h-12"
+            />
+          </motion.div>
 
-          {/* Button Container */}
-          <div className="flex space-x-4">
-            {/* Waitlist Button */}
-            <motion.button
-              onClick={toggleForm}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-base md:text-lg px-6 py-3 rounded-lg font-bold shadow-lg transition-transform transform hover:scale-105 active:scale-95"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Join the Waitlist!
-            </motion.button>
+          {/* "What’s new" badge + v1.0 */}
+          <motion.div
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+            className="mb-6 flex items-center space-x-2"
+          >
+            <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-800">
+              What’s new
+            </span>
+            <span className="text-sm text-gray-500">v1.0 out now! &rarr;</span>
+          </motion.div>
 
-            {/* Try it out now Button */}
+          {/* Heading */}
+          <motion.h1
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+            className="
+              text-4xl  
+              font-bold 
+              tracking-tight 
+              text-gray-900 
+              sm:text-5xl 
+              lg:text-6xl
+            "
+          >
+            Welcome to Inkbound AI<br className="hidden sm:block" />
+          </motion.h1>
+
+          {/* Subheading */}
+          <motion.p
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+            className="text-base leading-relaxed text-gray-600 sm:text-lg md:text-xl md:max-w-md"
+          >
+            Your personal AI College Recruiting Coach
+          </motion.p>
+
+          {/* Call to Action Buttons */}
+          <motion.div
+            variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
+            className="flex flex-col items-start gap-4 sm:flex-row"
+          >
             <LoginButton
-              label="Try it out now!"
-              className="bg-green-600 hover:bg-green-700 text-white text-base md:text-lg px-6 py-3 rounded-lg font-bold shadow-lg transition-transform transform hover:scale-105 active:scale-95"
+              label="Get started"
+              className="
+                inline-block 
+                rounded-md 
+                bg-blue-600 
+                px-6 
+                py-3 
+                text-sm 
+                font-medium 
+                text-white 
+                shadow 
+                hover:bg-blue-500 
+                focus:outline-none 
+                focus:ring-2 
+                focus:ring-indigo-600 
+                focus:ring-offset-2
+                transition-transform 
+                transform 
+                hover:scale-105 
+                active:scale-95
+              "
+            />
+
+            <a
+              href="#"
+              className="
+                inline-block 
+                text-sm 
+                font-medium 
+                text-indigo-600 
+                hover:text-indigo-500
+              "
+            >
+              Learn more &rarr;
+            </a>
+          </motion.div>
+        </motion.div>
+
+        {/* Right Section: Updated Image */}
+        <div className="relative hidden w-full max-w-sm sm:max-w-md md:block lg:max-w-lg">
+          <div
+            className="
+              absolute 
+              -right-0 
+              top-0
+              md:-top-10
+              h-auto 
+              w-[400px] sm:w-[440px] lg:w-[460px] 
+              transform 
+              rounded-2xl 
+              overflow-hidden 
+              border border-gray-300 
+              shadow-lg
+            "
+          >
+            <img
+              src="/test-image.png"
+              alt="Test Image"
+              className="object-cover w-full h-full"
             />
           </div>
-
-          {/* Conditionally render the form */}
-          {isFormVisible && (
-            <motion.div
-              className="mt-6 w-full max-w-md mx-auto md:mx-0"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              {/* Render WaitlistForm */}
-              <WaitlistForm />
-            </motion.div>
-          )}
-        </motion.div>
-
-        <motion.div
-          className="w-full md:w-1/2 mt-12 md:mt-0 md:pl-8 flex justify-center md:justify-end"
-          initial={{ opacity: 0, x: 100 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          {/* Video Section */}
-          <video
-            className="rounded-lg shadow-2xl object-cover"
-            src="/inkbound-quick-vid.mov"
-            autoPlay
-            loop
-            muted
-            playsInline
-            width={1400}
-            height={1100}
-          />
-        </motion.div>
-
+        </div>
       </div>
     </section>
   );
-};
-
-export default Hero;
+}

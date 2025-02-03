@@ -8,6 +8,27 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import FavoriteButton from '../[school]/components/FavoriteButton';
 
+// First, add an interface for the AWS recommendation structure
+interface AWSRecommendation {
+  id: string;
+  school_name: string;
+  division: string;
+  state: string;
+  conference: string;
+}
+
+interface CoachEmail {
+  name: string;
+  position: string;
+  email: string;
+}
+
+interface SchoolCoachEmails {
+  id: string;
+  school_id: string;
+  coach_emails: string[];
+}
+
 export default function RecommendedSchools() {
   const supabase = createClient();
   const router = useRouter();
@@ -22,10 +43,7 @@ export default function RecommendedSchools() {
       setError(null);
 
       try {
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
 
         if (userError || !user) {
           setError('Please log in to view recommended schools');
@@ -35,19 +53,65 @@ export default function RecommendedSchools() {
 
         setUser(user);
 
-        const { data, error } = await supabase
-          .from('initial_school_recs')
+        const { data: awsData, error } = await supabase
+          .from('AWS-reccomend_list_of_recs')
           .select('recommendations')
           .eq('user_id', user.id)
           .single();
 
         if (error) {
-          setError('Failed to fetch recommended schools');
-        } else if (data?.recommendations?.length > 0) {
-          setRecommendations(data.recommendations);
-        } else {
-          setError('No recommendations found. Complete your background profile to receive recommendations.');
+          setError('Complete your background profile to receive recommendations.');
+          return;
         }
+
+        if (!awsData?.recommendations?.length) {
+          setError('No recommendations found. Complete your background profile to receive recommendations.');
+          return;
+        }
+
+        const schoolIds = awsData.recommendations.map((school: AWSRecommendation) => school.id);
+
+        const { data: coachesData, error: coachesError } = await supabase
+          .from('school_coach_emails')
+          .select('school_id, coach_emails')
+          .in('school_id', schoolIds);
+
+        if (coachesError) {
+          console.error('Error fetching data:', coachesError);
+        }
+
+        // Create a map of school_id to coach emails
+        const coachesMap = (coachesData || []).reduce((acc: { [key: string]: string[] }, schoolCoaches) => {
+          if (schoolCoaches.coach_emails && Array.isArray(schoolCoaches.coach_emails)) {
+            acc[schoolCoaches.school_id] = schoolCoaches.coach_emails;
+          }
+          return acc;
+        }, {});
+
+        const transformedRecommendations = awsData.recommendations.map((school: AWSRecommendation) => {
+          const schoolCoachEmails = coachesMap[school.id] || [];
+          
+          const coaches = schoolCoachEmails.map(email => ({
+            name: '', 
+            position: '', // We don't have this info
+            email: email
+          }));
+
+          return {
+            Email: school.id,
+            School: school.school_name,
+            State: school.state,
+            Division: school.division,
+            Conference: school.conference,
+            Name: '', 
+            Position: '', // We don't have positions
+            City: '',
+            Biography: '',
+            coaches: coaches
+          };
+        });
+
+        setRecommendations(transformedRecommendations);
       } catch (err) {
         setError('An unexpected error occurred');
       } finally {
@@ -67,7 +131,6 @@ export default function RecommendedSchools() {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) throw new Error('User not found');
 
-      // Fetch current favorites to check if the school is already added
       const { data: existingFavorites, error: fetchError } = await supabase
         .from('favorite_schools')
         .select('data')
@@ -98,13 +161,11 @@ export default function RecommendedSchools() {
 
       if (upsertError) throw upsertError;
 
-      // Remove the school from the recommendations list
       const updatedRecommendations = recommendations.filter((s) => s.id !== school.id);
       setRecommendations(updatedRecommendations);
 
-      // Update the recommendations in `initial_school_recs`
       const { error: updateError } = await supabase
-        .from('initial_school_recs')
+        .from('AWS-reccomend_list_of_recs')
         .update({ recommendations: updatedRecommendations })
         .eq('user_id', user.id);
 
@@ -129,7 +190,17 @@ export default function RecommendedSchools() {
         {isLoading ? (
           <div className="text-center">Loading...</div>
         ) : error ? (
-          <div className="text-center text-red-500">{error}</div>
+          <div className="text-center">
+            <p className="mb-4">{error}</p>
+            {error.includes('Complete your background profile') && (
+              <button
+                onClick={() => router.push('/dashboard/profile/background')}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Complete Profile
+              </button>
+            )}
+          </div>
         ) : (
           <motion.div
             className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
@@ -144,49 +215,45 @@ export default function RecommendedSchools() {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <div className="absolute top-4 right-4 flex gap-2">
-                  <FavoriteButton 
-                    school={{
-                      id: school.Email,
-                      state: school.State,
-                      school: school.School,
-                      coaches: [{ 
-                        name: school.Name, 
-                        position: school.Position,
-                        email: school.Email 
-                      }],
-                      division: school.Division,
-                      conference: school.Conference,
-                      biography: school.Biography || ''
-                    }} 
-                    userId={user?.id} 
-                  />
-                  <button
-                    onClick={() => handleViewDetails(school.School)}
-                    className="text-blue-400 hover:text-blue-600"
-                    title="View Details"
-                  >
-                    <AiOutlineInfoCircle size={24} />
-                  </button>
+                <div className="flex flex-col h-full">
+                  <div className="absolute top-4 right-4 flex gap-2">
+                    <FavoriteButton 
+                      school={{
+                        id: school.Email,
+                        state: school.State,
+                        school: school.School,
+                        coaches: school.coaches,
+                        division: school.Division,
+                        conference: school.Conference,
+                        biography: school.Biography || ''
+                      }} 
+                      userId={user?.id} 
+                    />
+                    <button
+                      onClick={() => handleViewDetails(school.School)}
+                      className="text-blue-400 hover:text-blue-600"
+                      title="View Details"
+                    >
+                      <AiOutlineInfoCircle size={24} />
+                    </button>
+                  </div>
+                  <div className="pr-20">
+                    <h2 className="text-lg font-semibold text-blue-800 mb-4">
+                      {school.School}
+                    </h2>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">
+                      Division: {school.Division || 'N/A'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Conference: {school.Conference || 'N/A'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      Location: {school.State}
+                    </p>
+                  </div>
                 </div>
-                {/* School Details */}
-                <div className="flex justify-between items-start">
-                  <h2 className="text-lg font-semibold text-blue-800">
-                    {school.School}
-                  </h2>
-                </div>
-                <p className="mt-2 text-sm text-gray-600">
-                  Coach: {school.Name} ({school.Position})
-                </p>
-                <p className="text-sm text-gray-600">
-                  Division: {school.Division || 'N/A'}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Conference: {school.Conference || 'N/A'}
-                </p>
-                <p className="text-sm text-gray-600">
-                  Location: {school.City}, {school.State}
-                </p>
               </motion.div>
             ))}
           </motion.div>

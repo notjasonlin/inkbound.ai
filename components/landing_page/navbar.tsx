@@ -1,33 +1,30 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { FaBars, FaTimes } from 'react-icons/fa'; // Icons for the hamburger menu
-import { Shrikhand } from 'next/font/google'; // Import the Shrikhand font
-import LoginButton from '../LoginLogoutButton'; // LoginButton component
-import ResourcesDropdown from './resources-dropdown';
-
-const shrikhand = Shrikhand({ subsets: ['latin'], weight: '400' });
+import { FaBars, FaTimes } from 'react-icons/fa';
+import Image from 'next/image';
+import LoginButton from '../LoginLogoutButton';
+import ResourcesDropdown from './resources-dropdown'; // ensure this path is correct
 
 export default function Navbar() {
   const router = useRouter();
-  const [menuOpen, setMenuOpen] = useState(false); // State to handle menu open/close for mobile
+  const [menuOpen, setMenuOpen] = useState(false);
 
-  // Custom smooth scrolling function
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
       const targetPosition = element.getBoundingClientRect().top + window.pageYOffset;
       const startPosition = window.pageYOffset;
       const distance = targetPosition - startPosition;
-      const duration = 1000; // 1000ms = 1 second (adjust this for slower scrolling)
+      const duration = 1000; // 1 second
       let start: number | null = null;
 
       const smoothScroll = (timestamp: number) => {
         if (!start) start = timestamp;
         const progress = timestamp - start;
         const easeInOutQuad = (t: number) =>
-          t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; // easing function
+          t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
         const percent = easeInOutQuad(Math.min(progress / duration, 1));
         window.scrollTo(0, startPosition + distance * percent);
         if (progress < duration) {
@@ -37,70 +34,72 @@ export default function Navbar() {
 
       window.requestAnimationFrame(smoothScroll);
     } else {
-      // If the element is not found, navigate to the section through router
+      // If the element is not found, navigate via router
       router.push(`/#${id}`);
     }
   };
 
-  // Toggle the mobile menu
-  const toggleMenu = () => {
-    setMenuOpen(!menuOpen);
-  };
+  const toggleMenu = () => setMenuOpen(!menuOpen);
 
   return (
-    <nav className="w-full bg-white shadow-lg">
+    <nav className="w-full bg-white shadow-lg z-50 relative">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between h-20"> {/* Adjusted height */}
+        <div className="flex justify-between h-20">
+          {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
-            {/* Apply gradient to the text */}
-            <h1
-              className={`text-4xl px-2 font-bold bg-gradient-to-r from-babyblue-500 to-blue-500 bg-clip-text text-transparent ${shrikhand.className}`}
-              style={{ lineHeight: '1.2', paddingBottom: '0.25rem' }} // Adjusted line height and padding
-            >
-              Inkbound
-            </h1>
+            <Image
+              src="/inkbound.png"
+              alt="Inkbound.ai Logo"
+              width={200}
+              height={50}
+              priority
+              className="object-contain py-2"
+            />
           </div>
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-6">
+            {/* Auth Buttons */}
             <div className="hidden md:flex items-center space-x-4">
               <LoginButton label="Sign in" />
               <LoginButton label="Get Started" />
             </div>
+
+            {/* Scroll-based nav */}
             <button
-              className="text-black hover:text-babyblue-600"
+              className="text-black hover:text-blue-600"
               onClick={() => scrollToSection('features')}
             >
               Features
             </button>
             <button
-              className="text-black hover:text-babyblue-600"
+              className="text-black hover:text-blue-600"
               onClick={() => scrollToSection('pricing')}
             >
               Pricing
             </button>
             <button
-              className="text-black hover:text-babyblue-600"
+              className="text-black hover:text-blue-600"
               onClick={() => scrollToSection('faq')}
             >
               FAQ
             </button>
             <ResourcesDropdown />
             <button
-              className="text-black hover:text-babyblue-600"
+              className="text-black hover:text-blue-600"
               onClick={() => scrollToSection('about-us')}
             >
               About Us
             </button>
           </div>
 
-          {/* Hamburger Icon for Mobile */}
+          {/* Mobile Menu Icon */}
           <div className="md:hidden flex items-center">
             <button onClick={toggleMenu}>
               {menuOpen ? (
-                <FaTimes className="text-2xl text-black" /> // X icon when menu is open
+                <FaTimes className="text-2xl text-black" />
               ) : (
-                <FaBars className="text-2xl text-black" /> // Hamburger icon when menu is closed
+                <FaBars className="text-2xl text-black" />
               )}
             </button>
           </div>
@@ -110,13 +109,12 @@ export default function Navbar() {
         {menuOpen && (
           <div className="md:hidden mt-4">
             <div className="flex flex-col space-y-4">
-              {/* Sign in and Get Started Buttons */}
               <div className="flex flex-col space-y-2">
                 <LoginButton label="Sign in" />
                 <LoginButton label="Get Started" />
               </div>
               <button
-                className="text-black hover:text-babyblue-600"
+                className="text-black hover:text-blue-600"
                 onClick={() => {
                   scrollToSection('features');
                   setMenuOpen(false);
@@ -125,7 +123,7 @@ export default function Navbar() {
                 Features
               </button>
               <button
-                className="text-black hover:text-babyblue-600"
+                className="text-black hover:text-blue-600"
                 onClick={() => {
                   scrollToSection('pricing');
                   setMenuOpen(false);
@@ -134,7 +132,7 @@ export default function Navbar() {
                 Pricing
               </button>
               <button
-                className="text-black hover:text-babyblue-600"
+                className="text-black hover:text-blue-600"
                 onClick={() => {
                   scrollToSection('faq');
                   setMenuOpen(false);
@@ -144,7 +142,7 @@ export default function Navbar() {
               </button>
               <ResourcesDropdown />
               <button
-                className="text-black hover:text-babyblue-600 mb-4"
+                className="text-black hover:text-blue-600 mb-4"
                 onClick={() => {
                   scrollToSection('about-us');
                   setMenuOpen(false);

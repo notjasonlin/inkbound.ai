@@ -42,7 +42,6 @@ export async function POST(req: Request) {
     let message = [
       `To: ${to}`,
       `Subject: ${subject}`,
-      `Bcc: ${userEmail}`,
       'MIME-Version: 1.0',
       `Content-Type: multipart/mixed; boundary="${boundary}"`,
       '',

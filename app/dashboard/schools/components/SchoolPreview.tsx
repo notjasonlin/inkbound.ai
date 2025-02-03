@@ -1,70 +1,130 @@
-import { SchoolData } from "@/types/school";
+/* eslint-disable @next/next/no-img-element */
+import React, { useEffect, useState } from 'react';
+import { SchoolData } from '@/types/school';
 
 interface SchoolPreviewProps {
-  school: SchoolData;
+  school: SchoolData | null;
+  lastHoveredSchool: SchoolData | null;
 }
 
-const SchoolPreview = ({ school }: SchoolPreviewProps) => {
+const SUPABASE_IMAGE_BASE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/school-logo-images/merged_school_images/`;
+
+const SchoolPreview: React.FC<SchoolPreviewProps> = ({ school, lastHoveredSchool }) => {
+  const [currentSchool, setCurrentSchool] = useState<SchoolData | null>(school || lastHoveredSchool);
+  const [imgSrc, setImgSrc] = useState<string>('');
+  const [fallback, setFallback] = useState(false);
+
+  // Update the current school whenever `school` or `lastHoveredSchool` changes
+  useEffect(() => {
+    setCurrentSchool(school || lastHoveredSchool);
+  }, [school, lastHoveredSchool]);
+
+  // Update the image source whenever the current school changes
+  useEffect(() => {
+    if (currentSchool) {
+      setImgSrc(`${SUPABASE_IMAGE_BASE_URL}${currentSchool.school.replaceAll(' ', '-')}.png`);
+      setFallback(false); // Reset fallback when school changes
+    }
+  }, [currentSchool]);
+
+  // Handle image loading errors by falling back to a placeholder
+  const handleImageError = () => {
+    setImgSrc('/fallback-logo.png');
+    setFallback(true);
+  };
+
+  if (!currentSchool) {
+    return (
+      <div className="flex items-center justify-center h-full text-gray-500">
+        <p>Select a school to view details</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="border rounded-lg shadow-md p-6 bg-white">
-      {/* School Name */}
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">{school.school}</h2>
-      
-      {/* School Info */}
-      <div className="grid grid-cols-2 gap-4 text-gray-700 mb-6">
-        <p><span className="font-semibold">State:</span> {school.state}</p>
-        <p><span className="font-semibold">Division:</span> {school.division}</p>
-        <p><span className="font-semibold">Conference:</span> {school.conference}</p>
+    <div className="p-4 bg-white rounded-lg shadow-lg max-h-[75vh] overflow-y-auto">
+      {/* Header */}
+      <div className="flex items-center space-x-4 mb-6">
+        <img
+          src={imgSrc}
+          onError={handleImageError}
+          alt={currentSchool.school}
+          className="w-16 h-16 object-contain rounded-full border border-gray-200"
+        />
+        <h2 className="text-xl font-bold text-gray-800">{currentSchool.school}</h2>
       </div>
 
-      {/* School Biography */}
-      {school.biography && (
-        <div className="mb-6">
-          <h3 className="text-xl font-semibold text-gray-800 mb-3">School Details</h3>
-          <div className="grid grid-cols-2 gap-4 text-gray-700">
-            {school.biography.undergraduates && <p><span className="font-semibold">Undergraduates:</span> {school.biography.undergraduates}</p>}
-            {school.biography.early_action && <p><span className="font-semibold">Early Action:</span> {school.biography.early_action}</p>}
-            {school.biography.early_decision && <p><span className="font-semibold">Early Decision:</span> {school.biography.early_decision}</p>}
-            {/* {school.biography.reg_admission_deadline && <p><span className="font-semibold">Regular Admission Deadline:</span> {school.biography.reg_admission_deadline}</p>} */}
-            {/* {school.biography.sat_math && <p><span className="font-semibold">SAT Math:</span> {school.biography.sat_math}</p>} */}
-            {/* {school.biography.sat_ebrw && <p><span className="font-semibold">SAT EBRW:</span> {school.biography.sat_ebrw}</p>} */}
-            {school.biography.sat && <p><span className="font-semibold">SAT Total:</span> {school.biography.sat}</p>}
-            {school.biography.act && <p><span className="font-semibold">ACT:</span> {school.biography.act}</p>}
-            {school.biography.cost && <p><span className="font-semibold">Cost:</span> ${school.biography.cost}</p>}
-            {/* {school.biography.need_met && <p><span className="font-semibold">Need Met:</span> {parseInt(school.biography.need_met) * 100}%</p>} */}
-            {/* {school.biography.academic_calendar && <p><span className="font-semibold">Academic Calendar:</span> {school.biography.academic_calendar}</p>} */}
-            {school.biography.gen_ed_req && <p><span className="font-semibold">General Education Requirements:</span> {school.biography.gen_ed_req}</p>}
-            {/* {school.biography.nearest_metro && <p><span className="font-semibold">Nearest Metro:</span> {school.biography.nearest_metro}</p>} */}
-            {/* {school.biography.freshman_housing && <p><span className="font-semibold">Freshman Housing:</span> {school.biography.freshman_housing}</p>} */}
-            {school.biography.gpa && <p><span className="font-semibold">GPA:</span> {school.biography.gpa}</p>}
+      {/* Details */}
+      <div className="text-sm space-y-3">
+        <p className="text-gray-700">
+          <span className="font-semibold text-blue-600">State:</span> {currentSchool.state}
+        </p>
+        <p className="text-gray-700">
+          <span className="font-semibold text-blue-600">Division:</span> {currentSchool.division}
+        </p>
+        <p className="text-gray-700">
+          <span className="font-semibold text-blue-600">Conference:</span> {currentSchool.conference}
+        </p>
+      </div>
+
+      {/* Biography */}
+      {currentSchool.biography && (
+        <div className="mt-4">
+          <h3 className="text-md font-semibold text-gray-800 mb-2">School Details</h3>
+          <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
+            {currentSchool.biography.undergraduates && (
+              <p>
+                <span className="font-semibold text-blue-600">Undergraduates:</span> {currentSchool.biography.undergraduates}
+              </p>
+            )}
+            {currentSchool.biography.cost && (
+              <p>
+                <span className="font-semibold text-blue-600">Cost:</span> ${currentSchool.biography.cost}
+              </p>
+            )}
+            {currentSchool.biography.sat && (
+              <p>
+                <span className="font-semibold text-blue-600">SAT Total:</span> {currentSchool.biography.sat}
+              </p>
+            )}
+            {currentSchool.biography.act && (
+              <p>
+                <span className="font-semibold text-blue-600">ACT:</span> {currentSchool.biography.act}
+              </p>
+            )}
           </div>
         </div>
       )}
 
       {/* Coaches Section */}
-      <div className="mt-6">
-        <h3 className="text-xl font-semibold text-gray-800 mb-3">Coaches</h3>
-        <ul className="space-y-4">
-          {school.coaches.length > 0 ? (
-            school.coaches.map((coach, index) => (
-              <li key={index} className="p-4 bg-gray-50 border rounded-lg shadow-sm">
-                <p className="font-medium text-gray-800">{coach.name}</p>
-                <p className="text-gray-700">
-                  Email:{" "}
+      <div className="mt-4">
+        <h3 className="text-md font-semibold text-gray-800 mb-2">Coaches</h3>
+        <div className="grid grid-cols-1 gap-3">
+          {currentSchool.coaches.length > 0 ? (
+            currentSchool.coaches.map((coach, index) => (
+              <div
+                key={index}
+                className="flex flex-col p-3 bg-gray-50 border border-gray-200 rounded-md shadow-sm hover:shadow-md transition-shadow"
+              >
+                <p className="text-sm font-medium text-gray-800">{coach.name}</p>
+                <p className="text-xs text-gray-700 break-words">
+                  <span className="font-semibold text-blue-600">Email:</span>{' '}
                   <a
                     href={`mailto:${coach.email}`}
-                    className="text-blue-600 hover:underline"
+                    className="text-blue-500 hover:underline"
                   >
                     {coach.email}
                   </a>
                 </p>
-                <p className="text-gray-700">Position: {coach.position}</p>
-              </li>
+                <p className="text-xs text-gray-700">
+                  <span className="font-semibold text-blue-600">Position:</span> {coach.position}
+                </p>
+              </div>
             ))
           ) : (
-            <li className="text-gray-600">No coaches listed for this school.</li>
+            <p className="text-sm text-gray-600">No coaches listed for this school.</p>
           )}
-        </ul>
+        </div>
       </div>
     </div>
   );

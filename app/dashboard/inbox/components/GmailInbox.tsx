@@ -11,6 +11,7 @@ import ReplyAIButton from "./ReplyAIButton";
 
 interface GmailInboxProps {
   coachEmails: CoachData[];
+  schoolName?: string;
 }
 
 export default function GmailInbox({ coachEmails }: GmailInboxProps) {

@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: linear-gradient(to bottom, #e0f7ff, #f0f8ff);
+  background: #ffffff; /* Clean white background */
   border-radius: 0.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
@@ -11,6 +11,7 @@
   padding: 1rem;
   border-bottom: 1px solid #ddd;
   border-radius: 0.5rem 0.5rem 0 0;
+  background: #ffffff; /* White header */
 }
 
 .select-box {
@@ -23,8 +24,8 @@
 }
 
 .select-box:focus {
-  border-color: #007bff;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+  border-color: #007bff; 
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); 
 }
 
 .messages {
@@ -35,6 +36,7 @@
   display: flex;
   flex-direction: column;
   position: relative;
+  background: #ffffff; /* White background for message area */
 }
 
 /* Coach and user message bubbles */
@@ -53,7 +55,6 @@
   margin-right: auto;
   padding: 0.75rem;
   border-radius: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .user-message {
@@ -80,7 +81,7 @@
   padding: 1rem;
   border-top: 1px solid #ddd;
   border-radius: 0 0 0.5rem 0.5rem;
-  background: linear-gradient(to bottom, #e0f7ff, #f0f8ff);
+  background: #ffffff; /* White input area */
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -102,7 +103,7 @@
 
 .send-button {
   padding: 0.5rem 1rem;
-  background: #007bff;
+  background: #007bff; /* Blue accent for send button */
   color: white;
   border: none;
   border-radius: 0.5rem;
@@ -111,10 +112,10 @@
 }
 
 .send-button:hover {
-  background: #0056b3;
+  background: #0056b3; /* Darker blue on hover */
 }
 
-/* AI button (no separate AI response bubble needed) */
+/* AI button: same overall style, different shade if you prefer */
 .ai-button {
   margin-top: 0.75rem;
   padding: 0.5rem 1rem;

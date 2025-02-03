@@ -1,64 +1,70 @@
 .checklist {
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    border: 2px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 20px;
+    max-width: 400px;
+    margin: 0 auto;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: left;
 }
 
 .checklist h2 {
-    font-size: 1.75rem;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333333;
+    margin-bottom: 16px;
     text-align: center;
 }
 
 .checklist ul {
-    list-style-type: none;
+    list-style: none;
     padding: 0;
+    margin: 0;
 }
 
 .checklist li {
-    font-size: 1.1rem;
     display: flex;
     align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #e0e0e0;
-    transition: color 0.3s, background-color 0.3s;
+    justify-content: space-between;
+    font-size: 1rem;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    white-space: nowrap;
 }
 
 .checklist li:last-child {
-    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.checklist li.found {
+    color: #4caf50;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.checklist li.found::after {
+    content: "✓";
+    font-size: 1.25rem;
+    color: #4caf50;
+    margin-left: 10px;
+}
+
+.checklist li.not-found {
+    color: #555555;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.checklist li.not-found:hover {
+    background-color: #f0f0f0;
+    color: #333333;
 }
 
 .checklist li:hover {
     background-color: #f0f0f0;
-}
-
-.checklist .found {
-    text-decoration: line-through;
-    color: #888;
-}
-
-.checklist .not-found {
-    color: #555;
-}
-
-.checklist .not-found:hover {
-    color: #333;
-}
-
-.checklist li::before {
-    content: "•";
-    color: #2196F3; /* Accent color for unchecked items */
-    font-weight: bold;
-    display: inline-block;
-    width: 1rem;
-    text-align: center;
-    margin-right: 0.5rem;
-}
-
-.checklist .found::before {
-    content: "✓";
-    color: #4caf50; /* Accent color for checked items */
+    cursor: pointer;
 }

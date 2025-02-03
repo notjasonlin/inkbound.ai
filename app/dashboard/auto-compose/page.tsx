@@ -8,11 +8,13 @@ import QueueStatus from './components/QueueStatus';
 import TemplateModal from './components/TemplateModal';
 import Sidebar from './components/Sidebar';
 import { TemplateData } from '@/types/template/index';
-import { motion, AnimatePresence } from 'framer-motion';
-import { checkUserLimits, incrementUsage } from '@/utils/checkUserLimits';
+import { checkUserLimits } from '@/utils/checkUserLimits';
 import { User } from '@supabase/supabase-js';
 import readTemplate from "@/functions/readTemplate";
 import styles from './styles/AutoCompose.module.css';
+import { FavoriteSchoolsData } from '@/types/favorite_schools';
+import { PersonalizedMessage } from '@/types/personalized_messages';
+import PersonalizedMessageModal from './components/PersonalizedMessageModal';
 
 interface EmailPreviewData {
   to: string;
@@ -28,20 +30,22 @@ interface QueueStatusItem {
 }
 
 export default function AutoComposePage() {
-  const [favoriteSchools, setFavoriteSchools] = useState<SchoolData[]>([]);
+  const [favoriteSchools, setFavoriteSchools] = useState<FavoriteSchoolsData | null>();
+  const [personalizedMessages, setPersonalizedMessages] = useState<{ [key: string]: PersonalizedMessage }>({});
   const [selectedSchools, setSelectedSchools] = useState<SchoolData[]>([]);
   const [templates, setTemplates] = useState<TemplateData[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateData | null>(null);
   const [queueStatus, setQueueStatus] = useState<QueueStatusItem[]>([]);
   const [previewEmails, setPreviewEmails] = useState<{ [key: string]: EmailPreviewData }>({});
-  const [showTemplateModal, setShowTemplateModal] = useState(false);
-  const [isSending, setIsSending] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState<boolean>(false);
+  const [isSending, setIsSending] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [toPersonalize, setToPersonalize] = useState<boolean>(false) // State for prompting user to write personalized message for super fav school
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const supabase = createClient();
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    fetchFavoriteSchools();
     fetchTemplates();
     fetchUser();
   }, []);
@@ -52,22 +56,54 @@ export default function AutoComposePage() {
     }
   }, [selectedTemplate, selectedSchools]);
 
-  const fetchFavoriteSchools = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+  useEffect(() => {
+    if (selectedTemplate) {
+      selectedTemplate.content.personalizedMessage ? setToPersonalize(true) : setToPersonalize(false);
+    }
+  }, [selectedTemplate])
+
+  const fetchPersonalizedMessages = async () => {
     if (!user) return;
 
-    const { data, error } = await supabase
-      .from("favorite_schools")
-      .select("data")
-      .eq("uuid", user.id)
-      .single();
+    try {
+        const { data, error } = await supabase
+            .from('personalized_messages')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_curr_fav', true);
 
-    if (error) {
-      console.error("Error fetching data:", error);
-    } else if (data && data.data) {
-      setFavoriteSchools(data.data);
+        if (error) {
+            console.error('Error fetching data:', error);
+            return;
+        }
+
+        // Convert array to object with school_id as key
+        const messagesObj: { [key: string]: PersonalizedMessage } = {};
+        data?.forEach(msg => {
+            if (msg.school_id) {
+                messagesObj[msg.school_id] = {
+                    id: msg.id,
+                    user_id: msg.user_id,
+                    school_id: msg.school_id,
+                    school_name: msg.school_name,
+                    message: msg.message,
+                    is_super_fav: msg.is_super_fav,
+                    is_curr_fav: msg.is_curr_fav,
+                    is_generated: msg.is_generated,
+                    needs_handwritten: msg.needs_handwritten
+                };
+            }
+        });
+
+        setPersonalizedMessages(messagesObj);
+    } catch (err) {
+        console.error('Error processing data:', err);
     }
   };
+
+  useEffect(() => {
+    fetchPersonalizedMessages();
+  }, [user]);
 
   const fetchTemplates = async () => {
     try {
@@ -101,14 +137,14 @@ export default function AutoComposePage() {
 
     const newPreviews: { [key: string]: EmailPreviewData } = {};
     selectedSchools.forEach(school => {
-      const content = readTemplate(selectedTemplate, school);
-      const subject = selectedTemplate.content.title.replace(/\[schoolName\]/g, school.school);
+        const content = readTemplate(selectedTemplate, school, personalizedMessages);
+        const subject = selectedTemplate.content.title.replace(/\[schoolName\]/g, school.school);
 
-      newPreviews[school.id] = {
-        to: school.coaches.map(coach => coach.email).join(', '),
-        subject,
-        content: content || ''
-      };
+        newPreviews[school.id] = {
+            to: school.coaches.map(coach => coach.email).join(', '),
+            subject,
+            content: content || ''
+        };
     });
     setPreviewEmails(newPreviews);
   };
@@ -116,12 +152,24 @@ export default function AutoComposePage() {
   const handleSubmit = async () => {
     if (!selectedTemplate || selectedSchools.length === 0 || !user) return;
 
-    const canSendEmails = await checkUserLimits((user as any)?.id, 'school');
+    const { data: usage } = await supabase
+      .from('user_usage')
+      .select('schools_sent')
+      .eq('user_id', user.id)
+      .single();
+
+    const { data: subscription } = await supabase
+      .from('user_subscriptions')
+      .select('schools_sent_limit')
+      .eq('user_id', user.id)
+      .single();
+
+    const canSendEmails = await checkUserLimits((user as any)?.id, 'school', selectedSchools.length);
     const canUseTemplate = await checkUserLimits((user as any)?.id, 'template');
     const canUseAI = await checkUserLimits((user as any)?.id, 'aiCall');
 
     if (!canSendEmails) {
-      alert('You have reached your school limit. Please upgrade your plan to send more emails.');
+      alert(`You can only send to ${subscription?.schools_sent_limit - usage?.schools_sent} more schools this month. Please upgrade your plan or try again next week.`);
       return;
     }
 
@@ -154,28 +202,58 @@ export default function AutoComposePage() {
   };
 
   const processQueue = async (queue: { emailData: EmailPreviewData, schoolId: string, schoolName: string }[]) => {
-    const processNextBatch = async () => {
-      if (queue.length === 0) {
-        setIsSending(false);
-        return;
+    try {
+      // First, insert all emails into the queue table for backup
+      const queueInserts = queue.map(item => ({
+        user_id: user?.id,
+        school_id: item.schoolId,
+        school_name: item.schoolName,
+        email_data: item.emailData,
+        status: 'queued'
+      }));
+
+      if (queueInserts.length > 0) {
+        supabase
+          .from('email_queue')
+          .insert(queueInserts)
+          .then(() => console.log('Data backed up'))
       }
 
-      const batch = queue.slice(0, 2);
-      queue = queue.slice(2);
+      const processNextBatch = async () => {
+        if (queue.length === 0) {
+          setIsSending(false);
+          return;
+        }
 
-      await Promise.all(batch.map(item => sendEmail(item.emailData, item.schoolId, item.schoolName)));
+        const batch = queue.slice(0, 2);
+        queue = queue.slice(2);
 
-      setTimeout(() => processNextBatch(), 1000);
-    };
+        await Promise.all(batch.map(item => sendEmail(item.emailData, item.schoolId, item.schoolName)));
 
-    await processNextBatch();
+        setTimeout(() => processNextBatch(), 1000);
+      };
+
+      await processNextBatch();
+    } catch (error) {
+      console.error('Error processing:', error);
+      setIsSending(false);
+    }
   };
 
   const sendEmail = async (emailData: EmailPreviewData, schoolId: string, schoolName: string) => {
     try {
-      setQueueStatus(prev => prev.map(item => 
+      setQueueStatus(prev => prev.map(item =>
         item.schoolId === schoolId ? { ...item, status: 'sending' } : item
       ));
+
+      await supabase
+        .from('email_queue')
+        .update({ 
+          status: 'sending',
+          updated_at: new Date().toISOString()
+        })
+        .eq('school_id', schoolId)
+        .eq('user_id', user?.id);
 
       const response = await fetch('/api/sendEmail', {
         method: 'POST',
@@ -185,33 +263,152 @@ export default function AutoComposePage() {
 
       if (!response.ok) throw new Error('Failed to send email');
 
-      setQueueStatus(prev => prev.map(item => 
-        item.schoolId === schoolId 
+      // Update UI status
+      setQueueStatus(prev => prev.map(item =>
+        item.schoolId === schoolId
           ? { ...item, status: 'sent', timestamp: new Date().toISOString() }
           : item
       ));
 
+      // Update database status
+      await supabase
+        .from('email_queue')
+        .update({ 
+          status: 'sent',
+          sent_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('school_id', schoolId)
+        .eq('user_id', user?.id);
+
       if (user && 'id' in user) {
-        await incrementUsage(user.id, { schools_sent: 1 });
-      } else {
-        console.error('Error fetching data');
+        const { data: currentUsage } = await supabase
+          .from('user_usage')
+          .select('schools_sent')
+          .eq('user_id', user.id)
+          .single();
+
+        const newCount = (currentUsage?.schools_sent || 0) + 1;
+
+        await supabase
+          .from('user_usage')
+          .update({ schools_sent: newCount })
+          .eq('user_id', user.id);
       }
     } catch (error) {
       console.error(error);
-      setQueueStatus(prev => prev.map(item => 
-        item.schoolId === schoolId 
+      
+      // Update UI status
+      setQueueStatus(prev => prev.map(item =>
+        item.schoolId === schoolId
           ? { ...item, status: 'failed', timestamp: new Date().toISOString() }
           : item
       ));
+
+      // Update database status
+      await supabase
+        .from('email_queue')
+        .update({ 
+          status: 'failed',
+          error_message: (error as Error).message,
+          updated_at: new Date().toISOString()
+        })
+        .eq('school_id', schoolId)
+        .eq('user_id', user?.id);
     }
   };
 
+  // Add this useEffect to check for and resume any interrupted queues
+  useEffect(() => {
+    const checkInterruptedQueue = async () => {
+      if (!user) return;
+
+      const { data: interruptedEmails, error } = await supabase
+        .from('email_queue')
+        .select()
+        .eq('user_id', user.id)
+        .in('status', ['queued', 'sending'])
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error:', error);
+        return;
+      }
+
+      if (interruptedEmails?.length) {
+        const shouldResume = window.confirm(
+          `Found ${interruptedEmails.length} unsent emails from a previous session. Would you like to resume sending?`
+        );
+
+        if (shouldResume) {
+          const queueToResume = interruptedEmails.map(item => ({
+            emailData: item.email_data as EmailPreviewData,
+            schoolId: item.school_id,
+            schoolName: item.school_name
+          }));
+
+          setQueueStatus(interruptedEmails.map(item => ({
+            schoolId: item.school_id,
+            schoolName: item.school_name,
+            status: 'queued',
+            timestamp: item.created_at
+          })));
+
+          setIsSending(true);
+          processQueue(queueToResume);
+        }
+      }
+    };
+
+    checkInterruptedQueue();
+  }, [user]);
+
+  useEffect(() => {
+    let isLeaving = false;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isSending && !isLeaving) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && isSending && !isLeaving) {
+        const shouldLeave = window.confirm(
+          "Emails are still being sent. Are you sure you want to leave? Your progress is saved and you can resume sending later."
+        );
+        isLeaving = shouldLeave;
+        
+        if (!shouldLeave) {
+          window.focus();
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isSending]);
+
   return (
     <div className={styles.container}>
-      <Sidebar onSelectSchools={handleSchoolSelection} />
+      <Sidebar onSelectSchools={handleSchoolSelection} setFavoriteSchools={setFavoriteSchools} />
 
+      {isModalOpen && user && <PersonalizedMessageModal
+        userId={user.id}
+        pMessages={personalizedMessages}
+        onClose={() => setIsModalOpen(false)}
+        template={selectedTemplate?.content.content || ''}
+        onMessagesUpdated={fetchPersonalizedMessages}
+        selectedSchools={selectedSchools}
+      />}
       <div className="flex-1 p-6">
-        <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-50 to-babyblue-200 p-8 shadow-xl rounded-2xl">
+        <div className="max-w-5xl mx-auto bg-white p-8 shadow-xl rounded-2xl">
           <h1 className={styles.title}>Auto Compose</h1>
           <div className={styles.linkWrapper}>
             <a href="/dashboard/compose" className={styles.link}>
@@ -226,11 +423,26 @@ export default function AutoComposePage() {
             >
               Select Template
             </button>
+
+            <button
+              onClick={() => {
+                if (selectedSchools.length === 0) {
+                  alert('Please select schools first');
+                  return;
+                }
+                setIsModalOpen(true);
+              }}
+              className={styles.templateButton}
+              disabled={selectedSchools.length === 0}
+            >
+              Personalize Message
+            </button>
           </div>
+
 
           <button
             onClick={handleSubmit}
-            className={styles.sendButton}
+            className={styles.templateButton}
             disabled={selectedSchools.length === 0 || !selectedTemplate || isSending}
           >
             {isSending ? 'Sending...' : 'Send Emails'}
@@ -260,3 +472,4 @@ export default function AutoComposePage() {
     </div>
   );
 }
+

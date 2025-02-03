@@ -8,7 +8,7 @@ interface ModalProps {
   position: { top: number; left: number };
 }
 
-const placeholders = ["[coachLastName]", "[schoolName]"];
+const placeholders = ["[coachLastName]", "[schoolName]", "[personalizedMessage]"];
 
 const PlaceHolderModal: React.FC<ModalProps> = ({ isOpen, onClose, setPlaceHolder, trigger, position }) => {
   const modalRef = useRef<HTMLDivElement>(null);

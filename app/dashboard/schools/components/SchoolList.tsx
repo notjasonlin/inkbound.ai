@@ -1,29 +1,71 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
-import Link from 'next/link';
+import React, { useState, useEffect, useCallback } from 'react';
 import SearchBar, { SearchFilters } from './SearchBar';
 import { SchoolData } from '@/types/school';
 import SchoolPreview from './SchoolPreview';
 import FavoriteButton from '../[school]/components/FavoriteButton';
-import { useFavorites } from '../../schools/[school]/components/FavoritesProvider';
+import Link from 'next/link';
+import { createClient } from '@/utils/supabase/client';
 
 interface SchoolListProps {
   schools: SchoolData[];
   userID: string;
 }
 
+const supabase = createClient();
+
+function formatSchoolNameForImage(name: string): string {
+  return name.split(' ').join('-');
+}
+
 const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [filteredSchools, setFilteredSchools] = useState(schools);
+  const [logoUrls, setLogoUrls] = useState<Record<string, string>>({});
   const [hoveredSchool, setHoveredSchool] = useState<SchoolData | null>(null);
-  const [lastHoveredSchool, setLastHoveredSchool] = useState<SchoolData | null>(null);  // Track the last hovered school
-  const schoolsPerPage = 10;
-  const { favorites, toggleFavorite } = useFavorites();
+  const [lastHoveredSchool, setLastHoveredSchool] = useState<SchoolData | null>(schools[0] || null);
+  const [filteredSchools, setFilteredSchools] = useState(schools);
+  const [currentPage, setCurrentPage] = useState(1);
+  const schoolsPerPage = 12;
+
+  const indexOfLastSchool = currentPage * schoolsPerPage;
+  const indexOfFirstSchool = indexOfLastSchool - schoolsPerPage;
+  const currentSchools = filteredSchools.slice(indexOfFirstSchool, indexOfLastSchool);
+  const totalPages = Math.ceil(filteredSchools.length / schoolsPerPage);
 
   useEffect(() => {
-  }, [schools, filteredSchools]);
+    const fetchLogosForCurrentPage = async () => {
+      const urls = { ...logoUrls };
+      let hasNewUrls = false;
+
+      await Promise.all(
+        currentSchools.map(async (school) => {
+          if (!urls[school.school]) {
+            const formattedName = formatSchoolNameForImage(school.school);
+            const path = `merged_school_images/${formattedName}.png`;
+
+            try {
+              const { data } = supabase.storage.from('school-logo-images').getPublicUrl(path);
+              if (data?.publicUrl) {
+                urls[school.school] = data.publicUrl;
+                hasNewUrls = true;
+              } else {
+                urls[school.school] = '/fallback-logo.png';
+              }
+            } catch {
+              urls[school.school] = '/fallback-logo.png';
+            }
+          }
+        })
+      );
+
+      if (hasNewUrls) {
+        setLogoUrls(urls);
+      }
+    };
+
+    fetchLogosForCurrentPage();
+  }, [currentSchools, logoUrls]);
 
   const filterSchools = useCallback((filters: SearchFilters) => {
     const filtered = schools.filter((school) => {
@@ -37,116 +79,123 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, userID }) => {
     setCurrentPage(1);
   }, [schools]);
 
-  const indexOfLastSchool = currentPage * schoolsPerPage;
-  const indexOfFirstSchool = indexOfLastSchool - schoolsPerPage;
-  const currentSchools = filteredSchools.slice(indexOfFirstSchool, indexOfLastSchool);
-
-  const totalPages = Math.ceil(filteredSchools.length / schoolsPerPage);
-
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
-  };
-
-  const toggleDropdown = (school: string) => {
-    setOpenDropdown(openDropdown === school ? null : school);
-  };
-
-  const handleSearch = (filters: SearchFilters) => {
-    filterSchools(filters);
   };
 
   const renderPaginationButtons = () => {
     const buttons = [];
     const range = 2;
 
-    buttons.push(
-      <button
-        key="first"
-        onClick={() => handlePageChange(1)}
-        className={`px-3 py-1 rounded ${currentPage === 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-        disabled={currentPage === 1}
-      >
-        First
-      </button>
-    );
+    const buttonClass = "px-3 py-1.5 text-sm font-medium rounded-md";
+    const activeClass = "bg-blue-600 text-white hover:bg-blue-700";
+    const inactiveClass = "bg-white text-gray-700 hover:bg-gray-50 border";
 
-    if (currentPage > range + 1) {
-      buttons.push(<span key="ellipsis1" className="px-3 py-1">...</span>);
+    if (totalPages > 1) {
+      if (currentPage > 1) {
+        buttons.push(
+          <button
+            key="prev"
+            onClick={() => handlePageChange(currentPage - 1)}
+            className="px-3 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-blue-500 hover:text-white transition"
+          >
+            Previous
+          </button>
+        );
+      }
+
+      for (let i = Math.max(1, currentPage - range); i <= Math.min(totalPages, currentPage + range); i++) {
+        buttons.push(
+          <button
+            key={i}
+            onClick={() => handlePageChange(i)}
+            className={`px-3 py-2 rounded-lg ${
+              currentPage === i
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-800'
+            } hover:bg-blue-500 hover:text-white transition`}
+          >
+            {i}
+          </button>
+        );
+      }
+
+      if (currentPage < totalPages) {
+        buttons.push(
+          <button
+            key="next"
+            onClick={() => handlePageChange(currentPage + 1)}
+            className="px-3 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-blue-500 hover:text-white transition"
+          >
+            Next
+          </button>
+        );
+      }
     }
-
-    for (let i = Math.max(1, currentPage - range); i <= Math.min(totalPages, currentPage + range); i++) {
-      buttons.push(
-        <button
-          key={i}
-          onClick={() => handlePageChange(i)}
-          className={`px-3 py-1 rounded ${currentPage === i ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-        >
-          {i}
-        </button>
-      );
-    }
-
-    if (currentPage < totalPages - range) {
-      buttons.push(<span key="ellipsis2" className="px-3 py-1">...</span>);
-    }
-
-    buttons.push(
-      <button
-        key="last"
-        onClick={() => handlePageChange(totalPages)}
-        className={`px-3 py-1 rounded ${currentPage === totalPages ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-        disabled={currentPage === totalPages}
-      >
-        Last
-      </button>
-    );
 
     return buttons;
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Search bar fixed at the top, spanning across */}
-      <div className="p-4 bg-blue-75 z-10 w-full">
-        <SearchBar onSearch={handleSearch} />
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Top Row: Search, Filters, Browse Title, and Pagination */}
+      <div className="p-6 bg-white shadow-lg sticky top-0 z-10 flex items-center justify-between">
+        <h2 className="text-lg font-bold text-gray-800">Browse Schools</h2>
+        <div className="flex space-x-2">{renderPaginationButtons()}</div>
+        <SearchBar onSearch={filterSchools} />
       </div>
 
-      <div className="flex flex-grow">
-        {/* Left side: School list with individual scrolling */}
-        <div className="w-1/2 border-r overflow-hidden">
-          <div className="mt-4 flex justify-center space-x-2">
-            {renderPaginationButtons()}
-          </div>
-          <p>Showing {filteredSchools.length} schools</p>
-          <div className="p-4 h-80 overflow-y-auto"> {/* Set height to limit visible items */}
-            <ul className="space-y-2">
-              {currentSchools.map((school, index) => (
-                <li
-                  key={school.id || index}
-                  className="flex justify-between items-center border p-3 rounded-lg text-base font-semibold hover:bg-gray-100 cursor-pointer"
-                  onMouseEnter={() => { setHoveredSchool(school); setLastHoveredSchool(school); }}
-                  onMouseLeave={() => setHoveredSchool(null)}
-                >
-                  <div className="flex items-center w-full space-x-4">
-                    {/* School name with link */}
-                    <Link href={`/dashboard/schools/${encodeURIComponent(school.school)}`} className="flex-grow">
-                      {school.school}
-                    </Link>
+      {/* Main Content */}
+      <div className="flex-grow flex flex-col md:flex-row md:space-x-6 px-6 py-4 items-stretch">
+        {/* Left: School List */}
+        <div className="flex flex-col w-full md:w-2/3">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 flex-grow">
+            {currentSchools.map((school, index) => (
+              <div
+                key={school.id || index}
+                className="group bg-white rounded-lg shadow-lg hover:shadow-xl transition overflow-hidden cursor-pointer border border-gray-200 hover:border-blue-400 relative"
+                onMouseEnter={() => {
+                  setHoveredSchool(school);
+                  setLastHoveredSchool(school);
+                }}
+                onMouseLeave={() => setHoveredSchool(null)}
+              >
+                {/* Logo */}
+                <div className="relative flex justify-center items-center bg-gradient-to-b from-white to-blue-50 h-32">
+                  {logoUrls[school.school] ? (
+                    <img
+                      src={logoUrls[school.school]}
+                      alt={school.school}
+                      className="w-16 h-16 object-contain rounded-full shadow-lg group-hover:scale-105 transition-transform"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-gray-300 animate-pulse rounded-full" />
+                  )}
+                </div>
 
-                    {/* Favorite button with added right margin */}
-                    <FavoriteButton school={school} userId={userID} />
-                  </div>
-                </li>
-              ))}
-            </ul>
+                {/* School Info */}
+                <div className="p-4">
+                  <Link
+                    href={`/dashboard/schools/${encodeURIComponent(school.school)}`}
+                    className="text-lg font-semibold text-blue-600 hover:text-blue-800 transition"
+                  >
+                    {school.school}
+                  </Link>
+                  <p className="text-sm text-gray-500">{school.state}</p>
+                </div>
 
+                <div className="absolute top-2.5 left-1/2 transform -translate-x-1/2 -translate-y-2">
+                  <FavoriteButton school={school} userId={userID} size="text-2xl" />
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Right side: School preview */}
-        <div className="w-1/2 p-4">
+        {/* Right: School Preview */}
+        <div className="w-full md:w-1/3 bg-white rounded-lg shadow-lg border border-gray-200 p-6 flex-grow">
           {lastHoveredSchool ? (
-            <SchoolPreview school={hoveredSchool || lastHoveredSchool} />  // Display last hovered school if no new hover
+            <SchoolPreview school={hoveredSchool || lastHoveredSchool} lastHoveredSchool={null} />
           ) : (
             <div className="h-full flex justify-center items-center text-gray-500">
               <p>Hover over a school to preview details</p>

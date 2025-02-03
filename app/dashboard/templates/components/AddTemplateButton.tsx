@@ -15,15 +15,41 @@ const AddTemplateButton = () => {
 
   const handleConfirm = async () => {
     setIsLoading(true);
-    const title = "New Template " + now.getTime().toString();
     try {
+      const { data: existingTemplates, error } = await supabase
+        .from('templates')
+        .select('title')
+        .ilike('title', 'New Template%')
+        .order('title', { ascending: true });
+
+      if (error) throw error;
+
+      let nextNumber = 1;
+      const baseTitle = "New Template";
+      let title = baseTitle;
+
+      if (existingTemplates && existingTemplates.length > 0) {
+        const usedNumbers = existingTemplates
+          .map(template => {
+            const match = template.title.match(/New Template( \((\d+)\))?/);
+            return match ? (match[2] ? parseInt(match[2]) : 1) : 0;
+          })
+          .filter(num => num > 0);
+
+        if (usedNumbers.length > 0) {
+          // If "New Template" exists, start with (2)
+          // If "New Template (2)" exists, look for next number, etc.
+          nextNumber = Math.max(...usedNumbers) + 1;
+          title = `${baseTitle} (${nextNumber})`;
+        }
+      }
+
       await createBlankTemplate(title);
       setIsModalOpen(false);
       const encodedTitle = encodeURIComponent(title);
       router.push(`/dashboard/templates/${encodedTitle}`);
     } catch (error) {
       console.error('Error creating data:', error);
-      // Handle error (e.g., show an error message to the user)
     } finally {
       setIsLoading(false);
     }

@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { SchoolData } from '@/types/school/index';
 import { createClient } from "@/utils/supabase/client";
 import { FiChevronRight, FiChevronDown, FiMenu } from "react-icons/fi";
+import { FavoriteSchoolsData } from '@/types/favorite_schools';
+import { FaPlusCircle } from 'react-icons/fa';
 
 interface SidebarProps {
   onSelectSchools: (schools: SchoolData[]) => void;
+  setFavoriteSchools: (favs: FavoriteSchoolsData) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
+const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools, setFavoriteSchools }) => {
   const supabase = createClient();
   const [schools, setSchools] = useState<SchoolData[]>([]);
   const [selectedSchools, setSelectedSchools] = useState<SchoolData[]>([]);
@@ -40,19 +43,24 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
 
       const { data, error } = await supabase
         .from("favorite_schools")
-        .select("data")
+        .select("data, super_favorites")
         .eq("uuid", user.id)
         .single();
 
       if (error) {
-        setError("Failed to fetch favorite schools");
+        setError("Add your first school to get started.");
         setIsLoading(false);
         return;
       }
 
       if (data && data.data) {
         const schoolsData = Array.isArray(data.data) ? data.data : [];
-        setSchools(schoolsData);
+        setSchools(schoolsData); 
+        const favs = {
+          schools: schoolsData,
+          super_favorites: data.super_favorites ? data.super_favorites : []
+        }
+        setFavoriteSchools(favs);
       } else {
         setSchools([]);
       }
@@ -144,14 +152,27 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
   };
 
   if (isLoading) return <div className="p-4 text-center">Loading...</div>;
-  if (error) return <div className="p-4 text-center text-red-600">{error}</div>;
+  if (error) {
+    return (
+      <div className="text-center text-gray-600">
+        <p className="text-gray-500 text-xs mb-4">Add your first school to get started.</p>
+        <button
+          onClick={() => window.location.href = '/dashboard/schools'}
+          className="flex items-center justify-center space-x-2 text-xs font-medium text-blue-600 cursor-pointer"
+        >
+          <FaPlusCircle />
+          <span>Add New School</span>
+        </button>
+      </div>
+    );
+  }
 
   return (
     <>
       {/* Button to toggle sidebar on mobile */}
       <div className="p-4 fixed top-4 left-4 md:hidden">
         <button
-          className="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors flex items-center space-x-2"
+          className="bg-white text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors flex items-center space-x-2"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         >
           <FiMenu />
@@ -161,7 +182,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools }) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg transform transition-transform duration-300 md:w-80 w-full ${
+        className={`fixed top-0 left-0 h-full bg-white shadow-lg transform transition-transform duration-300 md:w-80 w-full ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } md:relative md:translate-x-0 md:h-auto`}
       >
