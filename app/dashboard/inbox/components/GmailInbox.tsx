@@ -1,29 +1,27 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { FiSend, FiChevronDown } from 'react-icons/fi';
-import { CoachData } from '@/types/school';
-import ReplyAIModal from './ReplyAIModal';
-import styles from '@/styles/GmailInbox.module.css';
-import { Message } from '@/types/message';
+import { FiSend } from "react-icons/fi";
+import { CoachData } from "@/types/school";
+import { Message } from "@/types/message";
+
+import styles from "@/styles/GmailInbox.module.css";
+import ReplyAIButton from "./ReplyAIButton";
 
 interface GmailInboxProps {
   coachEmails: CoachData[];
 }
 
 export default function GmailInbox({ coachEmails }: GmailInboxProps) {
-  const [selectedCoachEmail, setSelectedCoachEmail] = useState<string>(coachEmails[0]?.email || '');
+  const [selectedCoachEmail, setSelectedCoachEmail] = useState<string>(
+    coachEmails[0]?.email || ""
+  );
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState<string>('');
+  const [newMessage, setNewMessage] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
-  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
-  const [firstMessage, setFirstMessage] = useState<Message | null>(null);
-  const [modalIsOpen, setModalIsOpen] = useState<boolean>(false);
-  const [modalPosition, setModalPosition] = useState<{ top: number; left: number } | null>(null);
-  const [coachEmailsMap, setCoachEmailsMap] = useState<{ [id: string]: Message }>({});
 
   const supabase = createClient();
 
@@ -37,107 +35,118 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
     if (selectedCoachEmail) {
       fetchMessages(selectedCoachEmail);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCoachEmail]);
 
   const fetchMessages = async (coachEmail: string) => {
     setLoading(true);
-    setMessages([]); // Clear existing messages when switching coaches
+    setMessages([]); // Clear old messages on coach switch
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.error("Error fetching data");
-      } else {
-        const { data: trackingData, error: trackingError } = await supabase
-          .from('user_message_tracking')
-          .select('last_fetched_message_id, id')
-          .eq('user_id', user.id)
-          .eq('coach_email', coachEmail)
-          .single();
+        console.error("No user found. Please sign in.");
+        setLoading(false);
+        return;
+      }
 
-        const response = await fetch('/api/gmail/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ coachEmail, }),
-        });
-        const data = await response.json();
+      // Check user_message_tracking to see where we left off
+      const { data: trackingData, error: trackingError } = await supabase
+        .from("user_message_tracking")
+        .select("last_fetched_message_id, id")
+        .eq("user_id", user.id)
+        .eq("coach_email", coachEmail)
+        .single();
 
-        console.log("DATA", data);
+      if (trackingError) {
+        console.error("Error fetching tracking data:", trackingError);
+      }
 
-        const processedMessages: Message[] = data.messages.reverse().map((message: any, index: number) => ({
+      // Fetch messages from your /api/gmail/messages endpoint
+      const response = await fetch("/api/gmail/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coachEmail }),
+      });
+      const data = await response.json();
+
+      console.log("DATA", data);
+
+      // Create local array of messages
+      const processedMessages: Message[] = data.messages.reverse().map(
+        (message: any, index: number) => ({
           id: message.id,
           content: message.content,
           from: message.from,
           date: message.date,
           isCoachMessage: message.from.includes(coachEmail),
-          threadId: message.id, // Should be separate id???
+          threadId: message.id, // Use real thread ID if available
           messageNum: index,
           classification: null,
-        }));
+        })
+      );
 
-        let newMessages = processedMessages;
-        if (trackingData) {
-          const lastFetchedMessageId = trackingData ? trackingData.last_fetched_message_id : null;
-          const idx = processedMessages.findIndex((message) => message.id === lastFetchedMessageId);
-          if (idx >= 0) {
-            newMessages = processedMessages.slice(idx + 1);
-          }
-        }
-
-        for (const message of newMessages) {
-          if (message.isCoachMessage) {
-            console.log("MESSAGE", message);
-            await fetch('https://191gxash54.execute-api.us-east-2.amazonaws.com/email-classifier', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                emailId: message.id,
-                content: message.content,
-                from: message.from,
-                date: message.date,
-                threadId: message.threadId
-              }),
-            });
-          }
-        }
-
-        if (newMessages.length > 0) {
-          // Update the last fetched message ID with the most recent message
-          const latestMessageId = newMessages[newMessages.length - 1].id;
-          const toTrack: any = {
-            user_id: user.id,
-            coach_email: coachEmail,
-            last_fetched_message_id: latestMessageId
-          }
-          if (trackingData && trackingData.id) toTrack.id = trackingData.id;
-
-          const { error: upsertError } = await supabase
-            .from('user_message_tracking')
-            .upsert(toTrack);
-
-          if (upsertError) {
-            console.error('Error fetching data:', upsertError);
-          }
-        }
-
-        const map: { [id: string]: Message } = {};
-
-        processedMessages.map((message) => {
-          if (message.isCoachMessage) {
-            map[message.id] = message;
-          }
-        });
-        setCoachEmailsMap(map);
-
-        setMessages(processedMessages);
-
-        if (processedMessages.length > 0) {
-          setThreadId(processedMessages[0].threadId); // THREAD ID MAY NOT BE ACCURATE
-          // Fetch messages from the API
+      // If the tracking table recorded a last_fetched_message_id, only classify new
+      let newMessages = processedMessages;
+      if (trackingData) {
+        const lastFetchedMessageId = trackingData.last_fetched_message_id;
+        const idx = processedMessages.findIndex(
+          (msg) => msg.id === lastFetchedMessageId
+        );
+        if (idx >= 0) {
+          newMessages = processedMessages.slice(idx + 1);
         }
       }
+
+      // Classify new coach messages
+      for (const msg of newMessages) {
+        if (msg.isCoachMessage) {
+          await fetch(
+            "https://191gxash54.execute-api.us-east-2.amazonaws.com/email-classifier",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                emailId: msg.id,
+                content: msg.content,
+                from: msg.from,
+                date: msg.date,
+                threadId: msg.threadId,
+              }),
+            }
+          );
+        }
+      }
+
+      // Update user_message_tracking
+      if (newMessages.length > 0) {
+        const latestMessageId = newMessages[newMessages.length - 1].id;
+        const toTrack: any = {
+          user_id: user.id,
+          coach_email: coachEmail,
+          last_fetched_message_id: latestMessageId,
+        };
+        if (trackingData && trackingData.id) {
+          toTrack.id = trackingData.id;
+        }
+
+        const { error: upsertError } = await supabase
+          .from("user_message_tracking")
+          .upsert(toTrack);
+
+        if (upsertError) {
+          console.error("Error updating user_message_tracking:", upsertError);
+        }
+      }
+
+      setMessages(processedMessages);
+
+      // For demonstration, store the threadId from the first message
+      if (processedMessages.length > 0) {
+        setThreadId(processedMessages[0].threadId);
+      }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching messages:", error);
     } finally {
       setLoading(false);
     }
@@ -145,7 +154,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
 
   const handleCoachChange = (email: string) => {
     setSelectedCoachEmail(email);
-    setNewMessage('');
+    setNewMessage("");
     setThreadId(null);
   };
 
@@ -154,9 +163,10 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
 
     setIsSending(true);
     try {
-      const response = await fetch('/api/gmail/sendMessage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      // Send user’s new message via your /api/gmail/sendMessage
+      const response = await fetch("/api/gmail/sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           coachEmail: selectedCoachEmail,
           message: newMessage,
@@ -165,13 +175,14 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Error fetching data:');
+        throw new Error("Error sending message.");
       }
 
-      const sentMessage = {
+      // Add it locally to the top of the list
+      const sentMessage: Message = {
         id: `temp-${Date.now()}`,
         content: newMessage,
-        from: 'You',
+        from: "You",
         date: new Date().toISOString(),
         isCoachMessage: false,
         threadId,
@@ -179,89 +190,83 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         classification: null,
       };
 
-      setMessages((prevMessages) => [sentMessage, ...prevMessages]);
-      setNewMessage('');
+      setMessages((prev) => [sentMessage, ...prev]);
+      setNewMessage("");
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error sending message:", error);
     } finally {
       setIsSending(false);
     }
   };
 
+  // Reformat text for display
   const formatMessageContent = (content: string) => {
-    // Normalize line endings
-    const normalizedContent = content.replace(/\r\n/g, '\n'); // Replace all \r\n with \n
-
-    // Split into paragraphs by two consecutive newlines
-    const paragraphs = normalizedContent.split('\n');
-
-    // Wrap paragraphs with <p> and preserve single newlines as <br>
-    return paragraphs.map((p: string) => (p.trim() ? `<p>${p}</p>` : "<br>")).join("");
-  }
-
+    const normalized = content.replace(/\r\n/g, "\n");
+    const paragraphs = normalized.split("\n");
+    return paragraphs.map((p) => (p.trim() ? `<p>${p}</p>` : "<br>")).join("");
+  };
 
   const generateHTMLContent = (paragraphs: string) => {
     return `<!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="UTF-8">
-    <style>
-      p { margin: 0 0 70px; line-height: 1.8; }
-      body { font-family: Arial, sans-serif; }
-    </style>
-  </head>
-  <body>
-    ${paragraphs}
-  </body>
-  </html>`;
-  }
-
-
-  const handleCoachMessageClick = (event: React.MouseEvent, messageId: string) => {
-    const targetElement = event.currentTarget.getBoundingClientRect();
-    setModalPosition({ top: targetElement.bottom, left: targetElement.left });
-    setModalIsOpen(true);
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    p { margin: 0 0 70px; line-height: 1.8; }
+    body { font-family: Arial, sans-serif; }
+  </style>
+</head>
+<body>
+  ${paragraphs}
+</body>
+</html>`;
   };
 
-  const userMessage = (message: Message) => (
-    <div key={message.id} className="flex justify-end">
-      <div className="max-w-xs p-3 rounded-lg shadow-md bg-blue-500 text-white">
+  // When the AI reply is generated, place it in `newMessage` so user can edit/send
+  const handleAiGenerated = (aiText: string) => {
+    setNewMessage(aiText);
+  };
+
+  // Renders user-sent messages
+  const userMessage = (msg: Message) => (
+    <div key={msg.id} className="flex justify-end">
+      <div className={`${styles["user-message"]} max-w-xs p-3 rounded-lg shadow-md`}>
         <div
           className="text-sm"
           dangerouslySetInnerHTML={{
-            __html: generateHTMLContent(formatMessageContent(message.content)),
+            __html: generateHTMLContent(formatMessageContent(msg.content)),
           }}
         />
-        <p className="text-xs mt-2 text-black">{new Date(message.date).toLocaleString()}</p>
+        <p className="text-xs mt-2 text-black">
+          {new Date(msg.date).toLocaleString()}
+        </p>
       </div>
     </div>
   );
 
-  const coachMessage = (message: Message) => (
-    <button
-      key={message.id}
-      className={styles["coach-message"]}
-      onClick={(e) => {
-        setSelectedMessage(message);
-        setFirstMessage(message.messageNum > 0 ? messages[0] : null);
-        handleCoachMessageClick(e, message.id)
-      }}
-      tabIndex={0}
-    >
+  // Renders coach messages with a ReplyAIButton
+  const coachMessage = (msg: Message) => (
+    <div key={msg.id} className={styles["coach-message"]}>
       <div
         className="text-sm"
         dangerouslySetInnerHTML={{
-          __html: generateHTMLContent(formatMessageContent(message.content)),
+          __html: generateHTMLContent(formatMessageContent(msg.content)),
         }}
       />
-      <div>
-        <p className="text-xs mt-2 text-black">{new Date(message.date).toLocaleString()}</p>
-      </div>
-    </button>
+      <p className="text-xs mt-2 text-black">{new Date(msg.date).toLocaleString()}</p>
+
+      <ReplyAIButton
+        coachMessage={msg}
+        onAiGenerated={handleAiGenerated}
+        // If needed, pass a userMessage for AI context:
+        // userMessage={messages.find((m) => !m.isCoachMessage) || null}
+      />
+    </div>
   );
 
   return (
     <div className={styles.container}>
+      {/* Coach Selection */}
       <div className={styles.header}>
         <h2 className="text-lg font-bold text-gray-800 mb-2">Filter by Coach</h2>
         <select
@@ -277,6 +282,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         </select>
       </div>
 
+      {/* Messages List */}
       <div className={styles.messages}>
         {loading ? (
           <div className="text-center text-black">Loading messages...</div>
@@ -289,6 +295,7 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
         )}
       </div>
 
+      {/* New Message Text Editor + Send Button */}
       <div className={styles["input-area"]}>
         <input
           type="text"
@@ -305,19 +312,6 @@ export default function GmailInbox({ coachEmails }: GmailInboxProps) {
           {isSending ? "Sending..." : <FiSend />}
         </button>
       </div>
-
-      {modalIsOpen && modalPosition && (
-        <ReplyAIModal
-          isOpen={modalIsOpen}
-          onClose={() => setModalIsOpen(false)}
-          style={{
-            top: modalPosition.top,
-            left: modalPosition.left,
-          }}
-          coachMessage={selectedMessage}
-          firstMessage={firstMessage}
-        />
-      )}
     </div>
   );
 }
