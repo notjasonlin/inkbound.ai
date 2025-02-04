@@ -256,5 +256,6 @@ export default function SchoolContent({ schoolData, userID }: SchoolContentProps
         )}
       </div>
     </div>
+  </div>
   );
 }

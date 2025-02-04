@@ -3,12 +3,11 @@
 import React, { useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
-import { PlayerStats, FormField } from "@/types/background/index";
+import { PlayerStats } from "@/types/background/index";
 import { initialFormData, formFields } from "../constants";
+import { Poppins } from "next/font/google";
 import InputField from "@/app/dashboard/profile/background/components/InputField";
 
-// 1) Import a modern font from Google Fonts (e.g., Poppins)
-import { Poppins } from "next/font/google";
 const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
@@ -61,7 +60,7 @@ export default function BackgroundEditor({
     };
   };
 
-  // Merge existing stats with initial
+  // Initialize formData from existing profile stats (if any)
   const [formData, setFormData] = useState<PlayerStats>({
     ...initialFormData,
     ...(profile.stats ? transformSupabaseData(profile.stats) : {}),
@@ -111,40 +110,28 @@ export default function BackgroundEditor({
     setSuccess(null);
     setIsLoading(true);
 
-    // Cap numeric fields if needed
-    const capped = {
-      ...formData,
-      satScore: Math.min(formData.satScore || 0, 1600),
-      actScore: Math.min(formData.actScore || 0, 36),
-      unweightedGpa: Math.min(formData.unweightedGpa || 0, 5),
-    };
-
-    const transformedData = transformDataForSupabase(capped);
+    const transformedData = transformDataForSupabase(formData);
 
     try {
-      // First check if profile exists
       const { data: existingProfile } = await supabase
-        .from('player_profiles')
-        .select('id')
-        .eq('user_id', userId)
+        .from("player_profiles")
+        .select("id")
+        .eq("user_id", userId)
         .single();
 
       let result;
       if (existingProfile) {
         // Update existing profile
         result = await supabase
-          .from('player_profiles')
+          .from("player_profiles")
           .update({ stats: transformedData })
-          .eq('user_id', userId)
+          .eq("user_id", userId)
           .select();
       } else {
         // Insert new profile
         result = await supabase
-          .from('player_profiles')
-          .insert([{ 
-            user_id: userId, 
-            stats: transformedData 
-          }])
+          .from("player_profiles")
+          .insert([{ user_id: userId, stats: transformedData }])
           .select();
       }
 
@@ -155,12 +142,12 @@ export default function BackgroundEditor({
       setSuccess("Changes saved successfully.");
       router.refresh();
     } catch (error) {
-      console.error('Error details:', {
+      console.error("Error details:", {
         error,
         userId,
-        formDataKeys: Object.keys(cappedFormData)
+        formDataKeys: Object.keys(formData),
       });
-      setError('Failed to save background. Please try again.');
+      setError("Failed to save background. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -211,24 +198,20 @@ export default function BackgroundEditor({
   };
 
   return (
-    <div
-      className={`
-          flex items-center justify-center
-        ${poppins.className}  /* Apply the custom font globally */
-      `}
-    >
-      {/* Container to reduce wide blank space on desktop */}
+    <div className={`flex items-center justify-center ${poppins.className}`}>
       <div className="w-full max-w-4xl bg-white shadow-xl border border-blue-100 rounded-xl p-6 md:p-8">
         <h1 className="text-3xl font-extrabold text-center text-blue-700 mb-6">
           Edit Background Information
         </h1>
 
-        {/* Error/Success */}
+        {/* Error/Success messages */}
         {error && (
           <div className="text-center text-red-600 text-sm mb-2">{error}</div>
         )}
         {success && (
-          <div className="text-center text-green-600 text-sm mb-2">{success}</div>
+          <div className="text-center text-green-600 text-sm mb-2">
+            {success}
+          </div>
         )}
 
         {/* Save Button */}
@@ -261,11 +244,7 @@ export default function BackgroundEditor({
           </button>
         </div>
 
-        {/* 
-          Two-column grid on desktop, single column on mobile. 
-          We'll place SAT/ACT + a few other fields on the left, 
-          and the rest on the right to reduce big empty space.
-        */}
+        {/* Fields: two-column grid on md+, single column on smaller */}
         <form className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* SAT Score slider */}
           <div className="flex flex-col">
@@ -368,12 +347,10 @@ export default function BackgroundEditor({
               "
             >
               <option value="">Select Intended Major</option>
-              {/* Example major list */}
               <option value="Computer Science">Computer Science</option>
               <option value="Business">Business</option>
               <option value="Biology">Biology</option>
               <option value="Engineering">Engineering</option>
-              {/* Add more if you want */}
             </select>
           </div>
 
@@ -435,7 +412,6 @@ export default function BackgroundEditor({
               "
             >
               <option value="">Select your home state?</option>
-              {/* Add your list of states */}
               <option value="CA">California</option>
               <option value="NY">New York</option>
               <option value="TX">Texas</option>
