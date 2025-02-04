@@ -16,12 +16,15 @@ import {
 } from "react-icons/fa";
 import { Shrikhand } from "next/font/google";
 import { useEffect, useMemo, useState } from "react";
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { signout } from '../../lib/auth-actions';  // Import the signout function from your server actions
-import { Tooltip } from "@/app/components/Tooltip";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { signout } from "../../lib/auth-actions";
+import inkboundLogo from '@public/inkbound-full-logo.png'
+
+// Google font importimport { Tooltip } from "@/app/components/Tooltip";
 import OnboardingModal from '@/components/OnboardingModal';
 import InstructionsModal from "@/app/components/InstructionsModal";
 import { InstructionsProvider, useInstructions } from "@/app/contexts/InstructionsContext";
+import { Tooltip } from "../components/Tooltip";
 
 
 const shrikhand = Shrikhand({ subsets: ["latin"], weight: "400" });
@@ -133,7 +136,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-blue-50 to-blue-100 text-black">
+    <div className="flex h-screen bg-white text-black">
       <InstructionsModal />
       <OnboardingModal isOpen={showOnboarding} onClose={handleOnboardingComplete} />
       

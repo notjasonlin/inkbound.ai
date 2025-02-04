@@ -19,7 +19,6 @@ export default async function SchoolsPage() {
 
       {/* Content */}
       <div className="container mx-auto p-4">
-        <h1 className="text-2xl font-bold mb-4">Find Schools</h1>
         <SchoolList schools={schools} userID={user.id}/>
       </div>
     </>

@@ -22,7 +22,7 @@ export default function ComposePage() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
+    <div className="flex flex-col md:flex-row min-h-screen bg-white">
       {/* Sidebar */}
       <Sidebar onSelectSchool={handleSelectSchool} />
 
@@ -33,7 +33,7 @@ export default function ComposePage() {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6 }}
       >
-        <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-50 to-babyblue-200 p-8 shadow-xl rounded-2xl">
+        <div className="max-w-5xl mx-auto bg-white p-8 shadow-xl rounded-2xl">
           <div className="mb-6 flex justify-between items-center">
             {/* Back link to Auto Compose */}
             <Link href="/dashboard/auto-compose" className="text-blue-700 hover:underline text-sm font-medium">

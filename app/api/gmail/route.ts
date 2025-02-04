@@ -3,7 +3,7 @@ import { google } from 'googleapis';
 import { createClient } from '@/utils/supabase/server';
 import { Email } from '@/types/email/index';
 import { Readable } from 'stream';
-import { corsHeaders, handleOptions } from '@/utils/api-headers';
+import { getCorsHeaders, handleOptions } from '@/utils/api-headers';
 
 export const OPTIONS = handleOptions;
 
@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.provider_token) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401, headers: corsHeaders });
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401, headers: getCorsHeaders(req) });
   }
 
   const oauth2Client = new google.auth.OAuth2();
@@ -26,14 +26,14 @@ export async function GET(req: Request) {
     const userEmail = profile.data.emailAddress;
 
     if (!userEmail) {
-      return NextResponse.json({ error: 'Unable to fetch user email' }, { status: 500, headers: corsHeaders });
+      return NextResponse.json({ error: 'Unable to fetch user email' }, { status: 500, headers: getCorsHeaders(req) });
     }
 
     const url = new URL(req.url);
     const numEmails = url.searchParams.getAll('numEmails');
 
     if (!numEmails.length) {
-      return NextResponse.json({ error: 'No thread IDs provided' }, { status: 400, headers: corsHeaders });
+      return NextResponse.json({ error: 'No thread IDs provided' }, { status: 400, headers: getCorsHeaders(req) });
     }
 
     const res = await gmail.users.messages.list({
@@ -60,10 +60,10 @@ export async function GET(req: Request) {
       })
     );
 
-    return NextResponse.json(emails, { headers: corsHeaders });
+    return NextResponse.json(emails, { headers: getCorsHeaders(req) });
   } catch (error) {
     console.error('Error fetching data:', error);
-    return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500, headers: corsHeaders });
+    return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500, headers: getCorsHeaders(req) });
   }
 }
 
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.provider_token) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401, headers: corsHeaders });
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401, headers: getCorsHeaders(req) });
   }
 
   const oauth2Client = new google.auth.OAuth2();
@@ -91,7 +91,7 @@ export async function POST(req: Request) {
     const userEmail = profile.data.emailAddress;
 
     if (!userEmail) {
-      return NextResponse.json({ error: 'Unable to fetch user email' }, { status: 500, headers: corsHeaders });
+      return NextResponse.json({ error: 'Unable to fetch user email' }, { status: 500, headers: getCorsHeaders(req) });
     }
 
     // Generate a boundary for multipart message
@@ -138,12 +138,12 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, messageId: response.data.id }, { headers: corsHeaders });
+    return NextResponse.json({ success: true, messageId: response.data.id }, { headers: getCorsHeaders(req) });
   } catch (error: any) {
     console.error('Error sending data:', error);
     return NextResponse.json({ 
       error: 'Failed to send email', 
       details: error.message || 'Unknown error'
-    }, { status: 500, headers: corsHeaders });
+    }, { status: 500, headers: getCorsHeaders(req) });
   }
 }

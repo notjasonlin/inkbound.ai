@@ -15,49 +15,92 @@ export default function RandomFactsWidget() {
 
   // Show exactly 2 random facts
   const showRandomFacts = () => {
-    const shuffledFacts = randomFacts.sort(() => 0.5 - Math.random());
-    setVisibleFacts(shuffledFacts.slice(0, 2)); // Only show the first 2 facts
+    // Shuffle and pick first 2
+    const shuffled = [...randomFacts].sort(() => 0.5 - Math.random());
+    setVisibleFacts(shuffled.slice(0, 2));
   };
 
   // Handle checking off a fact
   const checkOffFact = (fact: string) => {
-    setCheckedFact(fact); // Trigger animation for checked fact
+    setCheckedFact(fact);
 
-    // After animation, remove the checked fact and add a new one
+    // Wait for exit animation, then remove old fact & add new one
     setTimeout(() => {
       setVisibleFacts((prevFacts) => {
         const newFacts = prevFacts.filter((f) => f !== fact);
         const remainingFacts = randomFacts.filter((f) => !newFacts.includes(f));
-        const newRandomFact = remainingFacts[Math.floor(Math.random() * remainingFacts.length)];
-        return [...newFacts, newRandomFact]; // Replace the checked fact with a new one
+        const newRandomFact =
+          remainingFacts[Math.floor(Math.random() * remainingFacts.length)];
+        return [...newFacts, newRandomFact];
       });
-      setCheckedFact(null); // Reset checked fact state
-    }, 500); // Animation time
+      setCheckedFact(null);
+    }, 500);
   };
 
   return (
-    <div className="bg-white rounded-lg p-3 h-full">
-      <h2 className="text-lg font-semibold text-gray-800 mb-2">Random Facts & Tips</h2>
+    <motion.div
+      // Card fade/slide in animation
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="
+        w-full
+        bg-white
+        border
+        border-gray-200
+        rounded-lg
+        shadow-sm
+        p-4
+        flex
+        flex-col
+      "
+      style={{ minHeight: "200px" }}
+    >
+      <h2 className="text-base md:text-lg font-bold text-gray-800 mb-3">
+        Random Facts &amp; Tips
+      </h2>
+
       <AnimatePresence>
         {visibleFacts.map((fact) => (
           <motion.div
             key={fact}
-            initial={{ opacity: 0, x: -50 }}
+            className="
+              relative
+              mb-3
+              bg-blue-50
+              rounded-md
+              shadow-sm
+              p-3
+              flex
+              items-center
+              justify-between
+            "
+            // Enter / Exit animations
+            initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 50 }}
+            exit={{ opacity: 0, x: 20 }}
             transition={{ duration: 0.5 }}
-            className="flex justify-between items-center mb-2 bg-blue-50 p-2 rounded-md shadow-sm"
           >
-            <p className="text-sm text-gray-700 font-bold">{fact}</p>
+            <p className="text-sm text-gray-700 font-medium pr-2">
+              {fact}
+            </p>
             <button
               onClick={() => checkOffFact(fact)}
-              className="text-xs text-green-600 font-semibold hover:text-green-800 transition"
+              className="
+                flex
+                items-center
+                text-green-600
+                hover:text-green-700
+                transition
+                ml-2
+              "
+              title="Mark this tip as complete"
             >
-              <FaCheckCircle />
+              <FaCheckCircle size={16} />
             </button>
           </motion.div>
         ))}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }

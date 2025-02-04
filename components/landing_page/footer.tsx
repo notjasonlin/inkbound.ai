@@ -28,12 +28,12 @@ export default function Footer() {
             <h4 className="text-lg md:text-xl font-semibold">Contact</h4>
             <ul className="mt-4 space-y-2">
               <li>
-                <a href="mailto:founders@inkbound.ai" className="text-black hover:text-white text-sm md:text-base">
+                <a href="mailto:founders@inkbound.ai" className="text-black hover:text-blue-600 text-sm md:text-base">
                   founders@inkbound.ai
                 </a>
               </li>
               <li>
-                <a href="tel:+19546393002" className="text-black hover:text-white text-sm md:text-base">
+                <a href="tel:+19546393002" className="text-black hover:text-blue-600 text-sm md:text-base">
                   +1 (954) 639-3002
                 </a>
               </li>
@@ -45,10 +45,10 @@ export default function Footer() {
 
           {/* Right Section - Privacy & Terms */}
           <div className="flex flex-col md:flex-row md:justify-end md:space-x-6 space-y-2 md:space-y-0 text-center md:text-left">
-            <a href="/policy/privacy" className="text-black hover:text-white text-sm md:text-base">
+            <a href="/policy/privacy" className="text-black hover:text-blue-600 text-sm md:text-base">
               Privacy Policy
             </a>
-            <a href="/policy/terms-and-conditions" className="text-black hover:text-white text-sm md:text-base">
+            <a href="/policy/terms-and-conditions" className="text-black hover:text-blue-600 text-sm md:text-base">
               Terms and Conditions
             </a>
           </div>

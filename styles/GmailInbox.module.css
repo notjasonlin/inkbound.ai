@@ -1,0 +1,137 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #ffffff; /* Clean white background */
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  padding: 1rem;
+  border-bottom: 1px solid #ddd;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: #ffffff; /* White header */
+}
+
+.select-box {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.select-box:focus {
+  border-color: #007bff; 
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); 
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  gap: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: #ffffff; /* White background for message area */
+}
+
+/* Coach and user message bubbles */
+.coach-message,
+.user-message {
+  max-width: 75%;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.coach-message {
+  max-width: 50%;
+  background: #f0f0f0;
+  text-align: left;
+  margin-right: auto;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.user-message {
+  background: #007bff;
+  color: white;
+  margin-left: auto;
+}
+
+.user-message p {
+  margin: 0.25rem 0 0;
+}
+
+.coach-message p {
+  margin: 0.25rem 0 0;
+}
+
+.message-date {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+/* Input area for composing new messages */
+.input-area {
+  padding: 1rem;
+  border-top: 1px solid #ddd;
+  border-radius: 0 0 0.5rem 0.5rem;
+  background: #ffffff; /* White input area */
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.input-box {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  outline: none;
+  transition: border-color 0.3s;
+}
+
+.input-box:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.send-button {
+  padding: 0.5rem 1rem;
+  background: #007bff; /* Blue accent for send button */
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.send-button:hover {
+  background: #0056b3; /* Darker blue on hover */
+}
+
+/* AI button: same overall style, different shade if you prefer */
+.ai-button {
+  margin-top: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: #4B9CE2;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.ai-button:hover {
+  background: #2f81c1;
+}
+
+.ai-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

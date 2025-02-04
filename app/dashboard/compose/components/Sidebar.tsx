@@ -138,7 +138,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
 
       {/* Sidebar */}
       <motion.aside
-        className={`fixed top-0 left-0 md:static md:block md:w-80 w-full h-full bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg flex flex-col transition-transform duration-300 ${
+        className={`fixed top-0 left-0 md:static md:block md:w-80 w-full h-full bg-white shadow-lg flex flex-col transition-transform duration-300 ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0`}
         initial={{ opacity: 0 }}
@@ -169,14 +169,14 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchool }) => {
         </div>
 
         {/* Add School Button */}
-        <div className="p-4">
+        {/* <div className="p-4">
           <button
             onClick={() => setIsModalOpen(true)}
             className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md"
           >
             Add School
           </button>
-        </div>
+        </div> */}
 
         {/* MUST FIX LATER!!!!!!!!!!! */}
         {/* {isModalOpen && (
