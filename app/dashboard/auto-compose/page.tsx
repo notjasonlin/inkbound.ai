@@ -408,7 +408,7 @@ export default function AutoComposePage() {
         selectedSchools={selectedSchools}
       />}
       <div className="flex-1 p-6">
-        <div className="max-w-5xl mx-auto bg-gradient-to-r from-blue-50 to-babyblue-200 p-8 shadow-xl rounded-2xl">
+        <div className="max-w-5xl mx-auto bg-white p-8 shadow-xl rounded-2xl">
           <h1 className={styles.title}>Auto Compose</h1>
           <div className={styles.linkWrapper}>
             <a href="/dashboard/compose" className={styles.link}>
@@ -442,7 +442,7 @@ export default function AutoComposePage() {
 
           <button
             onClick={handleSubmit}
-            className={styles.sendButton}
+            className={styles.templateButton}
             disabled={selectedSchools.length === 0 || !selectedTemplate || isSending}
           >
             {isSending ? 'Sending...' : 'Send Emails'}

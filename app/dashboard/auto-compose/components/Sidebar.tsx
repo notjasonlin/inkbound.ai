@@ -172,7 +172,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools, setFavoriteSchools }
       {/* Button to toggle sidebar on mobile */}
       <div className="p-4 fixed top-4 left-4 md:hidden">
         <button
-          className="bg-gradient-to-r from-blue-500 to-blue-700 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors flex items-center space-x-2"
+          className="bg-white text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors flex items-center space-x-2"
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         >
           <FiMenu />
@@ -182,7 +182,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectSchools, setFavoriteSchools }
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full bg-gradient-to-br from-blue-50 to-blue-100 shadow-lg transform transition-transform duration-300 md:w-80 w-full ${
+        className={`fixed top-0 left-0 h-full bg-white shadow-lg transform transition-transform duration-300 md:w-80 w-full ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } md:relative md:translate-x-0 md:h-auto`}
       >

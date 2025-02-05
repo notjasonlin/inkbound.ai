@@ -1,7 +1,18 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
+import { useEffect, useState } from 'react';
 import { SchoolData, CoachData } from '@/types/school/index';
 import FavoriteButton from './FavoriteButton';
+import { FiArrowLeft } from 'react-icons/fi';
+import Link from 'next/link';
+import { createClient } from '@/utils/supabase/client';
+
+const supabase = createClient();
+
+function formatSchoolNameForImage(name: string): string {
+  return name.split(' ').join('-');
+}
 
 interface SchoolContentProps {
   schoolData: SchoolData;
@@ -9,6 +20,26 @@ interface SchoolContentProps {
 }
 
 export default function SchoolContent({ schoolData, userID }: SchoolContentProps) {
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchLogo = async () => {
+      if (schoolData) {
+        const formattedName = formatSchoolNameForImage(schoolData.school);
+        const path = `merged_school_images/${formattedName}.png`;
+
+        try {
+          const { data } = supabase.storage.from('school-logo-images').getPublicUrl(path);
+          setLogoUrl(data?.publicUrl || '/fallback-logo.png');
+        } catch {
+          setLogoUrl('/fallback-logo.png');
+        }
+      }
+    };
+
+    fetchLogo();
+  }, [schoolData]);
+
   if (!schoolData) {
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -61,8 +92,8 @@ export default function SchoolContent({ schoolData, userID }: SchoolContentProps
             <p className="font-semibold text-gray-700 mb-2">Conference</p>
             <p className="text-gray-900">{schoolData.conference}</p>
           </div>
+          <FavoriteButton school={schoolData} userId={userID} size="text-2xl" />
         </div>
-      </div>
 
       {/* Coaches Section */}
       <div className="bg-white shadow-md rounded-lg p-6">
@@ -225,5 +256,6 @@ export default function SchoolContent({ schoolData, userID }: SchoolContentProps
         )}
       </div>
     </div>
+  </div>
   );
 }

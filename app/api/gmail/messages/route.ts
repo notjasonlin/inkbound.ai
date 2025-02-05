@@ -2,7 +2,7 @@ import { google } from "googleapis";
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { gmail_v1 } from "googleapis";
-import { corsHeaders, handleOptions } from "@/utils/api-headers";
+import { getCorsHeaders, handleOptions } from "@/utils/api-headers";
 
 export const OPTIONS = handleOptions;
 
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   if (!session) {
     return NextResponse.json(
       { error: "Unauthorized" },
-      { status: 401, headers: corsHeaders },
+      { status: 401, headers: getCorsHeaders(request) },
     );
   }
 
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   if (!accessToken) {
     return NextResponse.json(
       { error: "No access token available" },
-      { status: 401, headers: corsHeaders },
+      { status: 401, headers: getCorsHeaders(request) },
     );
   }
 
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
   if (!coachEmail) {
     return NextResponse.json(
       { error: "Coach email is required" },
-      { status: 400, headers: corsHeaders },
+      { status: 400, headers: getCorsHeaders(request) },
     );
   }
 
@@ -157,7 +157,7 @@ export async function POST(request: Request) {
     console.error("Error fetching data:", error);
     return NextResponse.json(
       { error: "Error fetching data" },
-      { status: 500, headers: corsHeaders },
+      { status: 500, headers: getCorsHeaders(request) },
     );
   }
 }

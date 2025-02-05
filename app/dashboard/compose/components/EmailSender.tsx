@@ -173,7 +173,7 @@ const EmailSender: React.FC<EmailSenderProps> = ({ school, onEmailSent, setIsOpe
   };
 
   return (
-    <div className="bg-gradient-to-br from-white to-blue-50 p-8 rounded-lg shadow-lg">
+    <div className="bg-white p-8 rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold mb-6 text-blue-800">Compose Email for {school.school}</h2>
 
       <button

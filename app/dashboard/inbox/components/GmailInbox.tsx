@@ -1,31 +1,29 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { FiSend } from 'react-icons/fi';
-import { CoachData } from '@/types/school';
+import { FiSend } from "react-icons/fi";
+import { CoachData } from "@/types/school";
+import { Message } from "@/types/message";
 
-interface Message {
-  id: string;
-  content: string;
-  from: string;
-  date: string;
-  isCoachMessage: boolean;
-  threadId: string;
-}
+import styles from "@/styles/GmailInbox.module.css";
+import ReplyAIButton from "./ReplyAIButton";
 
 interface GmailInboxProps {
   coachEmails: CoachData[];
   schoolName?: string;
 }
 
-export default function GmailInbox({ coachEmails, schoolName }: GmailInboxProps) {
-  const [selectedCoachEmail, setSelectedCoachEmail] = useState<string>(coachEmails[0]?.email || '');
+export default function GmailInbox({ coachEmails }: GmailInboxProps) {
+  const [selectedCoachEmail, setSelectedCoachEmail] = useState<string>(
+    coachEmails[0]?.email || ""
+  );
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState<string>('');
+  const [newMessage, setNewMessage] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [threadId, setThreadId] = useState<string | null>(null);
+
   const supabase = createClient();
 
   useEffect(() => {
@@ -38,93 +36,118 @@ export default function GmailInbox({ coachEmails, schoolName }: GmailInboxProps)
     if (selectedCoachEmail) {
       fetchMessages(selectedCoachEmail);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCoachEmail]);
 
   const fetchMessages = async (coachEmail: string) => {
     setLoading(true);
-    setMessages([]);
+    setMessages([]); // Clear old messages on coach switch
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.error("Error: User not authenticated");
-      } else {
-        const { data: trackingData } = await supabase
-          .from('user_message_tracking')
-          .select('last_fetched_message_id, id')
-          .eq('user_id', user.id)
-          .eq('coach_email', coachEmail)
-          .single();
+        console.error("No user found. Please sign in.");
+        setLoading(false);
+        return;
+      }
 
-        const response = await fetch('/api/gmail/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ coachEmail }),
-        });
+      // Check user_message_tracking to see where we left off
+      const { data: trackingData, error: trackingError } = await supabase
+        .from("user_message_tracking")
+        .select("last_fetched_message_id, id")
+        .eq("user_id", user.id)
+        .eq("coach_email", coachEmail)
+        .single();
 
-        if (!response.ok) throw new Error('Error fetching messages');
+      if (trackingError) {
+        console.error("Error fetching tracking data:", trackingError);
+      }
 
-        const data = await response.json();
+      // Fetch messages from your /api/gmail/messages endpoint
+      const response = await fetch("/api/gmail/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ coachEmail }),
+      });
+      const data = await response.json();
 
-        const processedMessages: Message[] = data.messages.map((message: any) => ({
+      console.log("DATA", data);
+
+      // Create local array of messages
+      const processedMessages: Message[] = data.messages.reverse().map(
+        (message: any, index: number) => ({
           id: message.id,
           content: message.content,
           from: message.from,
           date: message.date,
           isCoachMessage: message.from.includes(coachEmail),
-          threadId: message.id,
-        })).reverse();
+          threadId: message.id, // Use real thread ID if available
+          messageNum: index,
+          classification: null,
+        })
+      );
 
-        let newMessages = processedMessages;
-        if (trackingData) {
-          const lastFetchedMessageId = trackingData.last_fetched_message_id;
-          const idx = processedMessages.findIndex((m) => m.id === lastFetchedMessageId);
-          if (idx >= 0) {
-            newMessages = processedMessages.slice(idx + 1);
-          }
-        }
-
-        // Optionally send new messages to external API if needed
-        for (const message of newMessages) {
-          if (message.isCoachMessage) {
-            await fetch('https://jtf79lf49l.execute-api.us-east-2.amazonaws.com/fetch-email-data', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                emailId: message.id,
-                content: message.content,
-                from: message.from,
-                date: message.date,
-                threadId: message.threadId
-              }),
-            });
-          }
-        }
-
-        // Update tracking if new messages
-        if (newMessages.length > 0) {
-          const latestMessageId = newMessages[newMessages.length - 1].id;
-          const toTrack: any = {
-            user_id: user.id,
-            coach_email: coachEmail,
-            last_fetched_message_id: latestMessageId
-          };
-          if (trackingData && trackingData.id) toTrack.id = trackingData.id;
-
-          const { error: upsertError } = await supabase
-            .from('user_message_tracking')
-            .upsert(toTrack);
-          if (upsertError) console.error('Error updating tracking:', upsertError);
-        }
-
-        setMessages(processedMessages);
-
-        if (processedMessages.length > 0) {
-          setThreadId(processedMessages[0].threadId);
+      // If the tracking table recorded a last_fetched_message_id, only classify new
+      let newMessages = processedMessages;
+      if (trackingData) {
+        const lastFetchedMessageId = trackingData.last_fetched_message_id;
+        const idx = processedMessages.findIndex(
+          (msg) => msg.id === lastFetchedMessageId
+        );
+        if (idx >= 0) {
+          newMessages = processedMessages.slice(idx + 1);
         }
       }
+
+      // Classify new coach messages
+      for (const msg of newMessages) {
+        if (msg.isCoachMessage) {
+          await fetch(
+            "https://191gxash54.execute-api.us-east-2.amazonaws.com/email-classifier",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                emailId: msg.id,
+                content: msg.content,
+                from: msg.from,
+                date: msg.date,
+                threadId: msg.threadId,
+              }),
+            }
+          );
+        }
+      }
+
+      // Update user_message_tracking
+      if (newMessages.length > 0) {
+        const latestMessageId = newMessages[newMessages.length - 1].id;
+        const toTrack: any = {
+          user_id: user.id,
+          coach_email: coachEmail,
+          last_fetched_message_id: latestMessageId,
+        };
+        if (trackingData && trackingData.id) {
+          toTrack.id = trackingData.id;
+        }
+
+        const { error: upsertError } = await supabase
+          .from("user_message_tracking")
+          .upsert(toTrack);
+
+        if (upsertError) {
+          console.error("Error updating user_message_tracking:", upsertError);
+        }
+      }
+
+      setMessages(processedMessages);
+
+      // For demonstration, store the threadId from the first message
+      if (processedMessages.length > 0) {
+        setThreadId(processedMessages[0].threadId);
+      }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error("Error fetching messages:", error);
     } finally {
       setLoading(false);
     }
@@ -132,7 +155,7 @@ export default function GmailInbox({ coachEmails, schoolName }: GmailInboxProps)
 
   const handleCoachChange = (email: string) => {
     setSelectedCoachEmail(email);
-    setNewMessage('');
+    setNewMessage("");
     setThreadId(null);
   };
 
@@ -141,9 +164,10 @@ export default function GmailInbox({ coachEmails, schoolName }: GmailInboxProps)
 
     setIsSending(true);
     try {
-      const response = await fetch('/api/gmail/sendMessage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      // Send user’s new message via your /api/gmail/sendMessage
+      const response = await fetch("/api/gmail/sendMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           coachEmail: selectedCoachEmail,
           message: newMessage,
@@ -152,108 +176,142 @@ export default function GmailInbox({ coachEmails, schoolName }: GmailInboxProps)
       });
 
       if (!response.ok) {
-        throw new Error('Error sending message.');
+        throw new Error("Error sending message.");
       }
 
+      // Add it locally to the top of the list
       const sentMessage: Message = {
         id: `temp-${Date.now()}`,
         content: newMessage,
-        from: 'You',
+        from: "You",
         date: new Date().toISOString(),
         isCoachMessage: false,
-        threadId: threadId!,
+        threadId,
+        messageNum: messages.length,
+        classification: null,
       };
 
-      setMessages((prevMessages) => [sentMessage, ...prevMessages]);
-      setNewMessage('');
+      setMessages((prev) => [sentMessage, ...prev]);
+      setNewMessage("");
     } catch (error) {
-      console.error('Error sending data:', error);
+      console.error("Error sending message:", error);
     } finally {
       setIsSending(false);
     }
   };
 
-  const currentCoach = coachEmails.find(c => c.email === selectedCoachEmail);
+  // Reformat text for display
+  const formatMessageContent = (content: string) => {
+    const normalized = content.replace(/\r\n/g, "\n");
+    const paragraphs = normalized.split("\n");
+    return paragraphs.map((p) => (p.trim() ? `<p>${p}</p>` : "<br>")).join("");
+  };
+
+  const generateHTMLContent = (paragraphs: string) => {
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    p { margin: 0 0 70px; line-height: 1.8; }
+    body { font-family: Arial, sans-serif; }
+  </style>
+</head>
+<body>
+  ${paragraphs}
+</body>
+</html>`;
+  };
+
+  // When the AI reply is generated, place it in `newMessage` so user can edit/send
+  const handleAiGenerated = (aiText: string) => {
+    setNewMessage(aiText);
+  };
+
+  // Renders user-sent messages
+  const userMessage = (msg: Message) => (
+    <div key={msg.id} className="flex justify-end">
+      <div className={`${styles["user-message"]} max-w-xs p-3 rounded-lg shadow-md`}>
+        <div
+          className="text-sm"
+          dangerouslySetInnerHTML={{
+            __html: generateHTMLContent(formatMessageContent(msg.content)),
+          }}
+        />
+        <p className="text-xs mt-2 text-black">
+          {new Date(msg.date).toLocaleString()}
+        </p>
+      </div>
+    </div>
+  );
+
+  // Renders coach messages with a ReplyAIButton
+  const coachMessage = (msg: Message) => (
+    <div key={msg.id} className={styles["coach-message"]}>
+      <div
+        className="text-sm"
+        dangerouslySetInnerHTML={{
+          __html: generateHTMLContent(formatMessageContent(msg.content)),
+        }}
+      />
+      <p className="text-xs mt-2 text-black">{new Date(msg.date).toLocaleString()}</p>
+
+      <ReplyAIButton
+        coachMessage={msg}
+        onAiGenerated={handleAiGenerated}
+        // If needed, pass a userMessage for AI context:
+        // userMessage={messages.find((m) => !m.isCoachMessage) || null}
+      />
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-blue-100 py-8 px-4">
-      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg border border-gray-200 flex flex-col h-[80vh]">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200 rounded-t-lg bg-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            {schoolName && (
-              <h2 className="text-base font-medium text-gray-800">
-                {schoolName}
-              </h2>
-            )}
-            {currentCoach && (
-              <p className="text-sm text-gray-600 mt-1">
-                Conversation with <span className="font-medium">{currentCoach.name}</span> ({currentCoach.position})
-              </p>
-            )}
-          </div>
-          <div className="relative w-full sm:w-64">
-            <select
-              value={selectedCoachEmail}
-              onChange={(e) => handleCoachChange(e.target.value)}
-              className="w-full py-2 px-3 border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-            >
-              {coachEmails.map(coach => (
-                <option key={coach.email} value={coach.email}>
-                  {coach.name} — {coach.position}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+    <div className={styles.container}>
+      {/* Coach Selection */}
+      <div className={styles.header}>
+        <h2 className="text-lg font-bold text-gray-800 mb-2">Filter by Coach</h2>
+        <select
+          value={selectedCoachEmail}
+          onChange={(e) => handleCoachChange(e.target.value)}
+          className={styles["select-box"]}
+        >
+          {coachEmails.map((coach) => (
+            <option key={coach.email} value={coach.email}>
+              {coach.name + " — " + coach.position}
+            </option>
+          ))}
+        </select>
+      </div>
 
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {loading ? (
-            <div className="text-center text-black">Loading messages...</div>
-          ) : messages.length > 0 ? (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.isCoachMessage ? 'justify-start' : 'justify-end'}`}
-              >
-                <div
-                  className={`max-w-2xl w-fit p-4 rounded-lg shadow-sm border whitespace-pre-wrap break-words leading-relaxed ${
-                    message.isCoachMessage
-                      ? 'bg-gray-100 border-gray-300 text-gray-900'
-                      : 'bg-blue-600 border-blue-700 text-white'
-                  }`}
-                  style={{ whiteSpace: 'pre-wrap' }}
-                >
-                  {message.content}
-                  <p className={`text-xs mt-3 ${message.isCoachMessage ? 'text-gray-700' : 'text-blue-100'}`}>
-                    {new Date(message.date).toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center text-black">No messages found.</div>
-          )}
-        </div>
+      {/* Messages List */}
+      <div className={styles.messages}>
+        {loading ? (
+          <div className="text-center text-black">Loading messages...</div>
+        ) : messages.length > 0 ? (
+          messages.map((message) =>
+            message.isCoachMessage ? coachMessage(message) : userMessage(message)
+          )
+        ) : (
+          <div className="text-center text-black">No messages found.</div>
+        )}
+      </div>
 
-        {/* Input Area */}
-        <div className="p-4 border-t border-gray-200 bg-white rounded-b-lg flex items-center space-x-2">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a new message..."
-            className="flex-1 py-2 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-black text-sm"
-          />
-          <button
-            onClick={handleSendMessage}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center text-sm font-semibold"
-            disabled={isSending || !newMessage.trim()}
-          >
-            {isSending ? 'Sending...' : <FiSend className="w-5 h-5" />}
-          </button>
-        </div>
+      {/* New Message Text Editor + Send Button */}
+      <div className={styles["input-area"]}>
+        <input
+          type="text"
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          placeholder="Type a new message..."
+          className={styles["input-box"]}
+        />
+        <button
+          onClick={handleSendMessage}
+          className={styles["send-button"]}
+          disabled={isSending || !newMessage.trim()}
+        >
+          {isSending ? "Sending..." : <FiSend />}
+        </button>
       </div>
     </div>
   );

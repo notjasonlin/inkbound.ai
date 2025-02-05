@@ -27,7 +27,7 @@ export const plans: Plan[] = [
     stripePriceIdMonthly: '',
     stripePriceIdYearly: '',
     schoolLimit: 1,
-    templateLimit: 5,
+    templateLimit: 1,
     aiCallLimit: 10
   },
   {
@@ -44,7 +44,7 @@ export const plans: Plan[] = [
     stripePriceIdMonthly: 'price_1QUYnnGqe0TKVbR15qrNzYee',
     stripePriceIdYearly: 'price_1QUYnnGqe0TKVbR1Cv0KGooZ',
     schoolLimit: 20,
-    templateLimit: 20,
+    templateLimit: 5,
     aiCallLimit: 100
   },
   {

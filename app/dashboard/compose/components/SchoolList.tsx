@@ -13,7 +13,7 @@ const SchoolList: React.FC<SchoolListProps> = ({ schools, onSelectSchool }) => {
         return (
           <li
             key={school.id}
-            className="p-2 bg-gray-100 rounded cursor-pointer hover:bg-gray-200"
+            className="p-2 bg-blue-100 rounded-r-lg cursor-pointer hover:bg-gray-200"
             onClick={() => onSelectSchool(school)}
           >
             {school.school}

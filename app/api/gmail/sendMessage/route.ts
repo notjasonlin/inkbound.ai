@@ -1,7 +1,7 @@
 import { google } from "googleapis";
 import { createClient } from "@/utils/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-import { corsHeaders, handleOptions } from '@/utils/api-headers';
+import { getCorsHeaders, handleOptions } from '@/utils/api-headers';
 
 export const OPTIONS = handleOptions;
 
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     if (!session) {
         return NextResponse.json(
             { error: 'Unauthorized' },
-            { status: 401, headers: corsHeaders }
+            { status: 401, headers: getCorsHeaders(request) }
         );
     }
 
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     if (!accessToken) {
         return NextResponse.json(
             { error: 'No access token available' },
-            { status: 401, headers: corsHeaders }
+            { status: 401, headers: getCorsHeaders(request) }
         );
     }
 
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     if (!coachEmail || !message) {
         return NextResponse.json(
             { error: 'Coach email and message are required' },
-            { status: 400, headers: corsHeaders }
+            { status: 400, headers: getCorsHeaders(request) }
         );
     }
 
@@ -131,13 +131,13 @@ export async function POST(request: NextRequest) {
         // Return the sent message details
         return NextResponse.json(
             { id: result.data.id },
-            { status: 200, headers: corsHeaders }
+            { status: 200, headers: getCorsHeaders(request) }
         );
     } catch (error) {
         console.error("Error sending data:", error);
         return NextResponse.json(
             { error: 'Failed to send message' },
-            { status: 500, headers: corsHeaders }
+            { status: 500, headers: getCorsHeaders(request) }
         );
     }
 }
